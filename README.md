@@ -2,7 +2,7 @@
 
 ## 1. 概要
 
-このリポジトリは、[プロジェクト名] のフロントエンドアプリケーションです。Next.js, TypeScript, Tailwind CSS を使用しています。
+このリポジトリは、在宅勤務管理-MYTECNO のフロントエンドアプリケーションです。Next.js, TypeScript, Tailwind CSS を使用しています。
 開発環境の起動やGitの運用ルールについては、親リポジトリの `README.md` を参照してください。
 
 ## 2. 技術スタック
