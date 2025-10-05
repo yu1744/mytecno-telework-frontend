@@ -1,8 +1,8 @@
-# [プロジェクト名] 開発環境
+# 在宅勤務管理-MYTECNO 開発環境
 
 ## 1. はじめに
 
-このリポジトリは、[プロジェクト名] の開発環境を管理するためのものです。
+このリポジトリは、在宅勤務管理-MYTECNO の開発環境を管理するためのものです。
 ここにはアプリケーションのコードは含まれず、**フロントエンド**と**バックエンド**の2つのアプリケーションをDockerという技術を使って同時に動かすための設定ファイル (`docker-compose.yml` など) が格納されています。
 
 ### 1.1. 開発環境の全体構成
@@ -25,7 +25,7 @@
 
 ```
 (あなたのPCのどこか)/
-└── [このリポジトリ名]/      (例: mytecno-dev-env)
+└── mytecno-telework-env/
     ├── .git/               <- 親リポジトリのGit管理ファイル
     ├── docker-compose.yml  <- 全体を動かすための設計図
     ├── README.md           <- いま見ているこのファイル
@@ -51,15 +51,15 @@
 1.  **この親リポジトリをPCにコピー（クローン）します。**
     ターミナル（コマンドプロンプトやPowerShellなど）を開き、作業したいディレクトリに移動してから、以下のコマンドを実行します。
     ```bash
-    git clone <この親リポジトリのURL>
-    cd <この親リポジトリ名>
+    git clone git@github.com:your-org/mytecno-telework-env.git
+    cd mytecno-telework-env
     ```
 
 2.  **フロントエンドとバックエンドのリポジトリをクローンします。**
     続けて、今いるディレクトリ (`<この親リポジトリ名>`) の中で、以下のコマンドを実行します。
     ```bash
-    git clone <フロントエンドリポジトリのURL> frontend
-    git clone <バックエンドリポジトリのURL> backend
+    git clone git@github.com:your-org/mytecno-telework-frontend.git frontend
+    git clone git@github.com:your-org/mytecno-telework-backend.git backend
     ```
     これにより、`frontend` と `backend` という名前のフォルダが作成され、その中に各アプリケーションのコードが配置されます。
 
