@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# フロントエンド (Next.js)
 
-## Getting Started
+## 1. 概要
 
-First, run the development server:
+このリポジトリは、[プロジェクト名] のフロントエンドアプリケーションです。Next.js, TypeScript, Tailwind CSS を使用しています。
+開発環境の起動やGitの運用ルールについては、親リポジトリの `README.md` を参照してください。
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 2. 技術スタック
+
+-   フレームワーク: [Next.js](https://nextjs.org/) (App Router)
+-   言語: [TypeScript](https://www.typescriptlang.org/)
+-   CSS: [Tailwind CSS](https://tailwindcss.com/)
+-   状態管理: (例: Zustand, Recoil, etc. - 導入時に記載)
+-   データフェッチ: (例: SWR, React Query, etc. - 導入時に記載)
+
+## 3. コーディング規約
+
+-   **リンター & フォーマッター:** [ESLint](https://eslint.org/) と [Prettier](https://prettier.io/) を使用します。コミット前に自動でフォーマットが実行される設定になっています。
+-   **コンポーネント設計:** (例: Atomic Design, etc. - 方針が決まり次第記載)
+-   **命名規則:**
+    -   ファイル名: `kebab-case.tsx`
+    -   コンポーネント名: `PascalCase`
+    -   変数・関数名: `camelCase`
+
+## 4. ディレクトリ構成 (主要なもの)
+
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+frontend/
+├── app/              # App Routerの規約に沿ったページやコンポーネント
+│   ├── layout.tsx
+│   └── page.tsx
+├── components/       # 共通で利用するUIコンポーネント
+├── lib/              # APIクライアントや共通の便利関数など
+└── ...
