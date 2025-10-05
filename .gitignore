@@ -1,0 +1,28 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+
+# Docker volumes
+bundle_data/
+db_data/
+
+# Application dependencies
+frontend/node_modules/
+frontend/.next/
+backend/tmp/
+backend/log/
+backend/storage/
+backend/public/system/
+backend/vendor/bundle/
+
+# Env files
+.env

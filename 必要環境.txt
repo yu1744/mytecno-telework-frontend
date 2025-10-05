@@ -1,0 +1,3 @@
+•  フロントエンド: Next.js (App Router), TypeScript, Tailwind CSS
+•  バックエンド: Ruby on Rails (API mode), Ruby
+•  データベース: MySQL
