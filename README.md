@@ -51,15 +51,15 @@
 1.  **この親リポジトリをPCにコピー（クローン）します。**
     ターミナル（コマンドプロンプトやPowerShellなど）を開き、作業したいディレクトリに移動してから、以下のコマンドを実行します。
     ```bash
-    git clone git@github.com:your-org/mytecno-telework-env.git
+    git clone git@github.com:yu1744/mytecno-telework-env.git
     cd mytecno-telework-env
     ```
 
 2.  **フロントエンドとバックエンドのリポジトリをクローンします。**
     続けて、今いるディレクトリ (`<この親リポジトリ名>`) の中で、以下のコマンドを実行します。
     ```bash
-    git clone git@github.com:your-org/mytecno-telework-frontend.git frontend
-    git clone git@github.com:your-org/mytecno-telework-backend.git backend
+    git clone git@github.com:yu1744/mytecno-telework-frontend.git frontend
+    git clone git@github.com:yu1744/mytecno-telework-backend.git backend
     ```
     これにより、`frontend` と `backend` という名前のフォルダが作成され、その中に各アプリケーションのコードが配置されます。
 
