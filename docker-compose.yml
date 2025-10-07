@@ -11,9 +11,8 @@ services:
       - /app/.next
     ports:
       - "3000:3000"
-    environment:
-      # Next.jsからRails APIへのリクエストをプロキシするための設定
-      - NEXT_PUBLIC_API_URL=http://backend:3001
+    env_file:
+      - ./frontend/.env.local
     depends_on:
       - backend
     tty: true
