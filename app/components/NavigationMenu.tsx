@@ -17,6 +17,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import HistoryIcon from "@mui/icons-material/History";
 import ApprovalIcon from "@mui/icons-material/Approval";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useAuthStore } from "@/app/store/auth";
 
 const drawerWidth = 240;
@@ -49,6 +50,14 @@ const NavigationMenu = () => {
 						<HistoryIcon />
 					</ListItemIcon>
 					<ListItemText primary="申請履歴" />
+				</ListItemButton>
+			</ListItem>
+			<ListItem disablePadding>
+				<ListItemButton component={Link} href="/profile">
+					<ListItemIcon>
+						<AccountCircleIcon />
+					</ListItemIcon>
+					<ListItemText primary="プロフィール" />
 				</ListItemButton>
 			</ListItem>
 		</>

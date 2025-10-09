@@ -6,6 +6,7 @@ import { useAuthStore } from '@/app/store/auth';
 import { useRouter } from 'next/navigation';
 import api from '@/app/lib/api';
 import Cookies from 'js-cookie';
+import NotificationBell from './NotificationBell';
 
 const Header = () => {
   const { isAuthenticated, user, clearAuth } = useAuthStore();
@@ -41,6 +42,7 @@ const Header = () => {
         {isAuthenticated && user && (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Typography sx={{ mr: 2 }}>{user.email}</Typography>
+            <NotificationBell />
             <Button color="inherit" onClick={handleLogout}>
               ログアウト
             </Button>
