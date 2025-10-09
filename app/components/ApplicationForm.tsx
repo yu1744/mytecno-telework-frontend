@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
 	TextField,
 	Button,
@@ -14,6 +14,7 @@ import {
 	FormLabel,
 	Checkbox,
 	Collapse,
+	FormHelperText,
 } from "@mui/material";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -28,7 +29,38 @@ const ApplicationForm = () => {
 	const [isOvertime, setIsOvertime] = useState(false);
 	const [overtimeReason, setOvertimeReason] = useState("");
 	const [overtimeEnd, setOvertimeEnd] = useState("");
+	const [startTime, setStartTime] = useState("");
+	const [endTime, setEndTime] = useState("");
 	const [loading, setLoading] = useState(false);
+
+	const isLateNightWork = useMemo(() => {
+		if (!startTime && !endTime) return false;
+		const start = startTime ? parseInt(startTime.split(":")[0], 10) : 0;
+		const end = endTime ? parseInt(endTime.split(":")[0], 10) : 0;
+		return start >= 22 || start < 5 || end >= 22 || end < 5;
+	}, [startTime, endTime]);
+
+	useEffect(() => {
+		if (date) {
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+			const selectedDate = new Date(date);
+			selectedDate.setHours(0, 0, 0, 0);
+			setIsSpecial(selectedDate.getTime() === today.getTime());
+		}
+	}, [date]);
+
+	useEffect(() => {
+		if (startTime && endTime) {
+			const start = new Date(`1970-01-01T${startTime}`);
+			const end = new Date(`1970-01-01T${endTime}`);
+			const diff = end.getTime() - start.getTime();
+			const hours = diff / (1000 * 60 * 60);
+			setIsOvertime(hours > 8);
+		} else {
+			setIsOvertime(false);
+		}
+	}, [startTime, endTime]);
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -41,6 +73,8 @@ const ApplicationForm = () => {
 			isOvertime,
 			overtimeReason,
 			overtimeEnd,
+			startTime,
+			endTime,
 		});
 		toast.success("UI要素の確認");
 	};
@@ -99,12 +133,40 @@ const ApplicationForm = () => {
 							label="午後半休"
 						/>
 					</RadioGroup>
+					<FormHelperText>※半日勤務は0.5回としてカウントされます</FormHelperText>
 				</FormControl>
 
+				<Box sx={{ display: "flex", gap: 2 }}>
+					<FormControl fullWidth>
+						<FormLabel>勤務開始時間</FormLabel>
+						<TextField
+							type="time"
+							value={startTime}
+							onChange={(e) => setStartTime(e.target.value)}
+							InputLabelProps={{ shrink: true }}
+						/>
+					</FormControl>
+					<FormControl fullWidth>
+						<FormLabel>勤務終了時間</FormLabel>
+						<TextField
+							type="time"
+							value={endTime}
+							onChange={(e) => setEndTime(e.target.value)}
+							InputLabelProps={{ shrink: true }}
+						/>
+					</FormControl>
+				</Box>
+
+				{isLateNightWork && (
+					<Typography color="error" variant="body2">
+						特認申請として扱われ、所属長の承認が必要です
+					</Typography>
+				)}
+
 				<FormControl fullWidth>
-					<FormLabel required>申請理由</FormLabel>
+					<FormLabel required={isSpecial || isLateNightWork}>申請理由</FormLabel>
 					<TextField
-						required
+						required={isSpecial || isLateNightWork}
 						id="reason"
 						multiline
 						rows={4}
@@ -136,16 +198,18 @@ const ApplicationForm = () => {
 				<Collapse in={isOvertime}>
 					<Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
 						<FormControl fullWidth>
-							<FormLabel>超過理由</FormLabel>
+							<FormLabel required={isOvertime}>超過理由</FormLabel>
 							<TextField
+								required={isOvertime}
 								value={overtimeReason}
 								onChange={(e) => setOvertimeReason(e.target.value)}
 								fullWidth
 							/>
 						</FormControl>
 						<FormControl fullWidth>
-							<FormLabel>終了予定時間</FormLabel>
+							<FormLabel required={isOvertime}>業務終了予定時間</FormLabel>
 							<TextField
+								required={isOvertime}
 								type="time"
 								value={overtimeEnd}
 								onChange={(e) => setOvertimeEnd(e.target.value)}
