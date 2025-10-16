@@ -27,7 +27,7 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { ja } from "date-fns/locale";
 import toast, { Toaster } from "react-hot-toast";
-import api from "../lib/api";
+import * as api from "../lib/api";
 import { User, Role, Department } from "../types/user";
 import PrivateRoute from "../components/PrivateRoute";
 import UsageAnalytics from "../components/UsageAnalytics";
@@ -41,6 +41,11 @@ interface TabPanelProps {
 	index: number;
 	value: number;
 }
+
+const TAB_VALUES = {
+	USER_MANAGEMENT: 0,
+	USAGE_ANALYTICS: 1,
+};
 
 function TabPanel(props: TabPanelProps) {
 	const { children, value, index, ...other } = props;
@@ -73,37 +78,63 @@ const AdminPageContent = () => {
 	const [effectiveDate, setEffectiveDate] = useState<Date | null>(null);
 
 	useEffect(() => {
-		const dummyUsers: User[] = [
-			{ id: 1, name: '山田 太郎', email: 'yamada@example.com', hired_date: '2020-04-01', role_id: 1, department_id: 1, role: { id: 1, name: '管理者' }, department: { id: 1, name: '開発部' } },
-			{ id: 2, name: '鈴木 一郎', email: 'suzuki@example.com', hired_date: '2021-04-01', role_id: 2, department_id: 2, role: { id: 2, name: '承認者' }, department: { id: 2, name: '営業部' } },
-			{ id: 3, name: '佐藤 花子', email: 'sato@example.com', hired_date: '2019-04-01', role_id: 3, department_id: 1, role: { id: 3, name: '申請者' }, department: { id: 1, name: '開発部' } },
-		];
-		const dummyRoles: Role[] = [
-			{ id: 1, name: '管理者' },
-			{ id: 2, name: '承認者' },
-			{ id: 3, name: '申請者' },
-		];
-		const dummyDepartments: Department[] = [
-			{ id: 1, name: '開発部' },
-			{ id: 2, name: '営業部' },
-			{ id: 3, name: '人事部' },
-		];
-		setUsers(dummyUsers);
-		setRoles(dummyRoles);
-		setDepartments(dummyDepartments);
-		setLoading(false);
+		const fetchData = async () => {
+			try {
+				setLoading(true);
+				const [usersRes, rolesRes, departmentsRes] = await Promise.all([
+					api.adminGetUsers(),
+					api.getRoles(),
+					api.getDepartments(),
+				]);
+				setUsers(usersRes.data);
+				setRoles(rolesRes.data);
+				setDepartments(departmentsRes.data);
+			} catch (err) {
+				setError("データの取得に失敗しました。");
+				toast.error("データの取得に失敗しました。");
+			} finally {
+				setLoading(false);
+			}
+		};
+		fetchData();
 	}, []);
 
 	const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
 		setTabValue(newValue);
 	};
 
-	const handleRoleChange = (userId: number, newRoleId: number) => {
-		setUsers(
-			users.map((user) =>
-				user.id === userId ? { ...user, role_id: newRoleId } : user
-			)
+	const handleUserUpdate = async (
+		userId: number,
+		field: "role_id" | "department_id",
+		value: number
+	) => {
+		const originalUsers = [...users];
+		const updatedUsers = users.map((user) =>
+			user.id === userId ? { ...user, [field]: value } : user
 		);
+		setUsers(updatedUsers);
+
+		const userToUpdate = updatedUsers.find((u) => u.id === userId);
+		if (!userToUpdate) return;
+
+		try {
+			const { id, name, email, role_id, department_id } = userToUpdate;
+			await api.adminUpdateUser(id, {
+				name,
+				email,
+				role_id,
+				department_id,
+			});
+			toast.success("ユーザー情報を更新しました。");
+		} catch (error) {
+			setUsers(originalUsers);
+			// 失敗した場合、モーダル用に選択されているユーザー情報も元に戻す
+			if (selectedUser && selectedUser.id === userId) {
+				setSelectedUser(originalUsers.find((u) => u.id === userId) || null);
+			}
+			toast.error("ユーザー情報の更新に失敗しました。");
+			console.error("Failed to update user", error);
+		}
 	};
 
 	const handleOpenModal = (user: User) => {
@@ -119,18 +150,20 @@ const AdminPageContent = () => {
 
 	const handleUpdateUser = async () => {
 		if (!selectedUser) return;
+		if (!effectiveDate) {
+			toast.error("変更反映日を選択してください。");
+			return;
+		}
 
 		const params = {
 			user_id: selectedUser.id,
 			new_department_id: selectedUser.department_id,
 			new_role_id: selectedUser.role_id,
-			effective_date: effectiveDate
-				? effectiveDate.toISOString().split("T")[0]
-				: null,
+			effective_date: effectiveDate.toISOString().split("T")[0],
 		};
 
 		try {
-			await api.post("/admin/user_info_changes", params);
+			await api.adminCreateInfoChange(params);
 			toast.success("ユーザー情報の更新を予約しました。");
 			handleCloseModal();
 		} catch (error) {
@@ -154,11 +187,30 @@ const AdminPageContent = () => {
 		setDeleteModalOpen(false);
 	};
 
-	const handleDeleteUser = () => {
+	const handleDeleteUser = async () => {
 		if (!userToDelete) return;
-		setUsers(users.filter((user) => user.id !== userToDelete.id));
-		toast.success(`${userToDelete.name}さんを削除しました。`);
-		handleCloseDeleteModal();
+		try {
+			await api.adminDeleteUser(userToDelete.id);
+			setUsers(users.filter((user) => user.id !== userToDelete.id));
+			toast.success(`${userToDelete.name}さんを削除しました。`);
+		} catch (error) {
+			toast.error("ユーザーの削除に失敗しました。");
+			console.error("Failed to delete user", error);
+		} finally {
+			handleCloseDeleteModal();
+		}
+	};
+
+	const handleRegisterUser = async (newUser: api.CreateUserParams) => {
+		try {
+			const res = await api.adminCreateUser(newUser);
+			setUsers([...users, res.data]);
+			toast.success("新しいユーザーを登録しました。");
+			setRegisterModalOpen(false);
+		} catch (error) {
+			console.error("Failed to register user", error);
+			toast.error("ユーザー登録に失敗しました。");
+		}
 	};
 
 	if (loading) {
@@ -186,13 +238,10 @@ const AdminPageContent = () => {
 					</Tabs>
 				</Box>
 
-				<TabPanel value={tabValue} index={0}>
+				<TabPanel value={tabValue} index={TAB_VALUES.USER_MANAGEMENT}>
 					<Box
 						sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
 					>
-						<Button variant="contained" color="success">
-							新規登録
-						</Button>
 						<Button
 							variant="contained"
 							color="success"
@@ -272,14 +321,38 @@ const AdminPageContent = () => {
 											}}
 										>
 											<TableCell>{user.name}</TableCell>
-											<TableCell>{user.department?.name}</TableCell>
+											<TableCell>
+												<Select
+													value={user.department_id}
+													onChange={(e) =>
+														handleUserUpdate(
+															user.id,
+															"department_id",
+															e.target.value as number
+														)
+													}
+													size="small"
+													sx={{ minWidth: 120 }}
+												>
+													{departments.map((department) => (
+														<MenuItem key={department.id} value={department.id}>
+															{department.name}
+														</MenuItem>
+													))}
+												</Select>
+											</TableCell>
 											<TableCell>
 												<Select
 													value={user.role_id}
 													onChange={(e) =>
-														handleRoleChange(user.id, e.target.value as number)
+														handleUserUpdate(
+															user.id,
+															"role_id",
+															e.target.value as number
+														)
 													}
 													size="small"
+													sx={{ minWidth: 120 }}
 												>
 													{roles.map((role) => (
 														<MenuItem key={role.id} value={role.id}>
@@ -290,14 +363,6 @@ const AdminPageContent = () => {
 											</TableCell>
 											<TableCell>
 												<Box sx={{ display: "flex", gap: 1 }}>
-													<Button
-														variant="contained"
-														color="primary"
-														size="small"
-														onClick={() => handleOpenModal(user)}
-													>
-														更新
-													</Button>
 													<Button
 														variant="contained"
 														color="error"
@@ -316,59 +381,16 @@ const AdminPageContent = () => {
 					)}
 				</TabPanel>
 
-				<TabPanel value={tabValue} index={1}>
+				<TabPanel value={tabValue} index={TAB_VALUES.USAGE_ANALYTICS}>
 					<UsageAnalytics />
 				</TabPanel>
 
-				<Modal
-					open={open}
-					onClose={handleCloseModal}
-					aria-labelledby="modal-title"
-					aria-describedby="modal-description"
-				>
-					<Box
-						sx={{
-							position: "absolute",
-							top: "50%",
-							left: "50%",
-							transform: "translate(-50%, -50%)",
-							width: 400,
-							bgcolor: "background.paper",
-							border: "2px solid #000",
-							boxShadow: 24,
-							p: 4,
-						}}
-					>
-						<Typography id="modal-title" variant="h6" component="h2">
-							変更反映日設定
-						</Typography>
-						<Typography id="modal-description" sx={{ mt: 2 }}>
-							{selectedUser?.name} さんの情報を更新します。
-						</Typography>
-						<Box sx={{ mt: 2 }}>
-							<DatePicker
-								label="変更反映日"
-								value={effectiveDate}
-								onChange={(newValue) => setEffectiveDate(newValue)}
-							/>
-						</Box>
-						<Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-							<Button onClick={handleCloseModal}>キャンセル</Button>
-							<Button
-								variant="contained"
-								onClick={handleUpdateUser}
-								sx={{ ml: 1 }}
-							>
-								予約
-							</Button>
-						</Box>
-					</Box>
-				</Modal>
 				<RegisterUserModal
 					open={registerModalOpen}
 					onClose={() => setRegisterModalOpen(false)}
 					roles={roles}
 					departments={departments}
+					onRegister={handleRegisterUser}
 				/>
 				<DeleteUserModal
 					open={deleteModalOpen}
