@@ -33,7 +33,7 @@ const ReusableModal: React.FC<Props> = ({ open, onClose, title, content, actions
 				<Typography variant="h6" component="h2">
 					{title}
 				</Typography>
-				<Typography sx={{ mt: 2 }}>{content}</Typography>
+				<Typography component="div" sx={{ mt: 2 }}>{content}</Typography>
 				<Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
 					{actions.map((action, index) => (
 						<Button

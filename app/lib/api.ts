@@ -1,3 +1,4 @@
+import { Department } from '@/app/types/department';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { User } from '@/app/types/user';
@@ -66,11 +67,13 @@ export type CreateUserParams = {
   password_confirmation?: string;
   role_id: number;
   department_id: number;
+  hired_date?: string;
 };
-export type UpdateUserParams = Omit<User, 'id' | 'role' | 'department' | 'hired_date'>;
+export type UpdateUserParams = Omit<User, 'id' | 'role' | 'department'>;
 
 
 export const adminGetUsers = () => api.get<User[]>('/api/v1/admin/users');
+export const adminGetUser = (id: number) => api.get<User>(`/api/v1/admin/users/${id}`);
 export const adminCreateUser = (params: CreateUserParams) => api.post<User>('/api/v1/admin/users', { user: params });
 export const adminUpdateUser = (id: number, params: UpdateUserParams) => api.put<User>(`/api/v1/admin/users/${id}`, { user: params });
 export const adminDeleteUser = (id: number) => api.delete(`/api/v1/admin/users/${id}`);
@@ -86,5 +89,8 @@ export interface UserInfoChangeParams {
 export const adminCreateInfoChange = (params: UserInfoChangeParams) => api.post('/api/v1/admin/user_info_changes', params);
 
 // 部署・役職API
-export const getDepartments = () => api.get('/api/v1/departments');
+export const getDepartments = () => api.get<Department[]>('/api/v1/departments');
 export const getRoles = () => api.get('/api/v1/roles');
+export const createDepartment = (params: { name: string }) => api.post<Department>('/api/v1/departments', { department: params });
+export const updateDepartment = (id: number, params: { name: string }) => api.put<Department>(`/api/v1/departments/${id}`, { department: params });
+export const deleteDepartment = (id: number) => api.delete(`/api/v1/departments/${id}`);
