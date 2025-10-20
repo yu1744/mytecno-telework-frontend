@@ -1,6 +1,7 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { User } from '@/app/types/user';
+import { useAuthStore } from '../store/auth';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/',
@@ -27,6 +28,23 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// レスポンスインターセプター
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+  	if (error.response && error.response.status === 401) {
+  		// ログインAPIでの401エラーはモーダル表示の対象外とする
+  		if (error.config.url !== '/api/v1/auth/sign_in') {
+  			// Zustandストアのアクションを呼び出してモーダルを表示
+  			useAuthStore.getState().showSessionTimeoutModal();
+  		}
+  	}
+  	return Promise.reject(error);
+  }
+ );
 
 export default api;
 
