@@ -219,185 +219,187 @@ const AdminPageContent = () => {
 
 	return (
 		<LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ja}>
-			<Box>
-				<Toaster />
-				<Typography variant="h4" sx={{ mb: 4 }}>
-					管理者ページ
-				</Typography>
+			<Box component="main" sx={{ flexGrow: 1, p: 3, marginTop: '64px' }}>
+				<Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
+					<Toaster />
+					<Typography variant="h4" sx={{ mb: 4 }}>
+						管理者ページ
+					</Typography>
 
-				<Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-					<Tabs
-						value={tabValue}
-						onChange={handleTabChange}
-						aria-label="admin tabs"
-						indicatorColor="secondary"
-						textColor="inherit"
-					>
-						<Tab label="ユーザー管理" />
-						<Tab label="利用状況" />
-					</Tabs>
-				</Box>
-
-				<TabPanel value={tabValue} index={TAB_VALUES.USER_MANAGEMENT}>
-					<Box
-						sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
-					>
-						<Button
-							variant="contained"
-							color="success"
-							onClick={() => setRegisterModalOpen(true)}
+					<Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+						<Tabs
+							value={tabValue}
+							onChange={handleTabChange}
+							aria-label="admin tabs"
+							indicatorColor="secondary"
+							textColor="inherit"
 						>
-							新規登録
-						</Button>
-						<Button
-							component={Link}
-							href="/admin/integrations"
-							variant="contained"
-							color="primary"
-						>
-							外部連携設定
-						</Button>
-						<Button
-							component={Link}
-							href="/admin/personnel_changes"
-							variant="contained"
-							color="secondary"
-						>
-							人事異動の予約・管理
-						</Button>
+							<Tab label="ユーザー管理" />
+							<Tab label="利用状況" />
+						</Tabs>
 					</Box>
-					{error && <Typography color="error">{error}</Typography>}
-					{!error && users.length === 0 ? (
-						<EmptyState message="表示できるユーザーがいません。" />
-					) : (
-						<TableContainer component={Paper}>
-							<Table>
-								<TableHead>
-									<TableRow>
-										<TableCell
-											sx={{
-												backgroundColor: (theme) => theme.palette.grey[100],
-												fontWeight: "bold",
-											}}
-										>
-											名前
-										</TableCell>
-										<TableCell
-											sx={{
-												backgroundColor: (theme) => theme.palette.grey[100],
-												fontWeight: "bold",
-											}}
-										>
-											部署
-										</TableCell>
-										<TableCell
-											sx={{
-												backgroundColor: (theme) => theme.palette.grey[100],
-												fontWeight: "bold",
-											}}
-										>
-											権限
-										</TableCell>
-										<TableCell
-											sx={{
-												backgroundColor: (theme) => theme.palette.grey[100],
-												fontWeight: "bold",
-											}}
-										>
-											アクション
-										</TableCell>
-									</TableRow>
-								</TableHead>
-								<TableBody>
-									{users.map((user) => (
-										<TableRow
-											key={user.id}
-											sx={{
-												"&:last-child td, &:last-child th": { border: 0 },
-												"& td, & th": {
-													borderBottom: (theme) =>
-														`1px solid ${theme.palette.divider}`,
-												},
-											}}
-										>
-											<TableCell>{user.name}</TableCell>
-											<TableCell>
-												<Select
-													value={user.department_id}
-													onChange={(e) =>
-														handleUserUpdate(
-															user.id,
-															"department_id",
-															e.target.value as number
-														)
-													}
-													size="small"
-													sx={{ minWidth: 120 }}
-												>
-													{departments.map((department) => (
-														<MenuItem key={department.id} value={department.id}>
-															{department.name}
-														</MenuItem>
-													))}
-												</Select>
+
+					<TabPanel value={tabValue} index={TAB_VALUES.USER_MANAGEMENT}>
+						<Box
+							sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
+						>
+							<Button
+								variant="contained"
+								color="success"
+								onClick={() => setRegisterModalOpen(true)}
+							>
+								新規登録
+							</Button>
+							<Button
+								component={Link}
+								href="/admin/integrations"
+								variant="contained"
+								color="primary"
+							>
+								外部連携設定
+							</Button>
+							<Button
+								component={Link}
+								href="/admin/personnel_changes"
+								variant="contained"
+								color="secondary"
+							>
+								人事異動の予約・管理
+							</Button>
+						</Box>
+						{error && <Typography color="error">{error}</Typography>}
+						{!error && users.length === 0 ? (
+							<EmptyState message="表示できるユーザーがいません。" />
+						) : (
+							<TableContainer component={Paper}>
+								<Table>
+									<TableHead>
+										<TableRow>
+											<TableCell
+												sx={{
+													backgroundColor: (theme) => theme.palette.grey[100],
+													fontWeight: "bold",
+												}}
+											>
+												名前
 											</TableCell>
-											<TableCell>
-												<Select
-													value={user.role_id}
-													onChange={(e) =>
-														handleUserUpdate(
-															user.id,
-															"role_id",
-															e.target.value as number
-														)
-													}
-													size="small"
-													sx={{ minWidth: 120 }}
-												>
-													{roles.map((role) => (
-														<MenuItem key={role.id} value={role.id}>
-															{role.name}
-														</MenuItem>
-													))}
-												</Select>
+											<TableCell
+												sx={{
+													backgroundColor: (theme) => theme.palette.grey[100],
+													fontWeight: "bold",
+												}}
+											>
+												部署
 											</TableCell>
-											<TableCell>
-												<Box sx={{ display: "flex", gap: 1 }}>
-													<Button
-														variant="contained"
-														color="error"
-														size="small"
-														onClick={() => handleOpenDeleteModal(user)}
-													>
-														削除
-													</Button>
-												</Box>
+											<TableCell
+												sx={{
+													backgroundColor: (theme) => theme.palette.grey[100],
+													fontWeight: "bold",
+												}}
+											>
+												権限
+											</TableCell>
+											<TableCell
+												sx={{
+													backgroundColor: (theme) => theme.palette.grey[100],
+													fontWeight: "bold",
+												}}
+											>
+												アクション
 											</TableCell>
 										</TableRow>
-									))}
-								</TableBody>
-							</Table>
-						</TableContainer>
-					)}
-				</TabPanel>
+									</TableHead>
+									<TableBody>
+										{users.map((user) => (
+											<TableRow
+												key={user.id}
+												sx={{
+													"&:last-child td, &:last-child th": { border: 0 },
+													"& td, & th": {
+														borderBottom: (theme) =>
+															`1px solid ${theme.palette.divider}`,
+													},
+												}}
+											>
+												<TableCell>{user.name}</TableCell>
+												<TableCell>
+													<Select
+														value={user.department_id}
+														onChange={(e) =>
+															handleUserUpdate(
+																user.id,
+																"department_id",
+																e.target.value as number
+															)
+														}
+														size="small"
+														sx={{ minWidth: 120 }}
+													>
+														{departments.map((department) => (
+															<MenuItem key={department.id} value={department.id}>
+																{department.name}
+															</MenuItem>
+														))}
+													</Select>
+												</TableCell>
+												<TableCell>
+													<Select
+														value={user.role_id}
+														onChange={(e) =>
+															handleUserUpdate(
+																user.id,
+																"role_id",
+																e.target.value as number
+															)
+														}
+														size="small"
+														sx={{ minWidth: 120 }}
+													>
+														{roles.map((role) => (
+															<MenuItem key={role.id} value={role.id}>
+																{role.name}
+															</MenuItem>
+														))}
+													</Select>
+												</TableCell>
+												<TableCell>
+													<Box sx={{ display: "flex", gap: 1 }}>
+														<Button
+															variant="contained"
+															color="error"
+															size="small"
+															onClick={() => handleOpenDeleteModal(user)}
+														>
+															削除
+														</Button>
+													</Box>
+												</TableCell>
+											</TableRow>
+										))}
+									</TableBody>
+								</Table>
+							</TableContainer>
+						)}
+					</TabPanel>
 
-				<TabPanel value={tabValue} index={TAB_VALUES.USAGE_ANALYTICS}>
-					<UsageAnalytics />
-				</TabPanel>
+					<TabPanel value={tabValue} index={TAB_VALUES.USAGE_ANALYTICS}>
+						<UsageAnalytics />
+					</TabPanel>
 
-				<RegisterUserModal
-					open={registerModalOpen}
-					onClose={() => setRegisterModalOpen(false)}
-					roles={roles}
-					departments={departments}
-					onRegister={handleRegisterUser}
-				/>
-				<DeleteUserModal
-					open={deleteModalOpen}
-					onClose={handleCloseDeleteModal}
-					user={userToDelete}
-					onDelete={handleDeleteUser}
-				/>
+					<RegisterUserModal
+						open={registerModalOpen}
+						onClose={() => setRegisterModalOpen(false)}
+						roles={roles}
+						departments={departments}
+						onRegister={handleRegisterUser}
+					/>
+					<DeleteUserModal
+						open={deleteModalOpen}
+						onClose={handleCloseDeleteModal}
+						user={userToDelete}
+						onDelete={handleDeleteUser}
+					/>
+				</Box>
 			</Box>
 		</LocalizationProvider>
 	);

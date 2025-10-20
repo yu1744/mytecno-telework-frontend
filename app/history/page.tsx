@@ -46,23 +46,25 @@ const HistoryPageContent = () => {
   }
 
   return (
-    <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8, maxWidth: '1200px', mx: 'auto' }}>
-      <Typography variant="h4" sx={{ mb: 4 }}>
-        申請履歴
-      </Typography>
-      <FilterComponent
-        startDate={startDate}
-        endDate={endDate}
-        status={status}
-        onStartDateChange={setStartDate}
-        onEndDateChange={setEndDate}
-        onStatusChange={setStatus}
-      />
-      {filteredApplications.length === 0 ? (
-        <EmptyState message="表示できる申請はありません。" />
-      ) : (
-        <ApplicationListTable applications={filteredApplications} />
-      )}
+    <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
+      <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
+        <Typography variant="h4" sx={{ mb: 4 }}>
+          申請履歴
+        </Typography>
+        <FilterComponent
+          startDate={startDate}
+          endDate={endDate}
+          status={status}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+          onStatusChange={setStatus}
+        />
+        {filteredApplications.length === 0 ? (
+          <EmptyState message="表示できる申請はありません。" />
+        ) : (
+          <ApplicationListTable applications={filteredApplications} />
+        )}
+      </Box>
     </Box>
   );
 }
