@@ -32,6 +32,15 @@ api.interceptors.request.use(
 // レスポンスインターセプター
 api.interceptors.response.use(
   (response) => {
+    if (response.headers['access-token']) {
+      Cookies.set('access-token', response.headers['access-token']);
+    }
+    if (response.headers['client']) {
+      Cookies.set('client', response.headers['client']);
+    }
+    if (response.headers['uid']) {
+      Cookies.set('uid', response.headers['uid']);
+    }
     return response;
   },
   (error) => {
