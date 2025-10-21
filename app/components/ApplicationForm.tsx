@@ -20,9 +20,11 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import toast, { Toaster } from "react-hot-toast";
-
-const ApplicationForm = () => {
-	const [date, setDate] = useState<Date | null>(null);
+import { createApplication } from "@/app/lib/api";
+import { ApplicationPayload } from "@/app/types/application";
+ 
+ const ApplicationForm = () => {
+ 	const [date, setDate] = useState<Date | null>(null);
 	const [workOption, setWorkOption] = useState("full_day");
 	const [reason, setReason] = useState("");
 	const [isSpecial, setIsSpecial] = useState(false);
@@ -62,21 +64,37 @@ const ApplicationForm = () => {
 		}
 	}, [startTime, endTime]);
 
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		// 機能ロジックは実装しない
-		console.log({
-			date,
-			workOption,
-			reason,
-			isSpecial,
-			isOvertime,
-			overtimeReason,
-			overtimeEnd,
-			startTime,
-			endTime,
-		});
-		toast.success("UI要素の確認");
+		if (!date) {
+			toast.error("勤務日を選択してください。");
+			return;
+		}
+
+		setLoading(true);
+
+		const payload: ApplicationPayload = {
+			date: date.toISOString().split("T")[0],
+			work_option: workOption,
+			start_time: startTime,
+			end_time: endTime,
+			is_special: isSpecial,
+			reason: reason,
+			is_overtime: isOvertime,
+			overtime_reason: isOvertime ? overtimeReason : undefined,
+			overtime_end: isOvertime ? overtimeEnd : undefined,
+		};
+
+		try {
+			await createApplication(payload);
+			toast.success("申請を送信しました");
+			// フォームをリセットするなどの処理をここに追加できます
+		} catch (error) {
+			console.error("申請の送信に失敗しました", error);
+			toast.error("申請の送信に失敗しました");
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
@@ -225,7 +243,7 @@ const ApplicationForm = () => {
 					variant="contained"
 					color="primary"
 					sx={{ mt: 2 }}
-					disabled={loading}
+					disabled={loading || !date}
 				>
 					{loading ? <CircularProgress size={24} /> : "申請する"}
 				</Button>

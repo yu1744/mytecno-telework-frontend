@@ -8,7 +8,10 @@ import Header from "./components/Header";
 import NavigationMenu from "./components/NavigationMenu";
 import theme from "./theme";
 import Footer from "./components/Footer";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useAuthStore } from "./store/auth";
+import ReusableModal from "./components/ReusableModal";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,7 +27,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
+  const router = useRouter();
   const isLoginPage = pathname === "/login";
+  const {
+    isSessionTimeoutModalOpen,
+    hideSessionTimeoutModal,
+    clearAuth,
+  } = useAuthStore();
+
+  const handleCloseModal = () => {
+    hideSessionTimeoutModal();
+    clearAuth();
+    router.push("/login");
+  };
+
+  useEffect(() => {
+    useAuthStore.persist.rehydrate();
+  }, []);
 
   return (
     <html lang="ja">
@@ -62,6 +81,20 @@ export default function RootLayout({
             </Box>
           )}
           {!isLoginPage && <Footer />}
+          <ReusableModal
+            open={isSessionTimeoutModalOpen}
+            onClose={handleCloseModal}
+            title="セッションタイムアウト"
+            content="セッションが切れました。再度ログインしてください。"
+            actions={[
+              {
+                text: "OK",
+                onClick: handleCloseModal,
+                color: "primary",
+                variant: "contained",
+              },
+            ]}
+          />
         </ThemeProvider>
       </body>
     </html>

@@ -22,6 +22,7 @@ const schema = z
 		email: z.string().email("有効なメールアドレスを入力してください。"),
 		name: z.string().min(1, "名前は必須です。"),
 		employee_number: z.string().min(1, "社員番号は必須です。"),
+		hired_date: z.string().min(1, "入社日は必須です。"),
 		password: z.string().min(8, "パスワードは8文字以上で入力してください。"),
 		password_confirmation: z
 			.string()
@@ -62,6 +63,7 @@ const RegisterUserModal: React.FC<Props> = ({
 			email: "",
 			name: "",
 			employee_number: "",
+			hired_date: "",
 			password: "",
 			password_confirmation: "",
 			department_id: 0,
@@ -148,6 +150,23 @@ const RegisterUserModal: React.FC<Props> = ({
 								required
 								error={!!errors.employee_number}
 								helperText={errors.employee_number?.message}
+							/>
+						)}
+					/>
+					<Controller
+						name="hired_date"
+						control={control}
+						render={({ field }) => (
+							<TextField
+								{...field}
+								fullWidth
+								label="入社日"
+								margin="normal"
+								type="date"
+								required
+								error={!!errors.hired_date}
+								helperText={errors.hired_date?.message}
+								InputLabelProps={{ shrink: true }}
 							/>
 						)}
 					/>

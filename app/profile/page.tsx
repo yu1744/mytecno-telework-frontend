@@ -125,82 +125,84 @@ const ProfilePage = () => {
 
   return (
     <PrivateRoute>
-      <Container maxWidth="md">
-        <Typography variant="h4" component="h1" gutterBottom sx={{ mt: 4, mb: 4 }}>
-          ユーザープロファイル
-        </Typography>
-
-        <Paper sx={{ p: 3, mb: 4 }}>
-          <Typography variant="h6" gutterBottom>
-            社員情報
+      <Box component="main" sx={{ flexGrow: 1, p: 3, marginTop: '64px' }}>
+        <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
+          <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4 }}>
+            ユーザープロファイル
           </Typography>
-          <Box sx={{ '& > *': { mb: 1 } }}>
-            <Typography><strong>所属部署:</strong> {userInfo.department}</Typography>
-            <Typography><strong>勤続年数:</strong> {userInfo.yearsOfService}年</Typography>
-            <Typography><strong>申請上限（週）:</strong> {userInfo.weeklyLimit}回</Typography>
-            <Typography><strong>申請上限（月）:</strong> {userInfo.monthlyLimit}回</Typography>
-          </Box>
-        </Paper>
 
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            設定
-          </Typography>
-          <Box component="form" onSubmit={handleSubmit} noValidate>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={settings.outlook連携}
-                  onChange={handleSettingsChange}
-                  name="outlook連携"
-                />
-              }
-              label="Outlookカレンダー連携"
-            />
-            <Typography variant="subtitle1" sx={{ mt: 3, mb: 1 }}>
-              通勤経路（路線）
+          <Paper sx={{ p: 3, mb: 4 }}>
+            <Typography variant="h6" gutterBottom>
+              社員情報
             </Typography>
-            {settings.commuteRoutes.map((route, index) => (
-              <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  value={route}
-                  onChange={(e) => handleRouteChange(index, e.target.value)}
-                  placeholder={`路線 ${index + 1}`}
-                />
-                <IconButton onClick={() => handleRouteRemove(index)} disabled={settings.commuteRoutes.length <= 1}>
-                  <RemoveCircleOutline />
-                </IconButton>
-              </Box>
-            ))}
-            <Button
-              startIcon={<AddCircleOutline />}
-              onClick={handleRouteAdd}
-              sx={{ mt: 1 }}
-            >
-              路線を追加
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              sx={{ mt: 3, mb: 2, display: 'block' }}
-            >
-              設定を保存
-            </Button>
-          </Box>
-        </Paper>
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Container>
+            <Box sx={{ '& > *': { mb: 1 } }}>
+              <Typography><strong>所属部署:</strong> {userInfo.department}</Typography>
+              <Typography><strong>勤続年数:</strong> {userInfo.yearsOfService}年</Typography>
+              <Typography><strong>申請上限（週）:</strong> {userInfo.weeklyLimit}回</Typography>
+              <Typography><strong>申請上限（月）:</strong> {userInfo.monthlyLimit}回</Typography>
+            </Box>
+          </Paper>
+
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              設定
+            </Typography>
+            <Box component="form" onSubmit={handleSubmit} noValidate>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={settings.outlook連携}
+                    onChange={handleSettingsChange}
+                    name="outlook連携"
+                  />
+                }
+                label="Outlookカレンダー連携"
+              />
+              <Typography variant="subtitle1" sx={{ mt: 3, mb: 1 }}>
+                通勤経路（路線）
+              </Typography>
+              {settings.commuteRoutes.map((route, index) => (
+                <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <TextField
+                    fullWidth
+                    variant="outlined"
+                    value={route}
+                    onChange={(e) => handleRouteChange(index, e.target.value)}
+                    placeholder={`路線 ${index + 1}`}
+                  />
+                  <IconButton onClick={() => handleRouteRemove(index)} disabled={settings.commuteRoutes.length <= 1}>
+                    <RemoveCircleOutline />
+                  </IconButton>
+                </Box>
+              ))}
+              <Button
+                startIcon={<AddCircleOutline />}
+                onClick={handleRouteAdd}
+                sx={{ mt: 1 }}
+              >
+                路線を追加
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                sx={{ mt: 3, mb: 2, display: 'block' }}
+              >
+                設定を保存
+              </Button>
+            </Box>
+          </Paper>
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={6000}
+            onClose={handleCloseSnackbar}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          >
+            <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
+        </Box>
+      </Box>
     </PrivateRoute>
   );
 };

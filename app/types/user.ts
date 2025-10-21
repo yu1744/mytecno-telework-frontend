@@ -12,7 +12,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  hired_date: string;
+  hired_date?: string;
   role_id: number;
   department_id: number;
   role?: Role;
