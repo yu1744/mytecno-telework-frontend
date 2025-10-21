@@ -1,4 +1,5 @@
 import { Department } from '@/app/types/department';
+import { ApplicationPayload } from '@/app/types/application';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { User } from '@/app/types/user';
@@ -94,3 +95,6 @@ export const getRoles = () => api.get('/api/v1/roles');
 export const createDepartment = (params: { name: string }) => api.post<Department>('/api/v1/departments', { department: params });
 export const updateDepartment = (id: number, params: { name: string }) => api.put<Department>(`/api/v1/departments/${id}`, { department: params });
 export const deleteDepartment = (id: number) => api.delete(`/api/v1/departments/${id}`);
+
+// 申請API
+export const createApplication = (params: ApplicationPayload) => api.post('/api/v1/applications', { application: params });
