@@ -20,6 +20,7 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import toast, { Toaster } from "react-hot-toast";
+import { format } from "date-fns";
 import { createApplication } from "@/app/lib/api";
 import { ApplicationPayload } from "@/app/types/application";
  
@@ -74,7 +75,7 @@ import { ApplicationPayload } from "@/app/types/application";
 		setLoading(true);
 
 		const payload: ApplicationPayload = {
-			date: date.toISOString().split("T")[0],
+			date: format(date, "yyyy-MM-dd"),
 			work_option: workOption,
 			start_time: startTime,
 			end_time: endTime,
