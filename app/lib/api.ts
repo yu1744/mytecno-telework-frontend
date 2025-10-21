@@ -98,3 +98,6 @@ export const deleteDepartment = (id: number) => api.delete(`/api/v1/departments/
 
 // 申請API
 export const createApplication = (params: ApplicationPayload) => api.post('/api/v1/applications', { application: params });
+export const getApplications = () => api.get('/api/v1/applications');
+export const cancelApplication = (id: number) => api.put(`/api/v1/applications/${id}/cancel`);
+export const adminGetApplications = () => api.get('/api/v1/admin/applications');
