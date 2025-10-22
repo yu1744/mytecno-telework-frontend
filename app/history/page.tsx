@@ -27,7 +27,7 @@ const HistoryPageContent = () => {
     setLoading(true);
     try {
       let response;
-      if (user?.role?.name === 'admin' || user?.role?.name === 'approver') {
+      if (user?.role?.name === 'admin') {
         response = await api.adminGetApplications();
       } else {
         response = await api.getApplications();

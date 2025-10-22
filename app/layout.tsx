@@ -11,6 +11,7 @@ import Footer from "./components/Footer";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuthStore } from "./store/auth";
+import { useModalStore } from "./store/modal";
 import ReusableModal from "./components/ReusableModal";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -34,11 +35,17 @@ export default function RootLayout({
     hideSessionTimeoutModal,
     clearAuth,
   } = useAuthStore();
+  const { isOpen, title, message, onConfirm, confirmText, hideModal } = useModalStore();
 
   const handleCloseModal = () => {
     hideSessionTimeoutModal();
     clearAuth();
     router.push("/login");
+  };
+
+  const handleConfirm = () => {
+    onConfirm();
+    hideModal();
   };
 
   useEffect(() => {
@@ -90,6 +97,20 @@ export default function RootLayout({
               {
                 text: "OK",
                 onClick: handleCloseModal,
+                color: "primary",
+                variant: "contained",
+              },
+            ]}
+          />
+          <ReusableModal
+            open={isOpen}
+            onClose={hideModal}
+            title={title}
+            content={message}
+            actions={[
+              {
+                text: confirmText || "OK",
+                onClick: handleConfirm,
                 color: "primary",
                 variant: "contained",
               },
