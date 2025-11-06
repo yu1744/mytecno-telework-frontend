@@ -31,3 +31,12 @@ export interface ApplicationPayload {
   overtime_reason?: string;
   overtime_end?: string;
 }
+export interface AppNotification {
+  id: number;
+  user_id: number;
+  message: string;
+  read: boolean;
+  link: string;
+  created_at: string;
+  updated_at: string;
+}

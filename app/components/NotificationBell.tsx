@@ -4,43 +4,27 @@ import React, { useState, useEffect } from 'react';
 import { IconButton, Badge, Popover, List, ListItem, ListItemText, Typography, Divider, Box, ListItemButton } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useRouter } from 'next/navigation';
-import api from '@/app/lib/api';
-
-interface Notification {
-  id: number;
-  message: string;
-  read: boolean;
-  link: string;
-}
+import { getNotifications, markNotificationAsRead } from '@/app/lib/api';
+import { AppNotification } from '@/app/types/application';
 
 const NotificationBell = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const router = useRouter();
 
+  const fetchNotifications = async () => {
+    try {
+      const response = await getNotifications();
+      setNotifications(response.data);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        // TODO: APIエンドポイントが実装されたら差し替える
-        // const response = await api.get('/notifications');
-        // setNotifications(response.data);
-
-        // ダミーデータで代用
-        const dummyNotifications: Notification[] = [
-          { id: 1, message: '2023-10-26の在宅勤務申請が承認されました。', read: false, link: '/history' },
-          { id: 2, message: '山田太郎さんから新たな在宅勤務申請がありました。', read: false, link: '/approvals' },
-          { id: 3, message: '2023-10-25の在宅勤務申請が却下されました。', read: true, link: '/history' },
-        ];
-        setNotifications(dummyNotifications);
-      } catch (error) {
-        console.error('Failed to fetch notifications:', error);
-      }
-    };
-
     fetchNotifications();
-    // ポーリング実装の例（必要に応じて有効化）
-    // const interval = setInterval(fetchNotifications, 60000); // 60秒ごと
-    // return () => clearInterval(interval);
+    const interval = setInterval(fetchNotifications, 60000); // 60秒ごとに通知をポーリング
+    return () => clearInterval(interval);
   }, []);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -51,19 +35,19 @@ const NotificationBell = () => {
     setAnchorEl(null);
   };
 
-  const handleNotificationClick = async (notification: Notification) => {
+  const handleNotificationClick = async (notification: AppNotification) => {
     try {
-      // TODO: APIエンドポイントが実装されたら差し替える
-      // await api.patch(`/notifications/${notification.id}/read`);
-      const newNotifications = notifications.map(n =>
-        n.id === notification.id ? { ...n, read: true } : n
-      );
-      setNotifications(newNotifications);
+      if (!notification.read) {
+        await markNotificationAsRead(notification.id);
+        const newNotifications = notifications.map(n =>
+          n.id === notification.id ? { ...n, read: true } : n
+        );
+        setNotifications(newNotifications);
+      }
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
     }
     
-    // 関連ページに遷移
     if (notification.link) {
       router.push(notification.link);
     }

@@ -1,5 +1,6 @@
 import { Department } from '@/app/types/department';
 import { ApplicationPayload } from '@/app/types/application';
+import type { AppNotification } from '@/app/types/application';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { User } from '@/app/types/user';
@@ -121,3 +122,7 @@ export const getRecentApplications = () => api.get('/api/v1/applications/recent'
 // 承認API
 export const getPendingApprovals = () => api.get('/api/v1/approvals');
 export const updateApprovalStatus = (id: number, status: 'approved' | 'rejected') => api.put(`/api/v1/approvals/${id}`, { status });
+
+// 通知API
+export const getNotifications = () => api.get<AppNotification[]>('/api/v1/notifications');
+export const markNotificationAsRead = (id: number) => api.put<AppNotification>(`/api/v1/notifications/${id}`, { read: true });
