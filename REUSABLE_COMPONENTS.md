@@ -78,6 +78,98 @@
     -   `onEndDateChange` ((date: Date | null) => void): 終了日変更時のコールバック
     -   `onStatusChange` ((status: string) => void): ステータス変更時のコールバック
 
+### ReusableModal.tsx
+
+-   **目的:** アプリケーション全体で共通の確認モーダルダイアログを提供します。
+-   **Props:**
+    -   `isOpen` (boolean): モーダルの開閉状態を制御します。
+    -   `title` (string): モーダルのタイトル。
+    -   `message` (string): モーダルに表示するメッセージ本文。
+    -   `onConfirm` (function): 確認ボタンがクリックされたときに実行されるコールバック関数。
+    -   `confirmText` (string, optional): 確認ボタンのテキスト（デフォルトは "OK"）。
+-   **使用方法:**
+    Zustandストアなどを用いて、モーダルの状態（`isOpen`, `title`, `message`, `onConfirm`）をグローバルに管理し、アプリケーションのどこからでも呼び出せるようにすることを推奨します。
+
+    **ストアの例 (`/app/store/modal.ts`):**
+    ```tsx
+    import { create } from 'zustand';
+
+    interface ModalState {
+      isOpen: boolean;
+      title: string;
+      message: string;
+      onConfirm: () => void;
+      confirmText?: string;
+      showModal: (params: { title: string; message: string; onConfirm: () => void; confirmText?: string }) => void;
+      hideModal: () => void;
+    }
+
+    export const useModalStore = create<ModalState>((set) => ({
+      isOpen: false,
+      title: '',
+      message: '',
+      onConfirm: () => {},
+      confirmText: 'OK',
+      showModal: ({ title, message, onConfirm, confirmText }) =>
+        set({ isOpen: true, title, message, onConfirm, confirmText }),
+      hideModal: () => set({ isOpen: false, title: '', message: '', onConfirm: () => {} }),
+    }));
+    ```
+
+    **レイアウトファイルでの実装例 (`/app/layout.tsx`):**
+    ```tsx
+    'use client';
+    import ReusableModal from '@/app/components/ReusableModal';
+    import { useModalStore } from '@/app/store/modal'; // 仮のパス
+
+    export default function RootLayout({ children }: { children: React.ReactNode }) {
+      const { isOpen, title, message, onConfirm, confirmText, hideModal } = useModalStore();
+
+      const handleConfirm = () => {
+        onConfirm();
+        hideModal();
+      };
+
+      return (
+        <html>
+          <body>
+            {children}
+            <ReusableModal
+              isOpen={isOpen}
+              title={title}
+              message={message}
+              onConfirm={handleConfirm}
+              confirmText={confirmText}
+              onClose={hideModal} // ReusableModalにonCloseを追加した場合
+            />
+          </body>
+        </html>
+      );
+    }
+    ```
+
+    **コンポーネントからの呼び出し例:**
+    ```tsx
+    import { useModalStore } from '@/app/store/modal'; // 仮のパス
+
+    const MyComponent = () => {
+      const showModal = useModalStore((state) => state.showModal);
+
+      const handleDelete = () => {
+        showModal({
+          title: '削除の確認',
+          message: '本当にこのアイテムを削除しますか？',
+          onConfirm: () => {
+            console.log('削除処理を実行');
+            // ここで実際の削除APIを呼び出す
+          },
+          confirmText: '削除する',
+        });
+      };
+
+      return <button onClick={handleDelete}>削除</button>;
+    };
+    ```
 ---
 
 ## アプリケーション特化コンポーネント
