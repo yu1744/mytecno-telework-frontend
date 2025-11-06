@@ -99,10 +99,23 @@ export const updateDepartment = (id: number, params: { name: string }) => api.pu
 export const deleteDepartment = (id: number) => api.delete(`/api/v1/departments/${id}`);
 
 // 申請API
+export type ApplicationRequestParams = {
+  sort_by?: 'created_at' | 'date' | 'status';
+  sort_order?: 'asc' | 'desc';
+  filter_by_status?: string;
+  filter_by_user?: string;
+};
+
 export const createApplication = (params: ApplicationPayload) => api.post('/api/v1/applications', { application: params });
-export const getApplications = () => api.get('/api/v1/applications');
+export const getApplications = (params: ApplicationRequestParams = {}) => {
+  const query = new URLSearchParams(params as Record<string, string>).toString();
+  return api.get(`/api/v1/applications?${query}`);
+};
 export const cancelApplication = (id: number) => api.delete(`/api/v1/applications/${id}`);
-export const adminGetApplications = () => api.get('/api/v1/admin/applications');
+export const adminGetApplications = (params: ApplicationRequestParams = {}) => {
+  const query = new URLSearchParams(params as Record<string, string>).toString();
+  return api.get(`/api/v1/admin/applications?${query}`);
+};
 export const getApplicationStats = () => api.get('/api/v1/applications/stats');
 export const getRecentApplications = () => api.get('/api/v1/applications/recent');
 // 承認API
