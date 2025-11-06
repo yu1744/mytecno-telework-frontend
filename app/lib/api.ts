@@ -103,6 +103,8 @@ export const createApplication = (params: ApplicationPayload) => api.post('/api/
 export const getApplications = () => api.get('/api/v1/applications');
 export const cancelApplication = (id: number) => api.delete(`/api/v1/applications/${id}`);
 export const adminGetApplications = () => api.get('/api/v1/admin/applications');
+export const getApplicationStats = () => api.get('/api/v1/applications/stats');
+export const getRecentApplications = () => api.get('/api/v1/applications/recent');
 // 承認API
 export const getPendingApprovals = () => api.get('/api/v1/approvals');
 export const updateApprovalStatus = (id: number, status: 'approved' | 'rejected') => api.put(`/api/v1/approvals/${id}`, { status });
