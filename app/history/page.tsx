@@ -2,15 +2,17 @@
 
 import React, { useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
-import api from '../lib/api';
+import * as api from '../lib/api';
 import ApplicationListTable from '../components/ApplicationListTable';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
 import FilterComponent from '../components/FilterComponent';
 import { Application } from '../types/application';
 import PrivateRoute from '../components/PrivateRoute';
+import { useAuthStore } from '../store/auth';
 
 const HistoryPageContent = () => {
+  const { user } = useAuthStore();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -18,14 +20,25 @@ const HistoryPageContent = () => {
   const [status, setStatus] = useState('all');
 
   useEffect(() => {
-    const dummyApplications: Application[] = [
-      { id: 1, user: { id: 1, name: '山田 太郎', email: 'yamada@example.com', hired_date: '2020-04-01', role_id: 3, department_id: 1 }, start_date: '2023-10-01', end_date: '2023-10-01', reason: '私用のため', application_status_id: 1, application_status: { id: 1, name: '承認済み' }, created_at: '2023-09-28T10:00:00Z', updated_at: '2023-09-28T10:00:00Z' },
-      { id: 2, user: { id: 1, name: '山田 太郎', email: 'yamada@example.com', hired_date: '2020-04-01', role_id: 3, department_id: 1 }, start_date: '2023-10-05', end_date: '2023-10-05', reason: '通院のため', application_status_id: 2, application_status: { id: 2, name: '申請中' }, created_at: '2023-10-02T11:00:00Z', updated_at: '2023-10-02T11:00:00Z' },
-      { id: 3, user: { id: 1, name: '山田 太郎', email: 'yamada@example.com', hired_date: '2020-04-01', role_id: 3, department_id: 1 }, start_date: '2023-09-25', end_date: '2023-09-25', reason: '家庭の事情', application_status_id: 3, application_status: { id: 3, name: '却下' }, created_at: '2023-09-20T15:00:00Z', updated_at: '2023-09-20T15:00:00Z' },
-    ];
-    setApplications(dummyApplications);
-    setLoading(false);
+    fetchApplications();
   }, []);
+
+  const fetchApplications = async () => {
+    setLoading(true);
+    try {
+      let response;
+      if (user?.role?.name === 'admin') {
+        response = await api.adminGetApplications();
+      } else {
+        response = await api.getApplications();
+      }
+      setApplications(response.data);
+    } catch (error) {
+      console.error('Failed to fetch applications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredApplications = applications.filter((application) => {
     const applicationDate = new Date(application.created_at);
@@ -62,7 +75,11 @@ const HistoryPageContent = () => {
         {filteredApplications.length === 0 ? (
           <EmptyState message="表示できる申請はありません。" />
         ) : (
-          <ApplicationListTable applications={filteredApplications} />
+          <ApplicationListTable
+            applications={filteredApplications}
+            onApplicationUpdate={fetchApplications}
+            showApplicant={user?.role?.name === 'admin' || user?.role?.name === 'approver'}
+          />
         )}
       </Box>
     </Box>

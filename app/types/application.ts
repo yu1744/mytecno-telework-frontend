@@ -7,15 +7,15 @@ export interface ApplicationStatus {
 
 export interface Application {
   id: number;
-  start_date: string;
-  end_date: string;
+  date: string;
   reason: string;
   application_status_id: number;
   approver_comment?: string;
   created_at: string;
   updated_at: string;
-  user?: User;
+  user: User;
   application_status?: ApplicationStatus;
+  // 不要なプロパティを削除
 }
 
 export interface ApplicationPayload {

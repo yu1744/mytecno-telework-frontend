@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Button, Modal, TextField, Chip, Tooltip } from '@mui/material';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { Application } from '../types/application';
 import PrivateRoute from '../components/PrivateRoute';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -46,12 +45,9 @@ const style = {
 };
 
 const ApprovalsPage = () => {
-  const [applications, setApplications] = useState<(Application & { weekly_application_count?: number, application_type?: string })[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
-  const [selectedApp, setSelectedApp] = useState<Application | null>(null);
-  const [comment, setComment] = useState('');
 
   useEffect(() => {
     const fetchApprovals = async () => {
@@ -205,36 +201,6 @@ const ApprovalsPage = () => {
           </Box>
         </Box>
       </Box>
-
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="reject-modal-title"
-      >
-        <Box sx={style}>
-          <Typography id="reject-modal-title" variant="h6" component="h2">
-            却下理由入力
-          </Typography>
-          <TextField
-            fullWidth
-            multiline
-            rows={4}
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            label="却下理由やコメント"
-            margin="normal"
-            required
-            error={comment.trim() === ''}
-            helperText={comment.trim() === '' ? '却下理由は必須です' : ''}
-          />
-          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button onClick={handleClose} sx={{ mr: 1 }}>キャンセル</Button>
-            <Button onClick={handleReject} variant="contained" color="secondary" disabled={comment.trim() === ''}>
-              却下する
-            </Button>
-          </Box>
-        </Box>
-      </Modal>
     </PrivateRoute>
   );
 };
