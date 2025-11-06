@@ -14,7 +14,7 @@ const Header = () => {
 
   const handleLogout = async () => {
     try {
-      await api.delete('/auth/sign_out');
+      await api.delete('/api/v1/auth/sign_out');
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {

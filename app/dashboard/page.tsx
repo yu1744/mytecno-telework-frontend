@@ -54,7 +54,8 @@ const DashboardPage = () => {
   return (
     <PrivateRoute allowedRoles={['admin', 'approver', 'applicant']}>
       <Box sx={{ display: 'flex' }}>
-        <Box component="main" sx={{ flexGrow: 1, p: 3, marginTop: '64px', maxWidth: '1200px', mx: 'auto' }}>
+        <Box component="main" sx={{ flexGrow: 1, p: 3, marginTop: '64px' }}>
+          <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
             <Typography variant="h4" sx={{ mb: 2 }}>ダッシュボード</Typography>
             <Button variant="contained" color="primary" component={Link} href="/apply">
@@ -131,6 +132,7 @@ const DashboardPage = () => {
                 </CardContent>
               </Card>
             </Box>
+          </Box>
           </Box>
         </Box>
       </Box>

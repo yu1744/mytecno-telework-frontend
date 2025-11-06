@@ -10,11 +10,13 @@ import Cookies from "js-cookie";
 const LoginPage = () => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
+	const [error, setError] = useState("");
 	const setAuth = useAuthStore((state) => state.setAuth);
 	const router = useRouter();
 
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
+		setError("");
 		try {
 			const response = await api.post('/api/v1/auth/sign_in', {
 				email,
@@ -52,6 +54,7 @@ const LoginPage = () => {
 			}
 		} catch (error) {
 			console.error("Login failed:", error);
+			setError("メールアドレスまたはパスワードが正しくありません。");
 		}
 	};
 
@@ -64,6 +67,11 @@ const LoginPage = () => {
 				<Typography component="h2" variant="h6">
 					ログイン
 				</Typography>
+				{error && (
+					<Typography color="error" sx={{ mt: 2 }}>
+						{error}
+					</Typography>
+				)}
 				<Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
 					<TextField
 						margin="normal"

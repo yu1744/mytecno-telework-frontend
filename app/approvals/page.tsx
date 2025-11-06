@@ -174,11 +174,35 @@ const ApprovalsPage = () => {
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
+                  </TableHead>
+                  <TableBody>
+                    {applications.map((app) => (
+                      <TableRow
+                        key={app.id}
+                        sx={{ '&:last-child td, &:last-child th': { border: 0 }, '& td, & th': { borderBottom: (theme) => `1px solid ${theme.palette.divider}` } }}
+                      >
+                        <TableCell component="th" scope="row">
+                          {app.user?.name}
+                        </TableCell>
+                        <TableCell>{new Date(app.start_date).toLocaleDateString()}</TableCell>
+                        <TableCell>{getApplicationTypeIcon(app.application_type)}</TableCell>
+                        <TableCell>{app.reason}</TableCell>
+                        <TableCell align="center">{app.weekly_application_count ?? 'N/A'}</TableCell>
+                        <TableCell>
+                          <Button variant="contained" color="primary" sx={{ mr: 1 }} onClick={() => handleApprove(app.id)}>
+                            承認
+                          </Button>
+                          <Button variant="outlined" color="error" onClick={() => handleOpen(app)}>
+                            却下
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </Box>
         </Box>
       </Box>
 

@@ -17,3 +17,15 @@ export interface Application {
   user?: User;
   application_status?: ApplicationStatus;
 }
+
+export interface ApplicationPayload {
+	date: string;
+	work_option: string;
+	start_time: string;
+	end_time: string;
+	is_special: boolean;
+  reason: string;
+  is_overtime: boolean;
+  overtime_reason?: string;
+  overtime_end?: string;
+}
