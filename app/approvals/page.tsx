@@ -1,11 +1,13 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Tooltip, TextField } from '@mui/material';
 import { Application } from '../types/application';
 import PrivateRoute from '../components/PrivateRoute';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
 import api from "@/app/lib/api";
+import axios from 'axios';
+import ReusableModal from '../components/ReusableModal';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import MoreTimeIcon from '@mui/icons-material/MoreTime';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
@@ -48,6 +50,9 @@ const ApprovalsPage = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedApp, setSelectedApp] = useState<Application | null>(null);
+  const [open, setOpen] = useState(false);
+  const [comment, setComment] = useState('');
 
   useEffect(() => {
     const fetchApprovals = async () => {
@@ -93,9 +98,15 @@ const ApprovalsPage = () => {
       setApplications(prevApps => prevApps.filter(app => app.id !== appId));
       alert('承認しました。');
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error approving application:', err);
-      setError(`承認処理に失敗しました: ${err.response?.data?.error || err.message}`);
+      if (axios.isAxiosError(err) && err.response) {
+        setError(`承認処理に失敗しました: ${err.response.data.error || err.message}`);
+      } else if (err instanceof Error) {
+        setError(`承認処理に失敗しました: ${err.message}`);
+      } else {
+        setError('予期せぬエラーが発生しました。');
+      }
       alert('承認処理に失敗しました。');
     }
   };
@@ -114,9 +125,15 @@ const ApprovalsPage = () => {
         alert('却下しました。');
         handleClose();
 
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error rejecting application:', err);
-        setError(`却下処理に失敗しました: ${err.response?.data?.error || err.message}`);
+        if (axios.isAxiosError(err) && err.response) {
+          setError(`却下処理に失敗しました: ${err.response.data.error || err.message}`);
+        } else if (err instanceof Error) {
+          setError(`却下処理に失敗しました: ${err.message}`);
+        } else {
+          setError('予期せぬエラーが発生しました。');
+        }
         alert('却下処理に失敗しました。');
         handleClose();
       }
@@ -170,37 +187,43 @@ const ApprovalsPage = () => {
                         </Button>
                       </TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {applications.map((app) => (
-                      <TableRow
-                        key={app.id}
-                        sx={{ '&:last-child td, &:last-child th': { border: 0 }, '& td, & th': { borderBottom: (theme) => `1px solid ${theme.palette.divider}` } }}
-                      >
-                        <TableCell component="th" scope="row">
-                          {app.user?.name}
-                        </TableCell>
-                        <TableCell>{new Date(app.start_date).toLocaleDateString()}</TableCell>
-                        <TableCell>{getApplicationTypeIcon(app.application_type)}</TableCell>
-                        <TableCell>{app.reason}</TableCell>
-                        <TableCell align="center">{app.weekly_application_count ?? 'N/A'}</TableCell>
-                        <TableCell>
-                          <Button variant="contained" color="primary" sx={{ mr: 1 }} onClick={() => handleApprove(app.id)}>
-                            承認
-                          </Button>
-                          <Button variant="outlined" color="error" onClick={() => handleOpen(app)}>
-                            却下
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
+                  ))}
+                </TableBody>
                 </Table>
               </TableContainer>
             )}
+            <ReusableModal
+              open={open}
+              onClose={handleClose}
+              title="却下理由を入力"
+              content={
+                <TextField
+                  autoFocus
+                  margin="dense"
+                  id="comment"
+                  label="却下理由"
+                  type="text"
+                  fullWidth
+                  variant="standard"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                />
+              }
+              actions={[
+                {
+                  text: "キャンセル",
+                  onClick: handleClose,
+                  color: "secondary",
+                },
+                {
+                  text: "却下する",
+                  onClick: handleReject,
+                  color: "error",
+                },
+              ]}
+            />
           </Box>
         </Box>
-      </Box>
     </PrivateRoute>
   );
 };

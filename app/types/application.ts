@@ -15,7 +15,9 @@ export interface Application {
   updated_at: string;
   user: User;
   application_status?: ApplicationStatus;
-  // 不要なプロパティを削除
+  start_date: string;
+  application_type: string;
+  weekly_application_count: number;
 }
 
 export interface ApplicationPayload {
