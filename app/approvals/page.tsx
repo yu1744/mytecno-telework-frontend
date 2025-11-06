@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Button, Modal, TextField, Chip, Tooltip } from '@mui/material';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
@@ -7,13 +6,13 @@ import { Application } from '../types/application';
 import PrivateRoute from '../components/PrivateRoute';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
-import api from '../lib/api';
+import api from "@/app/lib/api";
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import MoreTimeIcon from '@mui/icons-material/MoreTime';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 
-// 申請種別に応じてアイコンを返すヘルパー関数
+
 const getApplicationTypeIcon = (type: string | undefined) => {
   switch (type) {
     case 'over_8_hours':
@@ -55,13 +54,24 @@ const ApprovalsPage = () => {
   const [comment, setComment] = useState('');
 
   useEffect(() => {
-    const dummyApprovals: (Application & { weekly_application_count?: number, application_type?: string })[] = [
-      { id: 1, user: { id: 2, name: '鈴木 一郎', email: 'suzuki@example.com', hired_date: '2021-04-01', role_id: 3, department_id: 2 }, start_date: '2023-10-10', end_date: '2023-10-10', reason: '体調不良のため', application_status_id: 2, application_status: { id: 2, name: '申請中' }, created_at: '2023-10-09T09:00:00Z', updated_at: '2023-10-09T09:00:00Z', weekly_application_count: 3, application_type: 'over_8_hours' },
-      { id: 2, user: { id: 3, name: '佐藤 花子', email: 'sato@example.com', hired_date: '2019-04-01', role_id: 3, department_id: 1 }, start_date: '2023-10-11', end_date: '2023-10-11', reason: '役所手続きのため', application_status_id: 2, application_status: { id: 2, name: '申請中' }, created_at: '2023-10-09T14:00:00Z', updated_at: '2023-10-09T14:00:00Z', weekly_application_count: 1, application_type: 'late_night_early_morning' },
-      { id: 3, user: { id: 4, name: '田中 太郎', email: 'tanaka@example.com', hired_date: '2022-04-01', role_id: 3, department_id: 3 }, start_date: '2023-10-12', end_date: '2023-10-12', reason: '子供の送迎', application_status_id: 2, application_status: { id: 2, name: '申請中' }, created_at: '2023-10-10T08:30:00Z', updated_at: '2023-10-10T08:30:00Z', weekly_application_count: 2 },
-    ];
-    setApplications(dummyApprovals);
-    setLoading(false);
+    const fetchApprovals = async () => {
+      setLoading(true);
+      try {
+        const response = await api.get('/api/v1/approvals');
+        
+        console.log('Fetched applications:', response.data);
+        
+        setApplications(response.data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching approvals:', err);
+        setError('データの取得に失敗しました。');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApprovals();
   }, []);
 
   const handleOpen = (app: Application) => {
@@ -75,19 +85,47 @@ const ApprovalsPage = () => {
     setComment('');
   };
 
-  const handleApprove = (appId: number) => {
-    console.log(`Approve application ${appId}`);
-    // 機能ロジックは実装しない
-  };
+  const handleApprove = async (appId: number) => {
+    try {
+      const response = await api.patch(`/api/v1/approvals/${appId}`, {
+        status: 'approved',
+        comment: '' 
+      });
 
-  const handleReject = () => {
-    if (selectedApp && comment.trim() !== '') {
-      console.log(`Reject application ${selectedApp.id} with comment: ${comment}`);
-      // 機能ロジックは実装しない
-      handleClose();
+      console.log('Approval response:', response.data);
+      
+      setApplications(prevApps => prevApps.filter(app => app.id !== appId));
+      alert('承認しました。');
+
+    } catch (err: any) {
+      console.error('Error approving application:', err);
+      setError(`承認処理に失敗しました: ${err.response?.data?.error || err.message}`);
+      alert('承認処理に失敗しました。');
     }
   };
+  
+  const handleReject = async () => {
+    if (selectedApp && comment.trim() !== '') {
+      try {
+        const response = await api.patch(`/api/v1/approvals/${selectedApp.id}`, {
+          status: 'rejected',
+          comment: comment
+        });
 
+        console.log('Rejection response:', response.data);
+        
+        setApplications(prevApps => prevApps.filter(app => app.id !== selectedApp.id));
+        alert('却下しました。');
+        handleClose();
+
+      } catch (err: any) {
+        console.error('Error rejecting application:', err);
+        setError(`却下処理に失敗しました: ${err.response?.data?.error || err.message}`);
+        alert('却下処理に失敗しました。');
+        handleClose();
+      }
+    }
+  };
 
   if (loading) {
     return <LoadingSpinner />;
@@ -96,23 +134,45 @@ const ApprovalsPage = () => {
   return (
     <PrivateRoute allowedRoles={['admin', 'approver']}>
       <Box sx={{ display: 'flex' }}>
-        <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
-          <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
-            <Typography variant="h4" sx={{ mb: 4 }}>承認待ち一覧</Typography>
-            {error && <Typography color="error">{error}</Typography>}
-            {!error && applications.length === 0 ? (
-              <EmptyState message="承認待ちの申請はありません。" />
-            ) : (
-              <TableContainer component={Paper}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>申請者</TableCell>
-                      <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>日付</TableCell>
-                      <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>申請種別</TableCell>
-                      <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>理由</TableCell>
-                      <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>今週の申請回数</TableCell>
-                      <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>操作</TableCell>
+        <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8, maxWidth: '1200px', mx: 'auto' }}>
+          <Typography variant="h4" sx={{ mb: 4 }}>承認待ち一覧</Typography>
+          {error && <Typography color="error" gutterBottom>エラー: {error}</Typography>}
+          {!error && applications.length === 0 ? (
+            <EmptyState message="承認待ちの申請はありません。" />
+          ) : (
+            <TableContainer component={Paper}>
+              <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>申請者</TableCell>
+                    <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>日付</TableCell>
+                    <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>申請種別</TableCell>
+                    <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>理由</TableCell>
+                    <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>今週の申請回数</TableCell>
+                    <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>操作</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {applications.map((app) => (
+                    <TableRow
+                      key={app.id}
+                      sx={{ '&:last-child td, &:last-child th': { border: 0 }, '& td, & th': { borderBottom: (theme) => `1px solid ${theme.palette.divider}` } }}
+                    >
+                      <TableCell component="th" scope="row">
+                        {app.user?.name}
+                      </TableCell>
+                      <TableCell>{new Date(app.start_date).toLocaleDateString()}</TableCell>
+                      <TableCell>{getApplicationTypeIcon(app.application_type)}</TableCell>
+                      <TableCell>{app.reason}</TableCell>
+                      <TableCell align="center">{app.weekly_application_count ?? 'N/A'}</TableCell>
+                      <TableCell>
+                        <Button variant="contained" color="primary" sx={{ mr: 1 }} onClick={() => handleApprove(app.id)}>
+                          承認
+                        </Button>
+                        <Button variant="outlined" color="error" onClick={() => handleOpen(app)}>
+                          却下
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
