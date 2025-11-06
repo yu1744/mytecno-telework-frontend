@@ -33,7 +33,7 @@ export const RecentApplicationsTable = ({ applications }: RecentApplicationsTabl
       <TableHeader>
         <TableRow>
           <TableHead>申請日</TableHead>
-          <TableHead>申請種別</TableHead>
+          <TableHead className="hidden md:table-cell">申請種別</TableHead>
           <TableHead>ステータス</TableHead>
         </TableRow>
       </TableHeader>
@@ -41,7 +41,7 @@ export const RecentApplicationsTable = ({ applications }: RecentApplicationsTabl
         {applications.map((application) => (
           <TableRow key={application.id}>
             <TableCell>{format(new Date(application.date), 'yyyy/MM/dd')}</TableCell>
-            <TableCell>{application.application_type}</TableCell>
+            <TableCell className="hidden md:table-cell">{application.application_type}</TableCell>
             <TableCell>{getStatusBadge(application.application_status?.name)}</TableCell>
           </TableRow>
         ))}

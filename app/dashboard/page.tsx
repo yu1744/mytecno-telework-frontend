@@ -52,15 +52,15 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="container mx-auto p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <h1 className="text-2xl font-bold">ダッシュボード</h1>
-        <Button asChild>
+        <Button asChild className="w-full sm:w-auto">
           <Link href="/apply">新規申請</Link>
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3 mb-6">
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 mb-6">
         <StatCard title="未処理" value={stats.pending} />
         <StatCard title="承認済み" value={stats.approved} />
         <StatCard title="却下済み" value={stats.rejected} />

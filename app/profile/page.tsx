@@ -125,9 +125,9 @@ const ProfilePage = () => {
 
   return (
     <PrivateRoute>
-      <Box component="main" sx={{ flexGrow: 1, p: 3, marginTop: '64px' }}>
+      <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, sm: 3 }, marginTop: { xs: '56px', sm: '64px' } }}>
         <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom sx={{ mb: { xs: 2, sm: 4 } }}>
             ユーザープロファイル
           </Typography>
 

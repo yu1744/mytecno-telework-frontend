@@ -133,7 +133,7 @@ const ApplicationListTable: React.FC<ApplicationListTableProps> = ({ isAdmin = f
 
   return (
     <>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2, gap: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'flex-end', mb: 2, gap: 2 }}>
         <TextField
           select
           label="ステータス"
@@ -170,10 +170,10 @@ const ApplicationListTable: React.FC<ApplicationListTableProps> = ({ isAdmin = f
         <EmptyState message="対象の申請はありません。" />
       ) : (
       <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} aria-label="simple table">
+        <Table sx={{ minWidth: 'auto' }} aria-label="simple table">
           <TableHead>
             <TableRow>
-              <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>
                 <TableSortLabel active={sortBy === 'created_at'} direction={sortBy === 'created_at' ? sortOrder : 'asc'} onClick={() => handleSort('created_at')}>
                   申請日
                 </TableSortLabel>
@@ -184,41 +184,43 @@ const ApplicationListTable: React.FC<ApplicationListTableProps> = ({ isAdmin = f
                 </TableSortLabel>
               </TableCell>
               <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>申請者</TableCell>
-              <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>部署</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>部署</TableCell>
               <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>
                 <TableSortLabel active={sortBy === 'status'} direction={sortBy === 'status' ? sortOrder : 'asc'} onClick={() => handleSort('status')}>
                   ステータス
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>承認者コメント</TableCell>
+              <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' }, backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>承認者コメント</TableCell>
               <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>操作</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {applications.map((application) => (
               <TableRow key={application.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                <TableCell>{new Date(application.created_at).toLocaleDateString('ja-JP')}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{new Date(application.created_at).toLocaleDateString('ja-JP')}</TableCell>
                 <TableCell>{new Date(application.date).toLocaleDateString('ja-JP')}</TableCell>
                 <TableCell>{application.user.name}</TableCell>
-                <TableCell>{application.user.department?.name}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{application.user.department?.name}</TableCell>
                 <TableCell>{getStatusChip(application.application_status_id)}</TableCell>
-                <TableCell>{application.approver_comment}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>{application.approver_comment}</TableCell>
                 <TableCell>
-                  {application.application_status_id === 1 && !isAdmin && (
-                    <Button variant="outlined" color="secondary" size="small" onClick={() => handleCancel(application.id)}>
-                      キャンセル
-                    </Button>
-                  )}
-                  {isAdmin && application.application_status_id === 1 && (
-                   <>
-                     <Button variant="contained" color="primary" size="small" onClick={() => handleApprovalAction(application.id, 'approved')} sx={{ mr: 1 }}>
-                       承認
-                     </Button>
-                     <Button variant="contained" color="error" size="small" onClick={() => handleApprovalAction(application.id, 'rejected')}>
-                       否認
-                     </Button>
-                   </>
-                  )}
+                  <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}>
+                    {application.application_status_id === 1 && !isAdmin && (
+                      <Button variant="outlined" color="secondary" size="small" onClick={() => handleCancel(application.id)}>
+                        キャンセル
+                      </Button>
+                    )}
+                    {isAdmin && application.application_status_id === 1 && (
+                     <>
+                       <Button variant="contained" color="primary" size="small" onClick={() => handleApprovalAction(application.id, 'approved')}>
+                         承認
+                       </Button>
+                       <Button variant="contained" color="error" size="small" onClick={() => handleApprovalAction(application.id, 'rejected')}>
+                         否認
+                       </Button>
+                     </>
+                    )}
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}
