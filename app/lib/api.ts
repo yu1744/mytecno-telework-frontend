@@ -76,11 +76,11 @@ export type CreateUserParams = {
 export type UpdateUserParams = Omit<User, 'id' | 'role' | 'department'>;
 
 
-export const adminGetUsers = () => api.get<User[]>('/api/v1/admin/users');
-export const adminGetUser = (id: number) => api.get<User>(`/api/v1/admin/users/${id}`);
-export const adminCreateUser = (params: CreateUserParams) => api.post<User>('/api/v1/admin/users', { user: params });
-export const adminUpdateUser = (id: number, params: UpdateUserParams) => api.put<User>(`/api/v1/admin/users/${id}`, { user: params });
-export const adminDeleteUser = (id: number) => api.delete(`/api/v1/admin/users/${id}`);
+export const adminGetUsers = () => api.get<User[]>('/admin/users');
+export const adminGetUser = (id: number) => api.get<User>(`/admin/users/${id}`);
+export const adminCreateUser = (params: CreateUserParams) => api.post<User>('/admin/users', { user: params });
+export const adminUpdateUser = (id: number, params: UpdateUserParams) => api.put<User>(`/admin/users/${id}`, { user: params });
+export const adminDeleteUser = (id: number) => api.delete(`/admin/users/${id}`);
 
 // 人事異動API
 export interface UserInfoChangeParams {
@@ -90,14 +90,14 @@ export interface UserInfoChangeParams {
   new_manager_id?: number;
   effective_date: string;
 }
-export const adminCreateInfoChange = (params: UserInfoChangeParams) => api.post('/api/v1/admin/user_info_changes', params);
+export const adminCreateInfoChange = (params: UserInfoChangeParams) => api.post('/admin/user_info_changes', params);
 
 // 部署・役職API
-export const getDepartments = () => api.get<Department[]>('/api/v1/departments');
-export const getRoles = () => api.get('/api/v1/roles');
-export const createDepartment = (params: { name: string }) => api.post<Department>('/api/v1/departments', { department: params });
-export const updateDepartment = (id: number, params: { name: string }) => api.put<Department>(`/api/v1/departments/${id}`, { department: params });
-export const deleteDepartment = (id: number) => api.delete(`/api/v1/departments/${id}`);
+export const getDepartments = () => api.get<Department[]>('/departments');
+export const getRoles = () => api.get('/roles');
+export const createDepartment = (params: { name: string }) => api.post<Department>('/departments', { department: params });
+export const updateDepartment = (id: number, params: { name: string }) => api.put<Department>(`/departments/${id}`, { department: params });
+export const deleteDepartment = (id: number) => api.delete(`/departments/${id}`);
 
 // 申請API
 export type ApplicationRequestParams = {
@@ -107,22 +107,22 @@ export type ApplicationRequestParams = {
   filter_by_user?: string;
 };
 
-export const createApplication = (params: ApplicationPayload) => api.post('/api/v1/applications', { application: params });
+export const createApplication = (params: ApplicationPayload) => api.post('/applications', { application: params });
 export const getApplications = (params: ApplicationRequestParams = {}) => {
   const query = new URLSearchParams(params as Record<string, string>).toString();
   return api.get(`/applications?${query}`);
 };
-export const cancelApplication = (id: number) => api.delete(`/api/v1/applications/${id}`);
+export const cancelApplication = (id: number) => api.delete(`/applications/${id}`);
 export const adminGetApplications = (params: ApplicationRequestParams = {}) => {
   const query = new URLSearchParams(params as Record<string, string>).toString();
   return api.get(`/admin/applications?${query}`);
 };
-export const getApplicationStats = () => api.get('/api/v1/applications/stats');
-export const getRecentApplications = () => api.get('/api/v1/applications/recent');
+export const getApplicationStats = () => api.get('/applications/stats');
+export const getRecentApplications = () => api.get('/applications/recent');
 // 承認API
-export const getPendingApprovals = () => api.get('/api/v1/approvals');
-export const updateApprovalStatus = (id: number, status: 'approved' | 'rejected') => api.put(`/api/v1/approvals/${id}`, { status });
+export const getPendingApprovals = () => api.get('/approvals');
+export const updateApprovalStatus = (id: number, status: 'approved' | 'rejected') => api.put(`/approvals/${id}`, { status });
 
 // 通知API
 export const getNotifications = () => api.get<AppNotification[]>('/notifications');
-export const markNotificationAsRead = (id: number) => api.put<AppNotification>(`/api/v1/notifications/${id}`, { read: true });
+export const markNotificationAsRead = (id: number) => api.put<AppNotification>(`/notifications/${id}`, { read: true });
