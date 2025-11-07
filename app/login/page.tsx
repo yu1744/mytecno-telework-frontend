@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { Container, Box, TextField, Button, Typography, Card } from "@mui/material";
+import {
+	Container,
+	Box,
+	TextField,
+	Button,
+	Typography,
+	Card,
+} from "@mui/material";
 import { useRouter } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuthStore } from "@/app/store/auth";
@@ -18,7 +25,7 @@ const LoginPage = () => {
 		event.preventDefault();
 		setError("");
 		try {
-			const response = await api.post('/api/v1/auth/sign_in', {
+			const response = await api.post("/auth/sign_in", {
 				email,
 				password,
 			});
@@ -39,17 +46,17 @@ const LoginPage = () => {
 
 			const roleName = user.role?.name;
 			switch (roleName) {
-				case 'admin':
-					router.push('/admin');
+				case "admin":
+					router.push("/admin");
 					break;
-				case 'approver':
-					router.push('/approvals');
+				case "approver":
+					router.push("/approvals");
 					break;
-				case 'applicant':
-					router.push('/dashboard');
+				case "applicant":
+					router.push("/dashboard");
 					break;
 				default:
-					router.push('/dashboard');
+					router.push("/dashboard");
 					break;
 			}
 		} catch (error) {
@@ -60,7 +67,16 @@ const LoginPage = () => {
 
 	return (
 		<Container component="main" maxWidth="xs">
-			<Card sx={{ mt: 8, p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: 3 }}>
+			<Card
+				sx={{
+					mt: 8,
+					p: 4,
+					display: "flex",
+					flexDirection: "column",
+					alignItems: "center",
+					boxShadow: 3,
+				}}
+			>
 				<Typography component="h1" variant="h5" sx={{ mb: 2 }}>
 					在宅勤務申請システム
 				</Typography>
