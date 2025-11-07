@@ -110,12 +110,12 @@ export type ApplicationRequestParams = {
 export const createApplication = (params: ApplicationPayload) => api.post('/api/v1/applications', { application: params });
 export const getApplications = (params: ApplicationRequestParams = {}) => {
   const query = new URLSearchParams(params as Record<string, string>).toString();
-  return api.get(`/api/v1/applications?${query}`);
+  return api.get(`/applications?${query}`);
 };
 export const cancelApplication = (id: number) => api.delete(`/api/v1/applications/${id}`);
 export const adminGetApplications = (params: ApplicationRequestParams = {}) => {
   const query = new URLSearchParams(params as Record<string, string>).toString();
-  return api.get(`/api/v1/admin/applications?${query}`);
+  return api.get(`/admin/applications?${query}`);
 };
 export const getApplicationStats = () => api.get('/api/v1/applications/stats');
 export const getRecentApplications = () => api.get('/api/v1/applications/recent');
@@ -124,5 +124,5 @@ export const getPendingApprovals = () => api.get('/api/v1/approvals');
 export const updateApprovalStatus = (id: number, status: 'approved' | 'rejected') => api.put(`/api/v1/approvals/${id}`, { status });
 
 // 通知API
-export const getNotifications = () => api.get<AppNotification[]>('/api/v1/notifications');
+export const getNotifications = () => api.get<AppNotification[]>('/notifications');
 export const markNotificationAsRead = (id: number) => api.put<AppNotification>(`/api/v1/notifications/${id}`, { read: true });
