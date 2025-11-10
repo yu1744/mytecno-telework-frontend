@@ -61,9 +61,9 @@ const HistoryPageContent = () => {
   return (
     <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
       <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
-        <Typography variant="h4" sx={{ mb: 4 }}>
+        <h1 className="text-2xl font-bold mb-6">
           申請履歴
-        </Typography>
+        </h1>
         <FilterComponent
           startDate={startDate}
           endDate={endDate}

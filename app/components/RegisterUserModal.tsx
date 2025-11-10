@@ -1,21 +1,29 @@
+"use client";
+
 import React from "react";
-import {
-	Modal,
-	Box,
-	Typography,
-	TextField,
-	Button,
-	Select,
-	MenuItem,
-	FormControl,
-	InputLabel,
-	FormHelperText,
-} from "@mui/material";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Role, Department } from "../types/user";
 import { CreateUserParams } from "../lib/api";
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogFooter,
+	DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 const schema = z
 	.object({
@@ -27,8 +35,8 @@ const schema = z
 		password_confirmation: z
 			.string()
 			.min(8, "パスワード（確認）は8文字以上で入力してください。"),
-		department_id: z.number().min(1, "所属部署を選択してください。"),
-		role_id: z.number().min(1, "権限を選択してください。"),
+		department_id: z.string().min(1, "所属部署を選択してください。"),
+		role_id: z.string().min(1, "権限を選択してください。"),
 	})
 	.refine((data) => data.password === data.password_confirmation, {
 		message: "パスワードが一致しません。",
@@ -66,8 +74,8 @@ const RegisterUserModal: React.FC<Props> = ({
 			hired_date: "",
 			password: "",
 			password_confirmation: "",
-			department_id: 0,
-			role_id: 0,
+			department_id: "",
+			role_id: "",
 		},
 	});
 
@@ -77,199 +85,221 @@ const RegisterUserModal: React.FC<Props> = ({
 	};
 
 	const onSubmit = (data: FormData) => {
-		onRegister(data);
+		const userData = {
+			...data,
+			department_id: parseInt(data.department_id, 10),
+			role_id: parseInt(data.role_id, 10),
+		};
+		onRegister(userData);
 		handleClose();
 	};
 
 	return (
-		<Modal open={open} onClose={handleClose}>
-			<Box
-				sx={{
-					position: "absolute",
-					top: "50%",
-					left: "50%",
-					transform: "translate(-50%, -50%)",
-					width: 400,
-					bgcolor: "background.paper",
-					border: "2px solid #000",
-					boxShadow: 24,
-					p: 4,
-				}}
-			>
-				<Typography variant="h6" component="h2">
-					新規ユーザー登録
-				</Typography>
-				<Box
-					component="form"
-					sx={{ mt: 2 }}
-					onSubmit={handleSubmit(onSubmit)}
-					noValidate
-				>
-					<Controller
-						name="email"
-						control={control}
-						render={({ field }) => (
-							<TextField
-								{...field}
-								fullWidth
-								label="メールアドレス"
-								margin="normal"
-								type="email"
-								required
-								error={!!errors.email}
-								helperText={errors.email?.message}
-							/>
+		<Dialog
+			open={open}
+			onOpenChange={(isOpen: boolean) => !isOpen && handleClose()}
+		>
+			<DialogContent className="sm:max-w-[425px]">
+				<DialogHeader>
+					<DialogTitle>新規ユーザー登録</DialogTitle>
+				</DialogHeader>
+				<form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 py-4">
+					<div className="grid grid-cols-4 items-center gap-4">
+						<Label htmlFor="email" className="text-right">
+							メールアドレス
+						</Label>
+						<Controller
+							name="email"
+							control={control}
+							render={({ field }) => (
+								<Input id="email" {...field} className="col-span-3" />
+							)}
+						/>
+						{errors.email && (
+							<p className="col-span-4 text-red-500 text-sm text-right">
+								{errors.email.message}
+							</p>
 						)}
-					/>
-					<Controller
-						name="name"
-						control={control}
-						render={({ field }) => (
-							<TextField
-								{...field}
-								fullWidth
-								label="名前"
-								margin="normal"
-								type="text"
-								required
-								error={!!errors.name}
-								helperText={errors.name?.message}
-							/>
+					</div>
+					<div className="grid grid-cols-4 items-center gap-4">
+						<Label htmlFor="name" className="text-right">
+							名前
+						</Label>
+						<Controller
+							name="name"
+							control={control}
+							render={({ field }) => (
+								<Input id="name" {...field} className="col-span-3" />
+							)}
+						/>
+						{errors.name && (
+							<p className="col-span-4 text-red-500 text-sm text-right">
+								{errors.name.message}
+							</p>
 						)}
-					/>
-					<Controller
-						name="employee_number"
-						control={control}
-						render={({ field }) => (
-							<TextField
-								{...field}
-								fullWidth
-								label="社員番号"
-								margin="normal"
-								type="text"
-								required
-								error={!!errors.employee_number}
-								helperText={errors.employee_number?.message}
-							/>
+					</div>
+					<div className="grid grid-cols-4 items-center gap-4">
+						<Label htmlFor="employee_number" className="text-right">
+							社員番号
+						</Label>
+						<Controller
+							name="employee_number"
+							control={control}
+							render={({ field }) => (
+								<Input id="employee_number" {...field} className="col-span-3" />
+							)}
+						/>
+						{errors.employee_number && (
+							<p className="col-span-4 text-red-500 text-sm text-right">
+								{errors.employee_number.message}
+							</p>
 						)}
-					/>
-					<Controller
-						name="hired_date"
-						control={control}
-						render={({ field }) => (
-							<TextField
-								{...field}
-								fullWidth
-								label="入社日"
-								margin="normal"
-								type="date"
-								required
-								error={!!errors.hired_date}
-								helperText={errors.hired_date?.message}
-								InputLabelProps={{ shrink: true }}
-							/>
+					</div>
+					<div className="grid grid-cols-4 items-center gap-4">
+						<Label htmlFor="hired_date" className="text-right">
+							入社日
+						</Label>
+						<Controller
+							name="hired_date"
+							control={control}
+							render={({ field }) => (
+								<Input
+									id="hired_date"
+									type="date"
+									{...field}
+									className="col-span-3"
+								/>
+							)}
+						/>
+						{errors.hired_date && (
+							<p className="col-span-4 text-red-500 text-sm text-right">
+								{errors.hired_date.message}
+							</p>
 						)}
-					/>
-					<Controller
-						name="password"
-						control={control}
-						render={({ field }) => (
-							<TextField
-								{...field}
-								fullWidth
-								label="パスワード"
-								margin="normal"
-								type="password"
-								required
-								error={!!errors.password}
-								helperText={errors.password?.message}
-							/>
+					</div>
+					<div className="grid grid-cols-4 items-center gap-4">
+						<Label htmlFor="password" className="text-right whitespace-nowrap">
+							パスワード
+						</Label>
+						<Controller
+							name="password"
+							control={control}
+							render={({ field }) => (
+								<Input
+									id="password"
+									type="password"
+									{...field}
+									className="col-span-3"
+								/>
+							)}
+						/>
+						{errors.password && (
+							<p className="col-span-4 text-red-500 text-sm text-right">
+								{errors.password.message}
+							</p>
 						)}
-					/>
-					<Controller
-						name="password_confirmation"
-						control={control}
-						render={({ field }) => (
-							<TextField
-								{...field}
-								fullWidth
-								label="パスワード（確認）"
-								margin="normal"
-								type="password"
-								required
-								error={!!errors.password_confirmation}
-								helperText={errors.password_confirmation?.message}
-							/>
+					</div>
+					<div className="grid grid-cols-4 items-center gap-4">
+						<Label
+							htmlFor="password_confirmation"
+							className="text-right whitespace-nowrap"
+						>
+							パスワード(確認)
+						</Label>
+						<Controller
+							name="password_confirmation"
+							control={control}
+							render={({ field }) => (
+								<Input
+									id="password_confirmation"
+									type="password"
+									{...field}
+									className="col-span-3"
+								/>
+							)}
+						/>
+						{errors.password_confirmation && (
+							<p className="col-span-4 text-red-500 text-sm text-right">
+								{errors.password_confirmation.message}
+							</p>
 						)}
-					/>
-					<FormControl fullWidth margin="normal" error={!!errors.department_id}>
-						<InputLabel id="department-select-label">所属部署</InputLabel>
+					</div>
+					<div className="grid grid-cols-4 items-center gap-4">
+						<Label htmlFor="department_id" className="text-right">
+							所属部署
+						</Label>
 						<Controller
 							name="department_id"
 							control={control}
 							render={({ field }) => (
 								<Select
-									{...field}
-									labelId="department-select-label"
-									label="所属部署"
-									required
+									onValueChange={field.onChange}
+									defaultValue={field.value}
 								>
-									<MenuItem value={0} disabled>
-										選択してください
-									</MenuItem>
-									{departments.map((department) => (
-										<MenuItem key={department.id} value={department.id}>
-											{department.name}
-										</MenuItem>
-									))}
+									<SelectTrigger className="col-span-3">
+										<SelectValue placeholder="選択してください" />
+									</SelectTrigger>
+									<SelectContent>
+										{departments.map((department) => (
+											<SelectItem
+												key={department.id}
+												value={String(department.id)}
+											>
+												{department.name}
+											</SelectItem>
+										))}
+									</SelectContent>
 								</Select>
 							)}
 						/>
 						{errors.department_id && (
-							<FormHelperText>{errors.department_id.message}</FormHelperText>
+							<p className="col-span-4 text-red-500 text-sm text-right">
+								{errors.department_id.message}
+							</p>
 						)}
-					</FormControl>
-					<FormControl fullWidth margin="normal" error={!!errors.role_id}>
-						<InputLabel id="role-select-label">権限</InputLabel>
+					</div>
+					<div className="grid grid-cols-4 items-center gap-4">
+						<Label htmlFor="role_id" className="text-right">
+							権限
+						</Label>
 						<Controller
 							name="role_id"
 							control={control}
 							render={({ field }) => (
 								<Select
-									{...field}
-									labelId="role-select-label"
-									label="権限"
-									required
+									onValueChange={field.onChange}
+									defaultValue={field.value}
 								>
-									<MenuItem value={0} disabled>
-										選択してください
-									</MenuItem>
-									{roles.map((role) => (
-										<MenuItem key={role.id} value={role.id}>
-											{role.name}
-										</MenuItem>
-									))}
+									<SelectTrigger className="col-span-3">
+										<SelectValue placeholder="選択してください" />
+									</SelectTrigger>
+									<SelectContent>
+										{roles.map((role) => (
+											<SelectItem key={role.id} value={String(role.id)}>
+												{role.name}
+											</SelectItem>
+										))}
+									</SelectContent>
 								</Select>
 							)}
 						/>
 						{errors.role_id && (
-							<FormHelperText>{errors.role_id.message}</FormHelperText>
+							<p className="col-span-4 text-red-500 text-sm text-right">
+								{errors.role_id.message}
+							</p>
 						)}
-					</FormControl>
-					<Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-						<Button onClick={handleClose}>キャンセル</Button>
-						<Button
-							variant="contained"
-							color="primary"
-							type="submit"
-							sx={{ ml: 1 }}
-						>
-							登録
-						</Button>
-					</Box>
-				</Box>
-			</Box>
-		</Modal>
+					</div>
+					<DialogFooter>
+						<DialogClose asChild>
+							<Button type="button" variant="secondary">
+								キャンセル
+							</Button>
+						</DialogClose>
+						<Button type="submit">登録</Button>
+					</DialogFooter>
+				</form>
+			</DialogContent>
+		</Dialog>
 	);
 };
 

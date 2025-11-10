@@ -4,6 +4,7 @@ import type { AppNotification } from '@/app/types/application';
 import axios from 'axios';
 import { User } from '@/app/types/user';
 import { useAuthStore } from '../store/auth';
+import { useModalStore } from '../store/modal';
 
 const api = axios.create({
   baseURL: (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001') + '/api/v1',
@@ -50,9 +51,20 @@ api.interceptors.response.use(
   (error) => {
   	if (error.response && error.response.status === 401) {
   		// ログインAPIでの401エラーはモーダル表示の対象外とする
-  		if (error.config.url !== '/api/v1/auth/sign_in') {
+  		if (error.config.url !== '/auth/sign_in') {
   			// Zustandストアのアクションを呼び出してモーダルを表示
-  			useAuthStore.getState().showSessionTimeoutModal();
+  		useModalStore.getState().showModal({
+  			title: 'セッションタイムアウト',
+  			message: 'セッションがタイムアウトしました。再度ログインしてください。',
+  			onConfirm: () => {
+  				useAuthStore.getState().clearAuth();
+  				localStorage.removeItem('access-token');
+  				localStorage.removeItem('client');
+  				localStorage.removeItem('uid');
+  				window.location.href = '/login';
+  				useModalStore.getState().hideModal();
+  			},
+  		});
   		}
   	}
   	return Promise.reject(error);

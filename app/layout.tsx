@@ -1,7 +1,7 @@
 "use client";
 
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import Header from "./components/Header";
@@ -14,7 +14,10 @@ import { useAuthStore } from "./store/auth";
 import { useModalStore } from "./store/modal";
 import ReusableModal from "./components/ReusableModal";
 
-const inter = Inter({ subsets: ["latin"] });
+const notoSansJp = Noto_Sans_JP({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
 
 // metadataはサーバーコンポーネントでしか使えないため、ここでは定義のみ
 // export const metadata: Metadata = {
@@ -30,22 +33,11 @@ export default function RootLayout({
   const pathname = usePathname();
   const router = useRouter();
   const isLoginPage = pathname === "/login";
-  const {
-    isSessionTimeoutModalOpen,
-    hideSessionTimeoutModal,
-    clearAuth,
-  } = useAuthStore();
+  const { clearAuth } = useAuthStore();
   const { isOpen, title, message, onConfirm, confirmText, hideModal } = useModalStore();
-
-  const handleCloseModal = () => {
-    hideSessionTimeoutModal();
-    clearAuth();
-    router.push("/login");
-  };
 
   const handleConfirm = () => {
     onConfirm();
-    hideModal();
   };
 
   useEffect(() => {
@@ -58,7 +50,7 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#000000" />
       </head>
-      <body className={inter.className}>
+      <body className={`${notoSansJp.className} bg-gray-100`}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
           {isLoginPage ? (
@@ -78,12 +70,12 @@ export default function RootLayout({
               <NavigationMenu />
               <Box
                 component="main"
+                className="p-6" // Add padding using Tailwind CSS
                 sx={{
                   flexGrow: 1,
-                  p: 3,
                   marginTop: "64px", // Headerの高さ分
                   width: `calc(100% - 240px)`, // Drawerの幅分
-                  maxWidth: "1200px", // 最大幅を設定
+                  maxWidth: "1400px", // 最大幅を設定
                   mx: "auto", // 中央寄せ
                 }}
               >
@@ -93,20 +85,6 @@ export default function RootLayout({
           )}
           {!isLoginPage && <Footer />}
           <ReusableModal
-            open={isSessionTimeoutModalOpen}
-            onClose={handleCloseModal}
-            title="セッションタイムアウト"
-            content="セッションが切れました。再度ログインしてください。"
-            actions={[
-              {
-                text: "OK",
-                onClick: handleCloseModal,
-                color: "primary",
-                variant: "contained",
-              },
-            ]}
-          />
-          <ReusableModal
             open={isOpen}
             onClose={hideModal}
             title={title}
@@ -115,8 +93,7 @@ export default function RootLayout({
               {
                 text: confirmText || "OK",
                 onClick: handleConfirm,
-                color: "primary",
-                variant: "contained",
+                variant: "default",
               },
             ]}
           />

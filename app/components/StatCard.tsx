@@ -12,7 +12,7 @@ export const StatCard = ({ title, value }: StatCardProps) => {
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-4xl font-bold">{value}</div>
       </CardContent>
     </Card>
   );

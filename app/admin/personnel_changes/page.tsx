@@ -124,9 +124,9 @@ const PersonnelChangesPage = () => {
 						mb: 2,
 					}}
 				>
-					<Typography variant="h4" component="h1">
+					<h1 className="text-2xl font-bold mb-6">
 						人事異動の予約・管理
-					</Typography>
+					</h1>
 					<Button variant="contained" color="primary">
 						新規予約作成
 					</Button>

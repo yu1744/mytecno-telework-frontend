@@ -1,12 +1,13 @@
 import React from 'react';
 import { User } from '@/app/types/user';
-import ReusableModal from './ReusableModal';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 interface Props {
@@ -20,48 +21,45 @@ const UserDetailModal: React.FC<Props> = ({ open, onClose, user }) => {
     return null;
   }
 
-  const content = (
-    <Card className="border-none shadow-none">
-      <CardHeader>
-        <CardTitle>ユーザー情報</CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-          <span className="font-semibold text-right">ID</span>
-          <span>{user.id}</span>
-        </div>
-        <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-          <span className="font-semibold text-right">名前</span>
-          <span>{user.name}</span>
-        </div>
-        <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-          <span className="font-semibold text-right">メールアドレス</span>
-          <span>{user.email}</span>
-        </div>
-        <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-          <span className="font-semibold text-right">入社日</span>
-          <span>{user.hired_date ? new Date(user.hired_date).toLocaleDateString() : "未設定"}</span>
-        </div>
-        <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-          <span className="font-semibold text-right">部署</span>
-          <span>{user.department?.name}</span>
-        </div>
-        <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-          <span className="font-semibold text-right">役職</span>
-          <Badge variant="outline">{user.role?.name}</Badge>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   return (
-    <ReusableModal
-      open={open}
-      onClose={onClose}
-      title="ユーザー詳細"
-      content={content}
-      actions={[{ text: '閉じる', onClick: onClose }]}
-    />
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>ユーザー詳細</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-3 items-center gap-4">
+            <p className="text-right font-semibold">ID</p>
+            <p className="col-span-2">{user.id}</p>
+          </div>
+          <div className="grid grid-cols-3 items-center gap-4">
+            <p className="text-right font-semibold">名前</p>
+            <p className="col-span-2">{user.name}</p>
+          </div>
+          <div className="grid grid-cols-3 items-center gap-4">
+            <p className="text-right font-semibold">メールアドレス</p>
+            <p className="col-span-2">{user.email}</p>
+          </div>
+          <div className="grid grid-cols-3 items-center gap-4">
+            <p className="text-right font-semibold">入社日</p>
+            <p className="col-span-2">{user.hired_date ? new Date(user.hired_date).toLocaleDateString() : "未設定"}</p>
+          </div>
+          <div className="grid grid-cols-3 items-center gap-4">
+            <p className="text-right font-semibold">部署</p>
+            <p className="col-span-2">{user.department?.name}</p>
+          </div>
+          <div className="grid grid-cols-3 items-center gap-4">
+            <p className="text-right font-semibold">役職</p>
+            <div className="col-span-2">
+              <Badge variant="outline">{user.role?.name}</Badge>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={onClose}>閉じる</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

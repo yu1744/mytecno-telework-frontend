@@ -10,7 +10,7 @@ const ApplyPage = () => {
       <Box sx={{ display: 'flex' }}>
         <Box component="main" sx={{ flexGrow: 1, p: 3, marginTop: '64px' }}>
           <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
-            <Typography variant="h4" sx={{ mb: 4 }}>在宅勤務申請</Typography>
+            <h1 className="text-2xl font-bold mb-6">在宅勤務申請</h1>
             <ApplicationForm />
           </Box>
         </Box>

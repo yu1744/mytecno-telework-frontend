@@ -71,7 +71,11 @@ const DashboardPage = () => {
           <CardTitle>最近の申請</CardTitle>
         </CardHeader>
         <CardContent>
-          <RecentApplicationsTable applications={recentApplications} />
+          {recentApplications.length > 0 ? (
+            <RecentApplicationsTable applications={recentApplications} />
+          ) : (
+            <p>最近の申請はありません</p>
+          )}
         </CardContent>
       </Card>
     </div>

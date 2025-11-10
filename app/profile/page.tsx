@@ -107,40 +107,50 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent className="space-y-6">
             {user.transport_routes && user.transport_routes.length > 0 ? (
-              user.transport_routes.map((route, index) => (
-                <Card key={route.id}>
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold mb-2">経路{index + 1}</h3>
-                        <div className="flex items-center space-x-2 text-gray-600">
-                          <span>{route.departure_station}</span>
-                          <ArrowRight className="h-4 w-4" />
-                          {route.via_station && (
-                            <>
-                              <span>{route.via_station}</span>
-                              <ArrowRight className="h-4 w-4" />
-                            </>
-                          )}
-                          <span>{route.arrival_station}</span>
+              <>
+                {user.transport_routes.map((route, index) => (
+                  <Card key={route.id}>
+                    <CardContent className="pt-6">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold mb-2">
+                            経路{index + 1}
+                          </h3>
+                          <div className="flex items-center space-x-2 text-gray-600">
+                            <span>{route.departure_station}</span>
+                            <ArrowRight className="h-4 w-4" />
+                            {route.via_station && (
+                              <>
+                                <span>{route.via_station}</span>
+                                <ArrowRight className="h-4 w-4" />
+                              </>
+                            )}
+                            <span>{route.arrival_station}</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center space-x-2">
+                            <Train className="h-5 w-5 text-gray-500" />
+                            <span>{route.transport_type}</span>
+                          </div>
+                          <p className="font-semibold text-lg">
+                            {route.fare.toLocaleString()}円
+                            <span className="text-sm text-gray-500">/月</span>
+                          </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="flex items-center space-x-2">
-                          <Train className="h-5 w-5 text-gray-500" />
-                          <span>{route.transport_type}</span>
-                        </div>
-                        <p className="font-semibold text-lg">
-                          {route.fare.toLocaleString()}円
-                          <span className="text-sm text-gray-500">/月</span>
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                    </CardContent>
+                  </Card>
+                ))}
+                <div className="mt-6 flex justify-end">
+                  <Button>編集する</Button>
+                </div>
+              </>
             ) : (
-              <p>通勤経路情報は登録されていません。</p>
+              <div className="text-center py-8">
+                <p className="mb-4">通勤経路情報は登録されていません。</p>
+                <Button>登録する</Button>
+              </div>
             )}
           </CardContent>
         </Card>

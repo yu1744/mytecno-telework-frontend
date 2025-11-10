@@ -102,9 +102,9 @@ function IntegrationsPage() {
 
   return (
     <Container maxWidth="md">
-      <Typography variant="h4" component="h1" gutterBottom sx={{ mt: 4, mb: 4 }}>
+      <h1 className="text-2xl font-bold mb-6">
         外部連携設定
-      </Typography>
+      </h1>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
