@@ -16,9 +16,11 @@ import LoadingSpinner from './LoadingSpinner';
 import EmptyState from './EmptyState';
 import { User } from '../types/user';
 import { adminGetUsers } from '../lib/api';
+import { ApplicationDetailModal } from './ApplicationDetailModal';
+import ApprovalCommentModal from './ApprovalCommentModal';
 
 interface ApplicationListTableProps {
-  isAdmin?: boolean;
+  isAdmin: boolean;
 }
 
 const getStatusBadge = (statusId: number) => {
@@ -31,7 +33,7 @@ const getStatusBadge = (statusId: number) => {
   }
 };
 
-const ApplicationListTable: React.FC<ApplicationListTableProps> = ({ isAdmin = false }) => {
+const ApplicationListTable: React.FC<ApplicationListTableProps> = ({ isAdmin }) => {
   const { user } = useAuthStore();
   const [applications, setApplications] = useState<Application[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -45,6 +47,20 @@ const ApplicationListTable: React.FC<ApplicationListTableProps> = ({ isAdmin = f
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null);
   const showModal = useModalStore((state) => state.showModal);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState<'approved' | 'rejected' | null>(null);
+ 
+   const handleOpenDetailModal = (application: Application) => {
+     setSelectedApplication(application);
+     setIsDetailModalOpen(true);
+   };
+
+  const handleCloseDetailModal = () => {
+    setSelectedApplication(null);
+    setIsDetailModalOpen(false);
+  };
 
   const fetchApplications = async () => {
     setLoading(true);
@@ -104,30 +120,23 @@ const ApplicationListTable: React.FC<ApplicationListTableProps> = ({ isAdmin = f
     }
   };
 
-  const handleApprovalAction = async (id: number, status: 'approved' | 'rejected') => {
-    if (status === 'rejected') {
-      try {
-        await updateApprovalStatus(id, status);
-        fetchApplications();
-      } catch (error) {
-        console.error(`Failed to ${status} application:`, error);
-      }
-      return;
-    }
+  const handleApprovalAction = (id: number, status: 'approved' | 'rejected') => {
+    setSelectedApplicationId(id);
+    setApprovalStatus(status);
+    setIsCommentModalOpen(true);
+  };
 
-    const application = applications.find(app => app.id === id);
-    if (!application || !user) return;
+  const handleConfirmApprovalAction = async (comment: string, status: 'approved' | 'rejected') => {
+    if (!selectedApplicationId) return;
 
-    if (user.department_id !== application.user.department_id) {
-      setSelectedApplicationId(id);
-      setIsModalOpen(true);
-    } else {
-      try {
-        await updateApprovalStatus(id, status);
-        fetchApplications();
-      } catch (error) {
-        console.error(`Failed to ${status} application:`, error);
-      }
+    try {
+      await updateApprovalStatus(selectedApplicationId, status, comment);
+      fetchApplications();
+    } catch (error) {
+      console.error(`Failed to ${status} application:`, error);
+    } finally {
+      setIsCommentModalOpen(false);
+      setSelectedApplicationId(null);
     }
   };
 
@@ -140,103 +149,110 @@ const ApplicationListTable: React.FC<ApplicationListTableProps> = ({ isAdmin = f
         <CardTitle>{isAdmin ? '申請管理' : '申請履歴'}</CardTitle>
       </CardHeader>
       <CardContent>
-        {applications.length === 0 ? (
-          <EmptyState message="対象の申請はありません。" />
-        ) : (
         <>
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, mb: 2, gap: 2 }}>
-          <TextField
-            select
-            label="ステータス"
-            value={filterByStatus}
-            onChange={(e) => setFilterByStatus(e.target.value)}
-            variant="outlined"
-            size="small"
-            sx={{ minWidth: 150 }}
-          >
-            <MenuItem value="">すべて</MenuItem>
-            <MenuItem value="1">申請中</MenuItem>
-            <MenuItem value="2">承認済み</MenuItem>
-            <MenuItem value="3">却下</MenuItem>
-            <MenuItem value="4">キャンセル</MenuItem>
-          </TextField>
-          {isAdmin && (
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, mb: 2, gap: 2 }}>
             <TextField
               select
-              label="申請者"
-              value={filterByUser}
-              onChange={(e) => setFilterByUser(e.target.value)}
+              label="ステータス"
+              value={filterByStatus}
+              onChange={(e) => setFilterByStatus(e.target.value)}
               variant="outlined"
               size="small"
-              sx={{ minWidth: 200 }}
+              sx={{ minWidth: 150 }}
             >
               <MenuItem value="">すべて</MenuItem>
-              {users.map((user) => (
-                <MenuItem key={user.id} value={user.id}>{user.name}</MenuItem>
-              ))}
+              <MenuItem value="1">申請中</MenuItem>
+              <MenuItem value="2">承認済み</MenuItem>
+              <MenuItem value="3">却下</MenuItem>
+              <MenuItem value="4">キャンセル</MenuItem>
             </TextField>
-          )}
-        </Box>
-        <TableContainer>
-          <Table sx={{ minWidth: 'auto' }} aria-label="simple table">
-            <TableHead>
-              <TableRow sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, fontWeight: 'bold', border: 'none' }}>
-                  <TableSortLabel active={sortBy === 'created_at'} direction={sortBy === 'created_at' ? sortOrder : 'asc'} onClick={() => handleSort('created_at')}>
-                    申請日
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', border: 'none' }}>
-                   <TableSortLabel active={sortBy === 'date'} direction={sortBy === 'date' ? sortOrder : 'asc'} onClick={() => handleSort('date')}>
-                    申請対象日
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold', border: 'none' }}>申請者</TableCell>
-                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, fontWeight: 'bold', border: 'none' }}>部署</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', border: 'none' }}>
-                  <TableSortLabel active={sortBy === 'status'} direction={sortBy === 'status' ? sortOrder : 'asc'} onClick={() => handleSort('status')}>
-                    ステータス
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' }, fontWeight: 'bold', border: 'none' }}>承認者コメント</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', border: 'none' }}>操作</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {applications.map((application) => (
-                <TableRow key={application.id} sx={{ '&:hover': { backgroundColor: '#f9fafb' }, 'td, th': { borderBottom: '1px solid #e0e0e0' }, '&:last-child td, &:last-child th': { border: 0 } }}>
-                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{new Date(application.created_at).toLocaleDateString('ja-JP')}</TableCell>
-                  <TableCell>{new Date(application.date).toLocaleDateString('ja-JP')}</TableCell>
-                  <TableCell>{application.user.name}</TableCell>
-                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{application.user.department?.name}</TableCell>
-                  <TableCell>{getStatusBadge(application.application_status_id)}</TableCell>
-                  <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>{application.approver_comment}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}>
-                      {application.application_status_id === 1 && !isAdmin && (
-                        <Button variant="outline" size="sm" onClick={() => handleCancel(application.id)}>
-                          キャンセル
-                        </Button>
-                      )}
-                      {isAdmin && application.application_status_id === 1 && (
-                       <>
-                         <Button size="sm" className="bg-green-500 hover:bg-green-600" onClick={() => handleApprovalAction(application.id, 'approved')}>
-                           承認
-                         </Button>
-                         <Button variant="destructive" size="sm" onClick={() => handleApprovalAction(application.id, 'rejected')}>
-                           否認
-                         </Button>
-                       </>
-                      )}
-                    </Box>
+            {isAdmin && (
+              <TextField
+                select
+                label="申請者"
+                value={filterByUser}
+                onChange={(e) => setFilterByUser(e.target.value)}
+                variant="outlined"
+                size="small"
+                sx={{ minWidth: 200 }}
+              >
+                <MenuItem value="">すべて</MenuItem>
+                {users.map((user) => (
+                  <MenuItem key={user.id} value={user.id}>{user.name}</MenuItem>
+                ))}
+              </TextField>
+            )}
+          </Box>
+          <TableContainer>
+            <Table sx={{ minWidth: 'auto' }} aria-label="simple table">
+              <TableHead>
+                <TableRow sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, fontWeight: 'bold', border: 'none' }}>
+                    <TableSortLabel active={sortBy === 'created_at'} direction={sortBy === 'created_at' ? sortOrder : 'asc'} onClick={() => handleSort('created_at')}>
+                      申請日
+                    </TableSortLabel>
                   </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', border: 'none' }}>
+                     <TableSortLabel active={sortBy === 'date'} direction={sortBy === 'date' ? sortOrder : 'asc'} onClick={() => handleSort('date')}>
+                      申請対象日
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', border: 'none' }}>申請者</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, fontWeight: 'bold', border: 'none' }}>部署</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', border: 'none' }}>
+                    <TableSortLabel active={sortBy === 'status'} direction={sortBy === 'status' ? sortOrder : 'asc'} onClick={() => handleSort('status')}>
+                      ステータス
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' }, fontWeight: 'bold', border: 'none' }}>承認者コメント</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', border: 'none' }}>操作</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {applications.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center">
+                      対象の申請はありません。
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  applications.map((application) => (
+                    <TableRow key={application.id} sx={{ '&:hover': { backgroundColor: '#f9fafb' }, 'td, th': { borderBottom: '1px solid #e0e0e0' }, '&:last-child td, &:last-child th': { border: 0 } }}>
+                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{new Date(application.created_at).toLocaleDateString('ja-JP')}</TableCell>
+                      <TableCell>{new Date(application.date).toLocaleDateString('ja-JP')}</TableCell>
+                      <TableCell>{application.user.name}</TableCell>
+                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{application.user.department?.name}</TableCell>
+                      <TableCell>{getStatusBadge(application.application_status_id)}</TableCell>
+                      <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>{application.approver_comment}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}>
+                          <Button variant="outline" size="sm" onClick={() => handleOpenDetailModal(application)}>
+                            詳細
+                          </Button>
+                          {application.application_status_id === 1 && !isAdmin && (
+                            <Button variant="outline" size="sm" onClick={() => handleCancel(application.id)}>
+                              キャンセル
+                            </Button>
+                          )}
+                          {isAdmin && application.application_status_id === 1 && (
+                           <>
+                             <Button size="sm" className="bg-green-500 hover:bg-green-600" onClick={() => handleApprovalAction(application.id, 'approved')}>
+                               承認
+                             </Button>
+                             <Button variant="destructive" size="sm" onClick={() => handleApprovalAction(application.id, 'rejected')}>
+                               否認
+                             </Button>
+                           </>
+                          )}
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </>
-        )}
         <ConfirmationModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
@@ -255,6 +271,24 @@ const ApplicationListTable: React.FC<ApplicationListTableProps> = ({ isAdmin = f
           title="承認確認"
           message="他の部署の申請です。本当に承認しますか？"
         />
+        {selectedApplication && (
+          <ApplicationDetailModal
+            isOpen={isDetailModalOpen}
+            onClose={handleCloseDetailModal}
+            date={selectedApplication.date}
+            applications={[{id: selectedApplication.id, user_name: selectedApplication.user.name, status: selectedApplication.application_status?.name || '不明'}]}
+          />
+        )}
+       <ApprovalCommentModal
+         isOpen={isCommentModalOpen}
+         onClose={() => {
+           setIsCommentModalOpen(false);
+           setApprovalStatus(null);
+         }}
+         onConfirm={handleConfirmApprovalAction}
+         applicationId={selectedApplicationId}
+         status={approvalStatus}
+       />
       </CardContent>
     </Card>
   );

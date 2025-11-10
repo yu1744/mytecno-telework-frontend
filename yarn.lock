@@ -1959,6 +1959,13 @@
   resolved "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.15.tgz"
   integrity sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==
 
+"@types/react-day-picker@^5.2.1":
+  version "5.2.1"
+  resolved "https://registry.npmjs.org/@types/react-day-picker/-/react-day-picker-5.2.1.tgz"
+  integrity sha512-h1eWS/6RgtixUJTnosmYbyt0kmnZ+nkbSzspdvnTI6aGmuJ37VQap4CNV7jlEZ0ghiEL5oypMlk7IzNH1lDZ+g==
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-dom@*", "@types/react-dom@^19":
   version "19.2.0"
   resolved "https://registry.npmjs.org/@types/react-dom/-/react-dom-19.2.0.tgz"

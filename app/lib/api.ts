@@ -152,9 +152,15 @@ export const adminGetApplications = (params: ApplicationRequestParams = {}) => {
 };
 export const getApplicationStats = () => api.get('/applications/stats');
 export const getRecentApplications = () => api.get('/applications/recent');
+export const getCalendarApplications = (year: number, month: number) => {
+  return api.get(`/applications/calendar?year=${year}&month=${month}`);
+};
+export const getApplicationsByDate = (date: string) => {
+  return api.get(`/applications/by_date?date=${date}`);
+};
 // 承認API
 export const getPendingApprovals = () => api.get('/approvals');
-export const updateApprovalStatus = (id: number, status: 'approved' | 'rejected') => api.put(`/approvals/${id}`, { status });
+export const updateApprovalStatus = (id: number, status: 'approved' | 'rejected', comment?: string) => api.put(`/approvals/${id}`, { status, comment });
 
 // 通知API
 export const getNotifications = () => api.get<AppNotification[]>('/notifications');
