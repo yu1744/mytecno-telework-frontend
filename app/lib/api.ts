@@ -81,6 +81,9 @@ export const adminCreateUser = (params: CreateUserParams) => api.post<User>('/ad
 export const adminUpdateUser = (id: number, params: UpdateUserParams) => api.put<User>(`/admin/users/${id}`, { user: params });
 export const adminDeleteUser = (id: number) => api.delete(`/admin/users/${id}`);
 
+// プロフィールAPI
+export const getProfile = () => api.get<User>('/profile');
+
 // 人事異動API
 export interface UserInfoChangeParams {
   user_id: number;

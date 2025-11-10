@@ -130,10 +130,11 @@ const AdminPageContent = () => {
 		if (!userToUpdate) return;
 
 		try {
-			const { id, name, email, role_id, department_id, hired_date } = userToUpdate;
+			const { id, name, email, employee_number, role_id, department_id, hired_date } = userToUpdate;
 			await api.adminUpdateUser(id, {
 				name,
 				email,
+				employee_number,
 				role_id,
 				department_id,
 				hired_date,
@@ -448,7 +449,7 @@ const AdminPageContent = () => {
 													>
 														{roles.map((role) => (
 															<MenuItem key={role.id} value={role.id}>
-																{role.name === "admin" ? "管理者" : role.name === "approver" ? "承認者" : role.name === "applicant" ? "申請者" : role.name}
+																{role.name}
 															</MenuItem>
 														))}
 													</Select>
