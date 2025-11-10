@@ -49,9 +49,24 @@ const UserDetailModal: React.FC<Props> = ({ open, onClose, user }) => {
             <p className="col-span-2">{user.department?.name}</p>
           </div>
           <div className="grid grid-cols-3 items-center gap-4">
+            <p className="text-right font-semibold">グループ</p>
+            <p className="col-span-2">{user.group?.name || "未設定"}</p>
+          </div>
+          <div className="grid grid-cols-3 items-center gap-4">
             <p className="text-right font-semibold">役職</p>
+            <p className="col-span-2">{user.position || "未設定"}</p>
+          </div>
+          <div className="grid grid-cols-3 items-center gap-4">
+            <p className="text-right font-semibold">権限</p>
             <div className="col-span-2">
               <Badge variant="outline">{user.role?.name}</Badge>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 items-center gap-4">
+            <p className="text-right font-semibold">育児・介護</p>
+            <div className="col-span-2 flex flex-col">
+              <p>育児: {user.has_child_under_elementary ? "あり" : "なし"}</p>
+              <p>介護: {user.is_caregiver ? "あり" : "なし"}</p>
             </div>
           </div>
         </div>

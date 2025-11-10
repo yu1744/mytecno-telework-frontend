@@ -8,6 +8,12 @@ export interface Department {
   name: string;
 }
 
+export interface Group {
+  id: number;
+  name: string;
+  department_id: number;
+}
+
 export interface TransportRoute {
   id: number;
   departure_station: string;
@@ -25,7 +31,12 @@ export interface User {
   employee_number: string;
   role_id: number;
   department_id: number;
+  group_id?: number;
+  position?: string;
+  is_caregiver?: boolean;
+  has_child_under_elementary?: boolean;
   role: Role;
   department: Department;
+  group?: Group;
   transport_routes?: TransportRoute[];
 }

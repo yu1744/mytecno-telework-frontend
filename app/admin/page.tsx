@@ -7,7 +7,7 @@ import { ja } from "date-fns/locale";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import * as api from "../lib/api";
-import { User, Role, Department } from "../types/user";
+import { User, Role, Department, Group } from "../types/user";
 import PrivateRoute from "../components/PrivateRoute";
 import UsageAnalytics from "../components/UsageAnalytics";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -41,6 +41,7 @@ const AdminPageContent = () => {
 	const [users, setUsers] = useState<User[]>([]);
 	const [roles, setRoles] = useState<Role[]>([]);
 	const [departments, setDepartments] = useState<Department[]>([]);
+	const [groups, setGroups] = useState<Group[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [registerModalOpen, setRegisterModalOpen] = useState(false);
@@ -60,14 +61,16 @@ const AdminPageContent = () => {
 		const fetchData = async () => {
 			try {
 				setLoading(true);
-				const [usersRes, rolesRes, departmentsRes] = await Promise.all([
+				const [usersRes, rolesRes, departmentsRes, groupsRes] = await Promise.all([
 					api.adminGetUsers(),
 					api.getRoles(),
 					api.getDepartments(),
+					api.getGroups(),
 				]);
 				setUsers(usersRes.data);
 				setRoles(rolesRes.data);
 				setDepartments(departmentsRes.data);
+				setGroups(groupsRes.data);
 			} catch (err) {
 				setError("データの取得に失敗しました。");
 				toast.error("データの取得に失敗しました。");
@@ -409,6 +412,7 @@ const AdminPageContent = () => {
 					onClose={() => setRegisterModalOpen(false)}
 					roles={roles}
 					departments={departments}
+					groups={groups}
 					onRegister={handleRegisterUser}
 				/>
 				<DeleteUserModal

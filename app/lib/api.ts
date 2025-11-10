@@ -108,7 +108,10 @@ export const adminCreateInfoChange = (params: UserInfoChangeParams) => api.post(
 
 // 部署・役職API
 export const getDepartments = () => api.get<Department[]>('/departments');
+import { Group } from '@/app/types/user';
+
 export const getRoles = () => api.get('/roles');
+export const getGroups = () => api.get<Group[]>('/groups');
 export const createDepartment = (params: { name: string }) => api.post<Department>('/departments', { department: params });
 export const updateDepartment = (id: number, params: { name: string }) => api.put<Department>(`/departments/${id}`, { department: params });
 export const deleteDepartment = (id: number) => api.delete(`/departments/${id}`);

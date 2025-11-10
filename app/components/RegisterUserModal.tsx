@@ -4,7 +4,7 @@ import React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Role, Department } from "../types/user";
+import { Role, Department, Group } from "../types/user";
 import { CreateUserParams } from "../lib/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const schema = z
 	.object({
@@ -37,6 +38,10 @@ const schema = z
 			.min(8, "パスワード（確認）は8文字以上で入力してください。"),
 		department_id: z.string().min(1, "所属部署を選択してください。"),
 		role_id: z.string().min(1, "権限を選択してください。"),
+		group_id: z.string().optional(),
+		position: z.string().optional(),
+		is_caregiver: z.boolean().optional(),
+		has_child_under_elementary: z.boolean().optional(),
 	})
 	.refine((data) => data.password === data.password_confirmation, {
 		message: "パスワードが一致しません。",
@@ -50,6 +55,7 @@ interface Props {
 	onClose: () => void;
 	roles: Role[];
 	departments: Department[];
+	groups: Group[];
 	onRegister: (user: CreateUserParams) => void;
 }
 
@@ -58,6 +64,7 @@ const RegisterUserModal: React.FC<Props> = ({
 	onClose,
 	roles,
 	departments,
+	groups,
 	onRegister,
 }) => {
 	const {
@@ -65,6 +72,7 @@ const RegisterUserModal: React.FC<Props> = ({
 		handleSubmit,
 		formState: { errors },
 		reset,
+		watch,
 	} = useForm<FormData>({
 		resolver: zodResolver(schema),
 		defaultValues: {
@@ -76,8 +84,14 @@ const RegisterUserModal: React.FC<Props> = ({
 			password_confirmation: "",
 			department_id: "",
 			role_id: "",
+			group_id: "",
+			position: "",
+			is_caregiver: false,
+			has_child_under_elementary: false,
 		},
 	});
+
+	const departmentId = watch("department_id");
 
 	const handleClose = () => {
 		reset();
@@ -89,6 +103,7 @@ const RegisterUserModal: React.FC<Props> = ({
 			...data,
 			department_id: parseInt(data.department_id, 10),
 			role_id: parseInt(data.role_id, 10),
+			group_id: data.group_id ? parseInt(data.group_id, 10) : undefined,
 		};
 		onRegister(userData);
 		handleClose();
@@ -288,6 +303,85 @@ const RegisterUserModal: React.FC<Props> = ({
 								{errors.role_id.message}
 							</p>
 						)}
+					</div>
+					<div className="grid grid-cols-4 items-center gap-4">
+						<Label htmlFor="group_id" className="text-right">
+							グループ
+						</Label>
+						<Controller
+							name="group_id"
+							control={control}
+							render={({ field }) => (
+								<Select
+									onValueChange={field.onChange}
+									defaultValue={field.value}
+									disabled={!departmentId}
+								>
+									<SelectTrigger className="col-span-3">
+										<SelectValue placeholder="部署を選択してください" />
+									</SelectTrigger>
+									<SelectContent>
+										{groups
+											.filter(
+												(group) =>
+													group.department_id === parseInt(departmentId, 10)
+											)
+											.map((group) => (
+												<SelectItem key={group.id} value={String(group.id)}>
+													{group.name}
+												</SelectItem>
+											))}
+									</SelectContent>
+								</Select>
+							)}
+						/>
+					</div>
+					<div className="grid grid-cols-4 items-center gap-4">
+						<Label htmlFor="position" className="text-right">
+							役職
+						</Label>
+						<Controller
+							name="position"
+							control={control}
+							render={({ field }) => (
+								<Input id="position" {...field} className="col-span-3" />
+							)}
+						/>
+					</div>
+					<div className="grid grid-cols-4 items-center gap-4">
+						<Label htmlFor="is_caregiver" className="text-right">
+							介護フラグ
+						</Label>
+						<Controller
+							name="is_caregiver"
+							control={control}
+							render={({ field }) => (
+								<Checkbox
+									id="is_caregiver"
+									checked={field.value}
+									onCheckedChange={field.onChange}
+								/>
+							)}
+						/>
+					</div>
+					<div className="grid grid-cols-4 items-center gap-4">
+						<Label
+							htmlFor="has_child_under_elementary"
+							className="text-right whitespace-nowrap"
+						>
+							育児フラグ
+						</Label>
+						<Controller
+							name="has_child_under_elementary"
+							control={control}
+							render={({ field }) => (
+								<Checkbox
+									id="has_child_under_elementary"
+									checked={field.value}
+									onCheckedChange={field.onChange}
+								/>
+							)}
+						/>
 					</div>
 					<DialogFooter>
 						<DialogClose asChild>
