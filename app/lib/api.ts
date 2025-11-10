@@ -2,7 +2,6 @@ import { Department } from '@/app/types/department';
 import { ApplicationPayload } from '@/app/types/application';
 import type { AppNotification } from '@/app/types/application';
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import { User } from '@/app/types/user';
 import { useAuthStore } from '../store/auth';
 
@@ -18,9 +17,9 @@ const api = axios.create({
 // リクエストインターセプター
 api.interceptors.request.use(
   (config) => {
-    const accessToken = Cookies.get('access-token');
-    const client = Cookies.get('client');
-    const uid = Cookies.get('uid');
+    const accessToken = localStorage.getItem('access-token');
+    const client = localStorage.getItem('client');
+    const uid = localStorage.getItem('uid');
 
     if (accessToken && client && uid) {
       config.headers['access-token'] = accessToken;
@@ -38,13 +37,13 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     if (response.headers['access-token']) {
-      Cookies.set('access-token', response.headers['access-token']);
+      localStorage.setItem('access-token', response.headers['access-token']);
     }
     if (response.headers['client']) {
-      Cookies.set('client', response.headers['client']);
+      localStorage.setItem('client', response.headers['client']);
     }
     if (response.headers['uid']) {
-      Cookies.set('uid', response.headers['uid']);
+      localStorage.setItem('uid', response.headers['uid']);
     }
     return response;
   },

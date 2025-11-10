@@ -25,15 +25,21 @@ const PrivateRoute = ({ children, allowedRoles }: PrivateRouteProps) => {
     }
   }, [isMounted, isAuthenticated, router]);
 
-  if (!isMounted || !isAuthenticated) {
-    return null; // Or a loading spinner
-  }
-
   const userRole = user?.role?.name;
-  if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
-    // 権限がない場合はダッシュボードにリダイレクト
-    router.push('/dashboard');
-    return null; // リダイレクト中に何も表示しない
+
+  useEffect(() => {
+    if (isMounted) {
+      if (!isAuthenticated) {
+        router.push('/login');
+      } else if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
+        // 権限がない場合はダッシュボードにリダイレクト
+        router.push('/dashboard');
+      }
+    }
+  }, [isMounted, isAuthenticated, userRole, allowedRoles, router]);
+
+  if (!isMounted || !isAuthenticated || (allowedRoles && userRole && !allowedRoles.includes(userRole))) {
+    return null; // Or a loading spinner
   }
 
   // 権限チェックを通過した場合、子コンポーネントをレンダリング

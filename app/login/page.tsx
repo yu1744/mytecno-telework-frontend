@@ -12,7 +12,6 @@ import {
 import { useRouter } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuthStore } from "@/app/store/auth";
-import Cookies from "js-cookie";
 
 const LoginPage = () => {
 	const [email, setEmail] = useState("");
@@ -40,9 +39,9 @@ const LoginPage = () => {
 
 			setAuth(user, authHeaders);
 
-			Cookies.set("access-token", authHeaders["access-token"]);
-			Cookies.set("client", authHeaders["client"]);
-			Cookies.set("uid", authHeaders["uid"]);
+			localStorage.setItem("access-token", authHeaders["access-token"]);
+			localStorage.setItem("client", authHeaders["client"]);
+			localStorage.setItem("uid", authHeaders["uid"]);
 
 			const roleName = user.role?.name;
 			switch (roleName) {
