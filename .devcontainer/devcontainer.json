@@ -1,0 +1,31 @@
+{
+	"name": "在宅勤務管理システム",
+	"dockerComposeFile": "../docker-compose.yml",
+	"service": "backend",
+	"workspaceFolder": "/app",
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"rebornix.ruby",
+				"castwide.solargraph",
+				"kaiwood.endwise",
+				"misogi.ruby-rubocop",
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode",
+				"formulahendry.auto-close-tag",
+				"formulahendry.auto-rename-tag"
+			],
+			"settings": {
+				"terminal.integrated.shell.linux": "/bin/bash",
+				"ruby.rubocop.executePath": "/usr/local/bundle/bin/",
+				"ruby.format": "rubocop",
+				"editor.formatOnSave": true
+			}
+		}
+	},
+
+	"forwardPorts": [3001, 3000, 3306],
+	"postCreateCommand": "bundle install",
+	"remoteUser": "root"
+}

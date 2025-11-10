@@ -1,27 +1,162 @@
-# 在宅勤務管理-MYTECNO 開発環境
+# 在宅勤務管理システム
+
+## 🚀 クイックスタート
+
+### 初回セットアップ（推奨）
+
+```bash
+# 自動セットアップスクリプトを実行
+./setup.sh
+```
+
+### 手動セットアップ
+
+```bash
+# 1. 環境変数の設定
+cp .env.example .env
+# frontend/.env.local を作成（必要に応じて）
+
+# 2. BuildKitの有効化
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+
+# 3. ビルドと起動
+make build
+make up
+
+# 4. データベースのセットアップ
+make db-migrate
+make db-seed
+```
+
+## 📋 Make コマンド一覧
+
+```bash
+make help        # コマンド一覧を表示
+make setup       # 初回セットアップ（自動）
+make build       # コンテナをビルド
+make up          # バックグラウンドで起動
+make dev         # フォアグラウンドで起動（ログ表示）
+make down        # コンテナを停止
+make restart     # コンテナを再起動
+make logs        # ログを表示
+make clean       # すべてのコンテナとボリュームを削除
+make rebuild     # クリーンビルドして起動
+
+# データベース操作
+make db-reset    # データベースをリセット
+make db-migrate  # マイグレーション実行
+make db-seed     # シードデータ投入
+
+# シェル
+make shell-backend   # バックエンドのシェルに入る
+make shell-frontend  # フロントエンドのシェルに入る
+make shell-db        # MySQLのシェルに入る
+
+# 監視・診断
+make ps          # コンテナの状態を表示
+make stats       # リソース使用状況を表示
+make monitor     # 詳細なパフォーマンス情報を表示
+make health      # ヘルスチェックを実行
+make benchmark   # ビルド時間をベンチマーク
+make optimize    # システム最適化を実行
+```
+
+## 🌐 アクセス情報
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:3001
+- **MySQL**: localhost:3306
+  - User: root
+  - Password: password
+  - Database: myapp_development
+
+## 📊 パフォーマンス最適化
+
+このプロジェクトは ARM Mac（M1/M2/M3）で最高のパフォーマンスを発揮するように最適化されています。
+
+### 主な最適化内容
+
+- ✅ ARM ネイティブ実行（全コンテナ）
+- ✅ Alpine Linux ベース（軽量化）
+- ✅ BuildKit キャッシュマウント
+- ✅ マルチステージビルド
+- ✅ MySQL パフォーマンスチューニング
+- ✅ 名前付きボリューム最適化
+- ✅ Ruby/Node.js GC 最適化
+
+詳細は [DOCKER_OPTIMIZATION.md](./DOCKER_OPTIMIZATION.md) を参照してください。
+
+## 🛠️ 開発ガイド
+
+### トラブルシューティング
+
+#### ビルドが遅い場合
+
+```bash
+make clean       # キャッシュクリア
+make rebuild     # 再ビルド
+```
+
+#### メモリ不足の場合
+
+Docker Desktop の設定でメモリを増やすか、`docker-compose.yml`のメモリ制限を調整してください。
+
+#### ホットリロードが効かない場合
+
+```bash
+make restart     # コンテナ再起動
+```
+
+### パフォーマンスモニタリング
+
+```bash
+make monitor     # 詳細な情報を表示
+make stats       # リアルタイム監視
+```
+
+## 📚 ドキュメント
+
+- [技術スタック](./TECHNICAL_STACK.md)
+- [開発ガイド](./DEVELOPMENT_GUIDE.md)
+- [API 仕様](./BACKEND_API_SPEC.md)
+- [Docker 最適化](./DOCKER_OPTIMIZATION.md)
+- [ER 図](./ER_DIAGRAM.md)
+
+## 🤝 コントリビューション
+
+1. このリポジトリをフォーク
+2. フィーチャーブランチを作成 (`git checkout -b feature/amazing-feature`)
+3. 変更をコミット (`git commit -m 'Add some amazing feature'`)
+4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
+5. プルリクエストを作成
+
+## 📄 ライセンス
+
+このプロジェクトは MIT ライセンスの下で公開されています。 開発環境
 
 ## 1. はじめに
 
 このリポジトリは、在宅勤務管理-MYTECNO の開発環境を管理するためのものです。
-ここにはアプリケーションのコードは含まれず、**フロントエンド**と**バックエンド**の2つのアプリケーションをDockerという技術を使って同時に動かすための設定ファイル (`docker-compose.yml` など) が格納されています。
+ここにはアプリケーションのコードは含まれず、**フロントエンド**と**バックエンド**の 2 つのアプリケーションを Docker という技術を使って同時に動かすための設定ファイル (`docker-compose.yml` など) が格納されています。
 
 ### 1.1. 開発環境の全体構成
 
-このプロジェクトは、役割の異なる**3つのGitリポジトリ**で構成されています。
+このプロジェクトは、役割の異なる**3 つの Git リポジトリ**で構成されています。
 
 1.  **親リポジトリ (このリポジトリ)**
-    -   役割: 開発環境全体の設定を管理します。
-    -   主なファイル: `docker-compose.yml`, `README.md`
+    - 役割: 開発環境全体の設定を管理します。
+    - 主なファイル: `docker-compose.yml`, `README.md`
 2.  **フロントエンドリポジトリ**
-    -   役割: 画面（ユーザーが見る部分）のコードを管理します。(Next.js)
+    - 役割: 画面（ユーザーが見る部分）のコードを管理します。(Next.js)
 3.  **バックエンドリポジトリ**
-    -   役割: 裏側の処理（データ処理など）のコードを管理します。(Ruby on Rails)
+    - 役割: 裏側の処理（データ処理など）のコードを管理します。(Ruby on Rails)
 
-開発を始めるには、まずこの親リポジトリをPCにコピーし、その中にフロントエンドとバックエンドのリポジトリを配置します。
+開発を始めるには、まずこの親リポジトリを PC にコピーし、その中にフロントエンドとバックエンドのリポジトリを配置します。
 
 ### 1.2. ディレクトリ構成
 
-最終的に、あなたのPC上のディレクトリは以下のようになります。
+最終的に、あなたの PC 上のディレクトリは以下のようになります。
 
 ```
 (あなたのPCのどこか)/
@@ -43,13 +178,14 @@
 
 ### Step 1: 必要なツールをインストールする
 
--   [Git](https://git-scm.com/book/ja/v2/%E4%BD%BF%E3%81%84%E5%A7%8B%E3%82%81%E3%82%8B-Git%E3%81%AE%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB)
--   [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Git](https://git-scm.com/book/ja/v2/%E4%BD%BF%E3%81%84%E5%A7%8B%E3%82%81%E3%82%8B-Git%E3%81%AE%E3%82%A4%E3%83%B3%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AB)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
-### Step 2: 3つのリポジトリを準備する
+### Step 2: 3 つのリポジトリを準備する
 
-1.  **この親リポジトリをPCにコピー（クローン）します。**
-    ターミナル（コマンドプロンプトやPowerShellなど）を開き、作業したいディレクトリに移動してから、以下のコマンドを実行します。
+1.  **この親リポジトリを PC にコピー（クローン）します。**
+    ターミナル（コマンドプロンプトや PowerShell など）を開き、作業したいディレクトリに移動してから、以下のコマンドを実行します。
+
     ```bash
     git clone git@github.com:yu1744/mytecno-telework-env.git
     cd mytecno-telework-env
@@ -63,19 +199,21 @@
     ```
     これにより、`frontend` と `backend` という名前のフォルダが作成され、その中に各アプリケーションのコードが配置されます。
 
-### Step 3: Docker環境を起動する
+### Step 3: Docker 環境を起動する
 
-1.  **Docker Desktopを起動します。**
-    PCのアプリケーション一覧からDocker Desktopを探して起動し、クジラのアイコンが動かなくなったら準備完了です。
+1.  **Docker Desktop を起動します。**
+    PC のアプリケーション一覧から Docker Desktop を探して起動し、クジラのアイコンが動かなくなったら準備完了です。
 
-2.  **Dockerイメージをビルドします。**
-    各アプリケーションをDockerコンテナとして動かすための「イメージ」を作成します。初回のみ少し時間がかかります。
+2.  **Docker イメージをビルドします。**
+    各アプリケーションを Docker コンテナとして動かすための「イメージ」を作成します。初回のみ少し時間がかかります。
+
     ```bash
     docker-compose build
     ```
 
 3.  **データベースを作成します。**
     バックエンドが使用するデータベースをコンテナ内に作成します。
+
     ```bash
     docker-compose run --rm backend rails db:create
     ```
@@ -89,70 +227,72 @@
 
 ### Step 4: 動作を確認する
 
--   フロントエンド: ブラウザで `http://localhost:3000` にアクセス
--   バックエンド: `http://localhost:3001` (APIなので通常はブラウザで見ても何も表示されません)
+- フロントエンド: ブラウザで `http://localhost:3000` にアクセス
+- バックエンド: `http://localhost:3001` (API なので通常はブラウザで見ても何も表示されません)
 
 ---
 
-## 3. Dockerの基本操作
+## 3. Docker の基本操作
 
-Dockerに慣れていない方向けの基本的な操作説明です。コマンドはすべて親リポジトリのディレクトリで実行します。
+Docker に慣れていない方向けの基本的な操作説明です。コマンドはすべて親リポジトリのディレクトリで実行します。
 
--   **起動:** `docker-compose up`
-    -   `-d` を付けるとバックグラウンドで起動します: `docker-compose up -d`
--   **停止:**
-    -   `docker-compose up` で起動した場合: ターミナルで `Ctrl + C`
-    -   バックグラウンドで起動した場合: `docker-compose down`
--   **ビルド (再構築):**
-    `Dockerfile` や `Gemfile`, `package.json` などを変更した場合は、イメージの再構築が必要です。
-    ```bash
-    docker-compose build
-    ```
--   **コンテナの状態確認:**
-    ```bash
-    docker-compose ps
-    ```
--   **コンテナの中に入る (デバッグなどで使用):**
-    ```bash
-    # バックエンドのコンテナに入る場合
-    docker-compose exec backend bash
-    ```
+- **起動:** `docker-compose up`
+  - `-d` を付けるとバックグラウンドで起動します: `docker-compose up -d`
+- **停止:**
+  - `docker-compose up` で起動した場合: ターミナルで `Ctrl + C`
+  - バックグラウンドで起動した場合: `docker-compose down`
+- **ビルド (再構築):**
+  `Dockerfile` や `Gemfile`, `package.json` などを変更した場合は、イメージの再構築が必要です。
+  ```bash
+  docker-compose build
+  ```
+- **コンテナの状態確認:**
+  ```bash
+  docker-compose ps
+  ```
+- **コンテナの中に入る (デバッグなどで使用):**
+  ```bash
+  # バックエンドのコンテナに入る場合
+  docker-compose exec backend bash
+  ```
 
 ---
 
-## 4. Git運用ルール (ブランチ戦略)
+## 4. Git 運用ルール (ブランチ戦略)
 
 コードの品質を保ち、チーム開発を円滑に進めるため、以下のルールで運用します。このルールは**フロントエンド**と**バックエンド**の両方のリポジトリで適用されます。
 
 ### 基本ブランチ
 
--   `main` (または `master`)
-    -   常に正常に動作する、リリース可能な状態のコードを格納します。
-    -   このブランチに直接コミットすることは**禁止**です。
--   `develop`
-    -   開発のメインとなるブランチです。
-    -   機能開発が完了し、レビューが終わったコードがマージされます。
+- `main` (または `master`)
+  - 常に正常に動作する、リリース可能な状態のコードを格納します。
+  - このブランチに直接コミットすることは**禁止**です。
+- `develop`
+  - 開発のメインとなるブランチです。
+  - 機能開発が完了し、レビューが終わったコードがマージされます。
 
 ### 作業ブランチ
 
--   `feature/`
-    -   新しい機能を追加・開発する際に使用します。
-    -   `develop` ブランチから作成します。
-    -   例: `feature/user-login`
--   `bugfix/`
-    -   バグを修正する際に使用します。
-    -   `develop` ブランチから作成します。
-    -   例: `bugfix/form-validation-error`
+- `feature/`
+  - 新しい機能を追加・開発する際に使用します。
+  - `develop` ブランチから作成します。
+  - 例: `feature/user-login`
+- `bugfix/`
+  - バグを修正する際に使用します。
+  - `develop` ブランチから作成します。
+  - 例: `bugfix/form-validation-error`
 
 ### 開発の基本的な流れ
 
 1.  **`develop` ブランチを最新の状態にします。**
+
     ```bash
     git checkout develop
     git pull origin develop
     ```
 
 2.  **作業ブランチを作成して移動します。**
+
     ```bash
     # 新機能開発の場合
     git checkout -b feature/your-feature-name
@@ -160,18 +300,20 @@ Dockerに慣れていない方向けの基本的な操作説明です。コマ�
 
 3.  **コーディングとコミットを行います。**
     作業がキリの良いところまで進んだら、変更内容をコミットします。
+
     ```bash
     git add .
     git commit -m "feat: ユーザー登録機能を追加"
     ```
 
 4.  **作業ブランチをリモートにプッシュします。**
+
     ```bash
     git push origin feature/your-feature-name
     ```
 
 5.  **プルリクエストを作成します。**
-    GitHubなどのサービス上で、`feature/your-feature-name` ブランチから `develop` ブランチへのプルリクエスト（マージリクエスト）を作成します。
+    GitHub などのサービス上で、`feature/your-feature-name` ブランチから `develop` ブランチへのプルリクエスト（マージリクエスト）を作成します。
 
 6.  **コードレビューを受けます。**
     チームメンバーにレビューを依頼し、修正があれば対応します。
