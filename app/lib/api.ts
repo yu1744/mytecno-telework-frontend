@@ -94,7 +94,7 @@ export const adminUpdateUser = (id: number, params: UpdateUserParams) => api.put
 export const adminDeleteUser = (id: number) => api.delete(`/admin/users/${id}`);
 
 // プロフィールAPI
-export const getProfile = () => api.get<User>('/profile');
+export const getProfile = () => api.get<User>('/me');
 
 // 人事異動API
 export interface UserInfoChangeParams {
