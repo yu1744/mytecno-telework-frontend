@@ -16,6 +16,7 @@ import RegisterUserModal from "../components/RegisterUserModal";
 import DeleteUserModal from "../components/DeleteUserModal";
 import ReusableModal from "../components/ReusableModal";
 import UserDetailModal from "../components/UserDetailModal";
+import EditUserModal from "../components/EditUserModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -50,6 +51,7 @@ const AdminPageContent = () => {
 	const [userDetail, setUserDetail] = useState<User | null>(null);
 	const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 	const [userToDelete, setUserToDelete] = useState<User | null>(null);
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
 	// Department Management State
 	const [isDepartmentModalOpen, setIsDepartmentModalOpen] = useState(false);
@@ -57,69 +59,37 @@ const AdminPageContent = () => {
 	const [departmentName, setDepartmentName] = useState("");
 	const [isDeleteDepartmentModalOpen, setIsDeleteDepartmentModalOpen] = useState(false);
 
+	const fetchData = async () => {
+		try {
+			setLoading(true);
+			const [usersRes, rolesRes, departmentsRes, groupsRes] = await Promise.all([
+				api.adminGetUsers(),
+				api.getRoles(),
+				api.getDepartments(),
+				api.getGroups(),
+			]);
+			setUsers(usersRes.data);
+			setRoles(rolesRes.data);
+			setDepartments(departmentsRes.data);
+			setGroups(groupsRes.data);
+		} catch (err) {
+			setError("データの取得に失敗しました。");
+			toast.error("データの取得に失敗しました。");
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				setLoading(true);
-				const [usersRes, rolesRes, departmentsRes, groupsRes] = await Promise.all([
-					api.adminGetUsers(),
-					api.getRoles(),
-					api.getDepartments(),
-					api.getGroups(),
-				]);
-				setUsers(usersRes.data);
-				setRoles(rolesRes.data);
-				setDepartments(departmentsRes.data);
-				setGroups(groupsRes.data);
-			} catch (err) {
-				setError("データの取得に失敗しました。");
-				toast.error("データの取得に失敗しました。");
-			} finally {
-				setLoading(false);
-			}
-		};
 		fetchData();
 	}, []);
 
-	const handleUserUpdate = async (
-		userId: number,
-		field: "role_id" | "department_id",
-		value: string
-	) => {
-		const numericValue = Number(value);
-		const originalUsers = [...users];
-		const updatedUsers = users.map((user) =>
-			user.id === userId ? { ...user, [field]: numericValue } : user
-		);
-		setUsers(updatedUsers);
-
-		const userToUpdate = updatedUsers.find((u) => u.id === userId);
-		if (!userToUpdate) return;
-
+	const handleUserUpdate = async (params: api.UpdateUserParams) => {
 		try {
-			const { id, name, email, employee_number, role_id, department_id, hired_date } = userToUpdate;
-			await api.adminUpdateUser(id, {
-				name,
-				email,
-				employee_number,
-				role_id,
-				department_id,
-				hired_date,
-			});
-			const updatedUser = updatedUsers.find((u) => u.id === userId);
-			if (updatedUser) {
-				if (field === "role_id") {
-					const roleName = roles.find((r) => r.id === numericValue)?.name;
-					toast.success(`${updatedUser.name}さんの権限を${roleName}に変更しました。`);
-				} else {
-					toast.success(`${updatedUser.name}さんの情報を更新しました。`);
-				}
-			}
+			await api.adminUpdateUser(params.id, params);
+			toast.success("ユーザー情報を更新しました。");
+			fetchData();
 		} catch (error) {
-			setUsers(originalUsers);
-			if (selectedUser && selectedUser.id === userId) {
-				setSelectedUser(originalUsers.find((u) => u.id === userId) || null);
-			}
 			toast.error("ユーザー情報の更新に失敗しました。");
 			console.error("Failed to update user", error);
 		}
@@ -144,6 +114,16 @@ const AdminPageContent = () => {
 	const handleOpenDeleteModal = (user: User) => {
 		setUserToDelete(user);
 		setDeleteModalOpen(true);
+	};
+
+	const handleOpenEditModal = (user: User) => {
+		setSelectedUser(user);
+		setIsEditModalOpen(true);
+	};
+
+	const handleCloseEditModal = () => {
+		setSelectedUser(null);
+		setIsEditModalOpen(false);
 	};
 
 	const handleCloseDeleteModal = () => {
@@ -290,42 +270,10 @@ const AdminPageContent = () => {
 												<TableRow key={user.id}>
 													<TableCell>{user.name}</TableCell>
 													<TableCell>
-														<Select
-															value={String(user.department_id)}
-															onValueChange={(value) =>
-																handleUserUpdate(user.id, "department_id", value)
-															}
-														>
-															<SelectTrigger className="w-[180px]">
-																<SelectValue placeholder="部署を選択" />
-															</SelectTrigger>
-															<SelectContent>
-																{departments.map((department) => (
-																	<SelectItem key={department.id} value={String(department.id)}>
-																		{department.name}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
+														{user.department.name}
 													</TableCell>
 													<TableCell>
-														<Select
-															value={String(user.role_id)}
-															onValueChange={(value) =>
-																handleUserUpdate(user.id, "role_id", value)
-															}
-														>
-															<SelectTrigger className="w-[180px]">
-																<SelectValue placeholder="権限を選択" />
-															</SelectTrigger>
-															<SelectContent>
-																{roles.map((role) => (
-																	<SelectItem key={role.id} value={String(role.id)}>
-																		{role.name}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
+														{user.role.name}
 													</TableCell>
 													<TableCell>
 														<div className="flex gap-2">
@@ -335,6 +283,13 @@ const AdminPageContent = () => {
 																onClick={() => handleOpenDetailModal(user.id)}
 															>
 																詳細
+															</Button>
+															<Button
+																variant="outline"
+																size="sm"
+																onClick={() => handleOpenEditModal(user)}
+															>
+																編集
 															</Button>
 															<Button
 																variant="destructive"
@@ -425,6 +380,16 @@ const AdminPageContent = () => {
 					open={isDetailModalOpen}
 					onClose={handleCloseDetailModal}
 					user={userDetail}
+				/>
+				<EditUserModal
+					open={isEditModalOpen}
+					onClose={handleCloseEditModal}
+					user={selectedUser}
+					users={users}
+					roles={roles}
+					departments={departments}
+					groups={groups}
+					onUpdate={handleUserUpdate}
 				/>
 
 				{/* Department Modals */}

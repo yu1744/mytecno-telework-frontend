@@ -8,9 +8,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getProfile } from "@/app/lib/api";
+import { getProfile, updateUser, UpdateUserParams } from "@/app/lib/api";
 import { User } from "@/app/types/user";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
+import EditProfileModal from "@/app/components/EditProfileModal";
+import { toast } from "sonner";
 import {
   User as UserIcon,
   Building,
@@ -24,21 +26,34 @@ import {
 export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await getProfile();
+      setUser(response.data);
+    } catch (error) {
+      console.error("Failed to fetch profile", error);
+      toast.error("プロフィールの取得に失敗しました。");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await getProfile();
-        setUser(response.data);
-      } catch (error) {
-        console.error("Failed to fetch profile", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
   }, []);
+
+  const handleUpdateUser = async (params: UpdateUserParams) => {
+    try {
+      await updateUser(params.id, params);
+      toast.success("プロフィールを更新しました。");
+      fetchProfile();
+    } catch (error) {
+      console.error("Failed to update profile", error);
+      toast.error("プロフィールの更新に失敗しました。");
+    }
+  };
 
   if (loading) {
     return <LoadingSpinner />;
@@ -96,7 +111,9 @@ export default function ProfilePage() {
               </div>
             </div>
             <div className="mt-6 flex justify-end">
-              <Button>プロフィールを編集する</Button>
+              <Button onClick={() => setIsModalOpen(true)}>
+                プロフィールを編集する
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -155,6 +172,12 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+      <EditProfileModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        user={user}
+        onUpdate={handleUpdateUser}
+      />
     </div>
   );
 }

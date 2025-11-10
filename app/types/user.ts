@@ -33,8 +33,11 @@ export interface User {
   department_id: number;
   group_id?: number;
   position?: string;
+  manager_id?: number;
   is_caregiver?: boolean;
   has_child_under_elementary?: boolean;
+  address?: string;
+  phone_number?: string;
   role: Role;
   department: Department;
   group?: Group;

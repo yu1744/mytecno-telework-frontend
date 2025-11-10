@@ -84,17 +84,33 @@ export type CreateUserParams = {
   department_id: number;
   hired_date?: string;
 };
-export type UpdateUserParams = Omit<User, 'id' | 'role' | 'department'>;
+export type UpdateUserParams = {
+  id: number;
+  name?: string;
+  email?: string;
+  address?: string;
+  phone_number?: string;
+  password?: string;
+  password_confirmation?: string;
+  department_id?: number;
+  role_id?: number;
+  group_id?: number;
+  position?: string;
+  employee_number?: string;
+  manager_id?: number;
+  hired_date?: string;
+};
 
 
 export const adminGetUsers = () => api.get<User[]>('/admin/users');
 export const adminGetUser = (id: number) => api.get<User>(`/admin/users/${id}`);
 export const adminCreateUser = (params: CreateUserParams) => api.post<User>('/admin/users', { user: params });
-export const adminUpdateUser = (id: number, params: UpdateUserParams) => api.put<User>(`/admin/users/${id}`, { user: params });
+export const adminUpdateUser = (id: number, params: Omit<UpdateUserParams, 'id'>) => api.put<User>(`/admin/users/${id}`, { user: params });
 export const adminDeleteUser = (id: number) => api.delete(`/admin/users/${id}`);
 
 // プロフィールAPI
 export const getProfile = () => api.get<User>('/me');
+export const updateUser = (id: number, params: Omit<UpdateUserParams, 'id'>) => api.put<User>(`/users/${id}`, { user: params });
 
 // 人事異動API
 export interface UserInfoChangeParams {
