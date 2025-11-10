@@ -1,0 +1,27 @@
+# 依存関係
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Next.js
+.next
+out
+*.tsbuildinfo
+
+# Git
+.git
+.gitignore
+
+# 環境変数
+.env*.local
+
+# テスト
+coverage
+.nyc_output
+
+# その他
+.DS_Store
+*.log
+.vscode
+.idea
+README.md

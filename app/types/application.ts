@@ -15,7 +15,9 @@ export interface Application {
   updated_at: string;
   user: User;
   application_status?: ApplicationStatus;
-  // 不要なプロパティを削除
+  start_date: string;
+  application_type: string;
+  weekly_application_count: number;
 }
 
 export interface ApplicationPayload {
@@ -28,4 +30,13 @@ export interface ApplicationPayload {
   is_overtime: boolean;
   overtime_reason?: string;
   overtime_end?: string;
+}
+export interface AppNotification {
+  id: number;
+  user_id: number;
+  message: string;
+  read: boolean;
+  link: string;
+  created_at: string;
+  updated_at: string;
 }

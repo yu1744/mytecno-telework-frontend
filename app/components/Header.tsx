@@ -5,7 +5,6 @@ import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import { useAuthStore } from '@/app/store/auth';
 import { useRouter } from 'next/navigation';
 import api from '@/app/lib/api';
-import Cookies from 'js-cookie';
 import NotificationBell from './NotificationBell';
 
 const Header = () => {
@@ -14,14 +13,14 @@ const Header = () => {
 
   const handleLogout = async () => {
     try {
-      await api.delete('/api/v1/auth/sign_out');
+      await api.delete('/auth/sign_out');
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {
       clearAuth();
-      Cookies.remove('access-token');
-      Cookies.remove('client');
-      Cookies.remove('uid');
+      localStorage.removeItem('access-token');
+      localStorage.removeItem('client');
+      localStorage.removeItem('uid');
       router.push('/login');
     }
   };

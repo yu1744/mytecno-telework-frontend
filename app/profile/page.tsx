@@ -32,6 +32,7 @@ const ProfilePage = () => {
   const [settings, setSettings] = useState({
     outlook連携: false,
     commuteRoutes: [''],
+    pushNotifications: false,
   });
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
@@ -58,9 +59,12 @@ const ProfilePage = () => {
           monthlyLimit: limitData.monthly_limit || 0,
         });
 
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
         setSettings({
           outlook連携: profileData.outlook_setting?.enabled || false,
           commuteRoutes: profileData.commute_routes?.length > 0 ? profileData.commute_routes : [''],
+          pushNotifications: !!subscription,
         });
       } catch (error) {
         console.error('Failed to fetch profile:', error);
@@ -111,6 +115,38 @@ const ProfilePage = () => {
     }
   };
 
+  const handlePushSubscription = async () => {
+    if (!('serviceWorker' in navigator)) {
+      setSnackbar({ open: true, message: 'プッシュ通知はこのブラウザではサポートされていません。', severity: 'error' });
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+
+    if (subscription) {
+      // Unsubscribe
+      await subscription.unsubscribe();
+      await api.post('/unregister_push', { endpoint: subscription.endpoint });
+      setSettings({ ...settings, pushNotifications: false });
+      setSnackbar({ open: true, message: 'プッシュ通知をオフにしました。', severity: 'success' });
+    } else {
+      // Subscribe
+      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!vapidPublicKey) {
+        setSnackbar({ open: true, message: 'プッシュ通知の設定に失敗しました。', severity: 'error' });
+        return;
+      }
+      const newSubscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: vapidPublicKey,
+      });
+      await api.post('/register_push', { subscription: newSubscription });
+      setSettings({ ...settings, pushNotifications: true });
+      setSnackbar({ open: true, message: 'プッシュ通知をオンにしました。', severity: 'success' });
+    }
+  };
+
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
@@ -125,9 +161,9 @@ const ProfilePage = () => {
 
   return (
     <PrivateRoute>
-      <Box component="main" sx={{ flexGrow: 1, p: 3, marginTop: '64px' }}>
+      <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, sm: 3 }, marginTop: { xs: '56px', sm: '64px' } }}>
         <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom sx={{ mb: { xs: 2, sm: 4 } }}>
             ユーザープロファイル
           </Typography>
 
@@ -157,6 +193,16 @@ const ProfilePage = () => {
                   />
                 }
                 label="Outlookカレンダー連携"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={settings.pushNotifications}
+                    onChange={handlePushSubscription}
+                    name="pushNotifications"
+                  />
+                }
+                label="プッシュ通知"
               />
               <Typography variant="subtitle1" sx={{ mt: 3, mb: 1 }}>
                 通勤経路（路線）

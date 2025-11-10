@@ -1,12 +1,12 @@
 import { Department } from '@/app/types/department';
 import { ApplicationPayload } from '@/app/types/application';
+import type { AppNotification } from '@/app/types/application';
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import { User } from '@/app/types/user';
 import { useAuthStore } from '../store/auth';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/',
+  baseURL: (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001') + '/api/v1',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -17,9 +17,9 @@ const api = axios.create({
 // リクエストインターセプター
 api.interceptors.request.use(
   (config) => {
-    const accessToken = Cookies.get('access-token');
-    const client = Cookies.get('client');
-    const uid = Cookies.get('uid');
+    const accessToken = localStorage.getItem('access-token');
+    const client = localStorage.getItem('client');
+    const uid = localStorage.getItem('uid');
 
     if (accessToken && client && uid) {
       config.headers['access-token'] = accessToken;
@@ -37,13 +37,13 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     if (response.headers['access-token']) {
-      Cookies.set('access-token', response.headers['access-token']);
+      localStorage.setItem('access-token', response.headers['access-token']);
     }
     if (response.headers['client']) {
-      Cookies.set('client', response.headers['client']);
+      localStorage.setItem('client', response.headers['client']);
     }
     if (response.headers['uid']) {
-      Cookies.set('uid', response.headers['uid']);
+      localStorage.setItem('uid', response.headers['uid']);
     }
     return response;
   },
@@ -75,11 +75,11 @@ export type CreateUserParams = {
 export type UpdateUserParams = Omit<User, 'id' | 'role' | 'department'>;
 
 
-export const adminGetUsers = () => api.get<User[]>('/api/v1/admin/users');
-export const adminGetUser = (id: number) => api.get<User>(`/api/v1/admin/users/${id}`);
-export const adminCreateUser = (params: CreateUserParams) => api.post<User>('/api/v1/admin/users', { user: params });
-export const adminUpdateUser = (id: number, params: UpdateUserParams) => api.put<User>(`/api/v1/admin/users/${id}`, { user: params });
-export const adminDeleteUser = (id: number) => api.delete(`/api/v1/admin/users/${id}`);
+export const adminGetUsers = () => api.get<User[]>('/admin/users');
+export const adminGetUser = (id: number) => api.get<User>(`/admin/users/${id}`);
+export const adminCreateUser = (params: CreateUserParams) => api.post<User>('/admin/users', { user: params });
+export const adminUpdateUser = (id: number, params: UpdateUserParams) => api.put<User>(`/admin/users/${id}`, { user: params });
+export const adminDeleteUser = (id: number) => api.delete(`/admin/users/${id}`);
 
 // 人事異動API
 export interface UserInfoChangeParams {
@@ -89,20 +89,39 @@ export interface UserInfoChangeParams {
   new_manager_id?: number;
   effective_date: string;
 }
-export const adminCreateInfoChange = (params: UserInfoChangeParams) => api.post('/api/v1/admin/user_info_changes', params);
+export const adminCreateInfoChange = (params: UserInfoChangeParams) => api.post('/admin/user_info_changes', params);
 
 // 部署・役職API
-export const getDepartments = () => api.get<Department[]>('/api/v1/departments');
-export const getRoles = () => api.get('/api/v1/roles');
-export const createDepartment = (params: { name: string }) => api.post<Department>('/api/v1/departments', { department: params });
-export const updateDepartment = (id: number, params: { name: string }) => api.put<Department>(`/api/v1/departments/${id}`, { department: params });
-export const deleteDepartment = (id: number) => api.delete(`/api/v1/departments/${id}`);
+export const getDepartments = () => api.get<Department[]>('/departments');
+export const getRoles = () => api.get('/roles');
+export const createDepartment = (params: { name: string }) => api.post<Department>('/departments', { department: params });
+export const updateDepartment = (id: number, params: { name: string }) => api.put<Department>(`/departments/${id}`, { department: params });
+export const deleteDepartment = (id: number) => api.delete(`/departments/${id}`);
 
 // 申請API
-export const createApplication = (params: ApplicationPayload) => api.post('/api/v1/applications', { application: params });
-export const getApplications = () => api.get('/api/v1/applications');
-export const cancelApplication = (id: number) => api.delete(`/api/v1/applications/${id}`);
-export const adminGetApplications = () => api.get('/api/v1/admin/applications');
+export type ApplicationRequestParams = {
+  sort_by?: 'created_at' | 'date' | 'status';
+  sort_order?: 'asc' | 'desc';
+  filter_by_status?: string;
+  filter_by_user?: string;
+};
+
+export const createApplication = (params: ApplicationPayload) => api.post('/applications', { application: params });
+export const getApplications = (params: ApplicationRequestParams = {}) => {
+  const query = new URLSearchParams(params as Record<string, string>).toString();
+  return api.get(`/applications?${query}`);
+};
+export const cancelApplication = (id: number) => api.delete(`/applications/${id}`);
+export const adminGetApplications = (params: ApplicationRequestParams = {}) => {
+  const query = new URLSearchParams(params as Record<string, string>).toString();
+  return api.get(`/admin/applications?${query}`);
+};
+export const getApplicationStats = () => api.get('/applications/stats');
+export const getRecentApplications = () => api.get('/applications/recent');
 // 承認API
-export const getPendingApprovals = () => api.get('/api/v1/approvals');
-export const updateApprovalStatus = (id: number, status: 'approved' | 'rejected') => api.put(`/api/v1/approvals/${id}`, { status });
+export const getPendingApprovals = () => api.get('/approvals');
+export const updateApprovalStatus = (id: number, status: 'approved' | 'rejected') => api.put(`/approvals/${id}`, { status });
+
+// 通知API
+export const getNotifications = () => api.get<AppNotification[]>('/notifications');
+export const markNotificationAsRead = (id: number) => api.put<AppNotification>(`/notifications/${id}`, { read: true });
