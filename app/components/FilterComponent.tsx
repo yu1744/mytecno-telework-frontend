@@ -1,73 +1,74 @@
 "use client";
 
 import React from "react";
-import { Box, TextField, MenuItem } from "@mui/material";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { ja } from "date-fns/locale/ja";
+import { DatePicker } from "@/components/ui/date-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface FilterComponentProps {
-	startDate: Date | null;
-	endDate: Date | null;
-	status: string;
-	onStartDateChange: (date: Date | null) => void;
-	onEndDateChange: (date: Date | null) => void;
-	onStatusChange: (status: string) => void;
+  startDate: Date | null;
+  endDate: Date | null;
+  status: string;
+  onStartDateChange: (date: Date | undefined) => void;
+  onEndDateChange: (date: Date | undefined) => void;
+  onStatusChange: (status: string) => void;
 }
 
 const FilterComponent: React.FC<FilterComponentProps> = ({
-	startDate,
-	endDate,
-	status,
-	onStartDateChange,
-	onEndDateChange,
-	onStatusChange,
+  startDate,
+  endDate,
+  status,
+  onStartDateChange,
+  onEndDateChange,
+  onStatusChange,
 }) => {
-	const statusOptions = [
-		{ value: "all", label: "すべて" },
-		{ value: "申請中", label: "申請中" },
-		{ value: "承認済み", label: "承認済み" },
-		{ value: "却下", label: "却下" },
-	];
+  const statusOptions = [
+    { value: "all", label: "すべて" },
+    { value: "申請中", label: "申請中" },
+    { value: "承認済み", label: "承認済み" },
+    { value: "却下", label: "却下" },
+  ];
 
-	return (
-		<LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ja}>
-			<Box sx={{ display: 'flex', gap: 2, mb: 4, flexWrap: 'wrap' }}>
-			  <Box sx={{ flex: '1 1 200px' }}>
-			    <DatePicker
-			      label="開始日"
-			      value={startDate}
-			      onChange={onStartDateChange}
-			      slotProps={{ textField: { fullWidth: true } }}
-			    />
-			  </Box>
-			  <Box sx={{ flex: '1 1 200px' }}>
-			    <DatePicker
-			      label="終了日"
-			      value={endDate}
-			      onChange={onEndDateChange}
-			      slotProps={{ textField: { fullWidth: true } }}
-			    />
-			  </Box>
-			  <Box sx={{ flex: '1 1 200px' }}>
-			    <TextField
-			      select
-			      label="ステータス"
-			      value={status}
-			      onChange={(e) => onStatusChange(e.target.value)}
-			      fullWidth
-			    >
-			      {statusOptions.map((option) => (
-			        <MenuItem key={option.value} value={option.value}>
-			          {option.label}
-			        </MenuItem>
-			      ))}
-			    </TextField>
-			  </Box>
-			</Box>
-		</LocalizationProvider>
-	);
+  const handleStatusChange = (value: string) => {
+    onStatusChange(value === "all" ? "" : value);
+  };
+
+  return (
+    <div className="flex flex-wrap items-end gap-4 mb-4">
+      <div className="flex-1 min-w-[200px]">
+        <Label>開始日</Label>
+        <DatePicker date={startDate ?? undefined} setDate={onStartDateChange} />
+      </div>
+      <div className="flex-1 min-w-[200px]">
+        <Label>終了日</Label>
+        <DatePicker date={endDate ?? undefined} setDate={onEndDateChange} />
+      </div>
+      <div className="flex-1 min-w-[200px]">
+        <Label>ステータス</Label>
+        <Select
+          value={status === "" ? "all" : status}
+          onValueChange={handleStatusChange}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="ステータスを選択" />
+          </SelectTrigger>
+          <SelectContent>
+            {statusOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
 };
 
 export default FilterComponent;

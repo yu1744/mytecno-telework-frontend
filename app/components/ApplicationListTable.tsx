@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-  Box, TextField, MenuItem, TableSortLabel, Typography
-} from '@mui/material';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +29,7 @@ import { User } from '../types/user';
 import { adminGetUsers } from '../lib/api';
 import { ApplicationDetailModal } from './ApplicationDetailModal';
 import ApprovalCommentModal from './ApprovalCommentModal';
+import { ArrowUpDown } from "lucide-react";
 
 interface ApplicationListTableProps {
   isAdmin: boolean;
@@ -141,7 +153,7 @@ const ApplicationListTable: React.FC<ApplicationListTableProps> = ({ isAdmin }) 
   };
 
   if (loading) return <LoadingSpinner />;
-  if (error) return <Typography color="error">{error}</Typography>;
+  if (error) return <p className="text-red-500">{error}</p>;
 
   return (
     <Card className="shadow-lg">
@@ -150,82 +162,79 @@ const ApplicationListTable: React.FC<ApplicationListTableProps> = ({ isAdmin }) 
       </CardHeader>
       <CardContent>
         <>
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, mb: 2, gap: 2 }}>
-            <TextField
-              select
-              label="ステータス"
-              value={filterByStatus}
-              onChange={(e) => setFilterByStatus(e.target.value)}
-              variant="outlined"
-              size="small"
-              sx={{ minWidth: 150 }}
-            >
-              <MenuItem value="">すべて</MenuItem>
-              <MenuItem value="1">申請中</MenuItem>
-              <MenuItem value="2">承認済み</MenuItem>
-              <MenuItem value="3">却下</MenuItem>
-              <MenuItem value="4">キャンセル</MenuItem>
-            </TextField>
+          <div className="flex flex-col sm:flex-row mb-2 gap-2">
+            <Select value={filterByStatus || "all"} onValueChange={(value) => setFilterByStatus(value === "all" ? "" : value)}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="ステータス" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">すべて</SelectItem>
+                <SelectItem value="1">申請中</SelectItem>
+                <SelectItem value="2">承認済み</SelectItem>
+                <SelectItem value="3">却下</SelectItem>
+                <SelectItem value="4">キャンセル</SelectItem>
+              </SelectContent>
+            </Select>
             {isAdmin && (
-              <TextField
-                select
-                label="申請者"
-                value={filterByUser}
-                onChange={(e) => setFilterByUser(e.target.value)}
-                variant="outlined"
-                size="small"
-                sx={{ minWidth: 200 }}
-              >
-                <MenuItem value="">すべて</MenuItem>
-                {users.map((user) => (
-                  <MenuItem key={user.id} value={user.id}>{user.name}</MenuItem>
-                ))}
-              </TextField>
+              <Select value={filterByUser || "all"} onValueChange={(value) => setFilterByUser(value === "all" ? "" : value)}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="申請者" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">すべて</SelectItem>
+                  {users.map((user) => (
+                    <SelectItem key={user.id} value={user.id.toString()}>{user.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
-          </Box>
-          <TableContainer>
-            <Table sx={{ minWidth: 'auto' }} aria-label="simple table">
-              <TableHead>
-                <TableRow sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, fontWeight: 'bold', border: 'none' }}>
-                    <TableSortLabel active={sortBy === 'created_at'} direction={sortBy === 'created_at' ? sortOrder : 'asc'} onClick={() => handleSort('created_at')}>
+          </div>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="hidden md:table-cell">
+                    <Button variant="ghost" onClick={() => handleSort('created_at')}>
                       申請日
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', border: 'none' }}>
-                     <TableSortLabel active={sortBy === 'date'} direction={sortBy === 'date' ? sortOrder : 'asc'} onClick={() => handleSort('date')}>
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                     <Button variant="ghost" onClick={() => handleSort('date')}>
                       申請対象日
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', border: 'none' }}>申請者</TableCell>
-                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, fontWeight: 'bold', border: 'none' }}>部署</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', border: 'none' }}>
-                    <TableSortLabel active={sortBy === 'status'} direction={sortBy === 'status' ? sortOrder : 'asc'} onClick={() => handleSort('status')}>
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>申請者</TableHead>
+                  <TableHead className="hidden md:table-cell">部署</TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('status')}>
                       ステータス
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' }, fontWeight: 'bold', border: 'none' }}>承認者コメント</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', border: 'none' }}>操作</TableCell>
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">承認者コメント</TableHead>
+                  <TableHead>操作</TableHead>
                 </TableRow>
-              </TableHead>
+              </TableHeader>
               <TableBody>
                 {applications.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center">
+                    <TableCell colSpan={7} className="text-center">
                       対象の申請はありません。
                     </TableCell>
                   </TableRow>
                 ) : (
                   applications.map((application) => (
-                    <TableRow key={application.id} sx={{ '&:hover': { backgroundColor: '#f9fafb' }, 'td, th': { borderBottom: '1px solid #e0e0e0' }, '&:last-child td, &:last-child th': { border: 0 } }}>
-                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{new Date(application.created_at).toLocaleDateString('ja-JP')}</TableCell>
+                    <TableRow key={application.id}>
+                      <TableCell className="hidden md:table-cell">{new Date(application.created_at).toLocaleDateString('ja-JP')}</TableCell>
                       <TableCell>{new Date(application.date).toLocaleDateString('ja-JP')}</TableCell>
                       <TableCell>{application.user.name}</TableCell>
-                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{application.user.department?.name}</TableCell>
+                      <TableCell className="hidden md:table-cell">{application.user.department?.name}</TableCell>
                       <TableCell>{getStatusBadge(application.application_status_id)}</TableCell>
-                      <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>{application.approver_comment}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{application.approver_comment}</TableCell>
                       <TableCell>
-                        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}>
+                        <div className="flex flex-col sm:flex-row gap-1">
                           <Button variant="outline" size="sm" onClick={() => handleOpenDetailModal(application)}>
                             詳細
                           </Button>
@@ -244,14 +253,14 @@ const ApplicationListTable: React.FC<ApplicationListTableProps> = ({ isAdmin }) 
                              </Button>
                            </>
                           )}
-                        </Box>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
             </Table>
-          </TableContainer>
+          </div>
         </>
         <ConfirmationModal
           isOpen={isModalOpen}

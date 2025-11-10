@@ -1,6 +1,5 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
-import InboxIcon from '@mui/icons-material/Inbox';
+import { Inbox } from 'lucide-react';
 
 interface EmptyStateProps {
   message?: string;
@@ -8,19 +7,10 @@ interface EmptyStateProps {
 
 const EmptyState: React.FC<EmptyStateProps> = ({ message = '表示できるデータはありません。' }) => {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '60vh',
-        color: 'text.secondary',
-      }}
-    >
-      <InboxIcon sx={{ fontSize: 60, mb: 2 }} />
-      <Typography variant="h6">{message}</Typography>
-    </Box>
+    <div className="flex flex-col justify-center items-center h-[60vh] text-gray-500">
+      <Inbox className="w-16 h-16 mb-4" />
+      <p className="text-xl">{message}</p>
+    </div>
   );
 };
 

@@ -1,15 +1,16 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Box, Typography } from '@mui/material';
-import * as api from '../lib/api';
 import ApplicationListTable from '../components/ApplicationListTable';
 import LoadingSpinner from '../components/LoadingSpinner';
-import EmptyState from '../components/EmptyState';
-import FilterComponent from '../components/FilterComponent';
-import { Application } from '../types/application';
 import PrivateRoute from '../components/PrivateRoute';
 import { useAuthStore } from '../store/auth';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 const HistoryPageContent = () => {
   const { user } = useAuthStore();
@@ -28,14 +29,10 @@ const HistoryPageContent = () => {
   }
 
   return (
-    <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
-      <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
-        <h1 className="text-2xl font-bold mb-6">
-          申請履歴
-        </h1>
-        <ApplicationListTable isAdmin={user?.role?.name === 'admin'} />
-      </Box>
-    </Box>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">申請履歴</h1>
+      <ApplicationListTable isAdmin={user?.role?.name === 'admin'} />
+    </div>
   );
 }
 

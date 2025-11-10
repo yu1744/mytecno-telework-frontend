@@ -81,7 +81,7 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 sm:p-6">
+    <div className="p-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <h1 className="text-2xl font-bold">ダッシュボード</h1>
         <Button asChild className="w-full sm:w-auto">

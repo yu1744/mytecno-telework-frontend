@@ -1,14 +1,21 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { IconButton, Badge, Popover, List, ListItem, ListItemText, Typography, Divider, Box, ListItemButton } from '@mui/material';
-import NotificationsIcon from '@mui/icons-material/Notifications';
+import { Bell } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getNotifications, markNotificationAsRead } from '@/app/lib/api';
 import { AppNotification } from '@/app/types/application';
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const NotificationBell = () => {
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const router = useRouter();
 
@@ -27,14 +34,6 @@ const NotificationBell = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
   const handleNotificationClick = async (notification: AppNotification) => {
     try {
       if (!notification.read) {
@@ -51,64 +50,40 @@ const NotificationBell = () => {
     if (notification.link) {
       router.push(notification.link);
     }
-    handleClose();
   };
 
-  const open = Boolean(anchorEl);
-  const id = open ? 'notification-popover' : undefined;
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div>
-      <IconButton color="inherit" onClick={handleClick}>
-        <Badge badgeContent={unreadCount} color="error">
-          <NotificationsIcon />
-        </Badge>
-      </IconButton>
-      <Popover
-        id={id}
-        open={open}
-        anchorEl={anchorEl}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-      >
-        <Box sx={{ width: 360 }}>
-          <Typography sx={{ p: 2, fontWeight: 'bold' }}>通知</Typography>
-          <Divider />
-          <List sx={{ p: 0 }}>
-            {notifications.length > 0 ? (
-              notifications.map((notification, index) => (
-                <React.Fragment key={notification.id}>
-                  <ListItem
-                    disablePadding
-                    key={notification.id}
-                  >
-                    <ListItemButton
-                      onClick={() => handleNotificationClick(notification)}
-                      sx={{ backgroundColor: notification.read ? 'inherit' : 'action.hover' }}
-                    >
-                      <ListItemText primary={notification.message} />
-                    </ListItemButton>
-                  </ListItem>
-                  {index < notifications.length - 1 && <Divider />}
-                </React.Fragment>
-              ))
-            ) : (
-              <ListItem>
-                <ListItemText primary="新しい通知はありません。" />
-              </ListItem>
-            )}
-          </List>
-        </Box>
-      </Popover>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <div className="absolute top-0 right-0 flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full">
+              {unreadCount}
+            </div>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-80" align="end">
+        <DropdownMenuLabel>通知</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {notifications.length > 0 ? (
+          notifications.map((notification) => (
+            <DropdownMenuItem
+              key={notification.id}
+              onClick={() => handleNotificationClick(notification)}
+              className={`cursor-pointer ${!notification.read ? 'bg-blue-50' : ''}`}
+            >
+              {notification.message}
+            </DropdownMenuItem>
+          ))
+        ) : (
+          <DropdownMenuItem disabled>新しい通知はありません。</DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

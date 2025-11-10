@@ -1,11 +1,12 @@
 "use client";
 
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import { useAuthStore } from '@/app/store/auth';
 import { useRouter } from 'next/navigation';
 import api from '@/app/lib/api';
 import NotificationBell from './NotificationBell';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 
 const Header = () => {
   const { isAuthenticated, user, clearAuth } = useAuthStore();
@@ -26,29 +27,20 @@ const Header = () => {
   };
 
   return (
-    <AppBar
-      position="fixed"
-      sx={{
-        width: `calc(100% - 240px)`,
-        ml: `240px`,
-        zIndex: (theme) => theme.zIndex.drawer + 1,
-      }}
-    >
-      <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          在宅勤務申請システム
-        </Typography>
+    <header className="bg-card text-card-foreground">
+      <div className="flex items-center justify-between h-full border-b px-8 py-4">
+        <h2 className="text-xl font-bold">在宅勤務申請システム</h2>
         {isAuthenticated && user && (
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography sx={{ mr: 2 }}>{user.email}</Typography>
+          <div className="flex items-center space-x-4">
+            <Label>{user.email}</Label>
             <NotificationBell />
-            <Button color="inherit" onClick={handleLogout}>
+            <Button variant="outline" onClick={handleLogout}>
               ログアウト
             </Button>
-          </Box>
+          </div>
         )}
-      </Toolbar>
-    </AppBar>
+      </div>
+    </header>
   );
 };
 

@@ -221,9 +221,9 @@ const AdminPageContent = () => {
 	}
 
 	return (
-		<main className="flex-grow p-3 mt-16">
+		<main className="p-6">
 			<Toaster />
-			<div className="max-w-6xl mx-auto">
+			<div>
 				<h1 className="text-2xl font-bold mb-6">管理者ページ</h1>
 
 				<Tabs defaultValue="user-management">

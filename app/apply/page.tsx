@@ -1,20 +1,21 @@
 "use client";
 import React from 'react';
-import { Box, Typography } from '@mui/material';
 import ApplicationForm from '../components/ApplicationForm';
 import PrivateRoute from '../components/PrivateRoute';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 const ApplyPage = () => {
   return (
     <PrivateRoute allowedRoles={['admin', 'approver', 'applicant']}>
-      <Box sx={{ display: 'flex' }}>
-        <Box component="main" sx={{ flexGrow: 1, p: 3, marginTop: '64px' }}>
-          <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
-            <h1 className="text-2xl font-bold mb-6">在宅勤務申請</h1>
-            <ApplicationForm />
-          </Box>
-        </Box>
-      </Box>
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-4">在宅勤務申請</h1>
+        <ApplicationForm />
+      </div>
     </PrivateRoute>
   );
 };
