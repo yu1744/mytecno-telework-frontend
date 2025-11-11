@@ -152,11 +152,7 @@ const ApprovalsPage = () => {
                     <TableRow
                       key={app.id}
                       sx={{ '&:last-child td, &:last-child th': { border: 0 }, '& td, & th': { borderBottom: (theme) => `1px solid ${theme.palette.divider}` } }}
-                    >
-                      <TableCell component="th" scope="row">
-                        {app.user?.name}
-                      </TableCell>
-                      
+                    >          
                       {/* 名前 */}
                       <TableCell component="th" scope="row">
                         {app.user?.name}
