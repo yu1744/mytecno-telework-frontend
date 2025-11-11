@@ -68,7 +68,7 @@ export default function ProfilePage() {
       <h1 className="text-2xl font-bold mb-6">プロフィール</h1>
 
       <div className="space-y-8">
-        <Card>
+        <Card className="shadow-md">
           <CardHeader>
             <CardTitle>プロフィール</CardTitle>
           </CardHeader>
@@ -118,7 +118,7 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-md">
           <CardHeader>
             <CardTitle>通勤経路情報</CardTitle>
           </CardHeader>

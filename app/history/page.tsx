@@ -1,41 +1,185 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import ApplicationListTable from '../components/ApplicationListTable';
-import LoadingSpinner from '../components/LoadingSpinner';
+import React, { useState, useEffect, useMemo } from 'react';
 import PrivateRoute from '../components/PrivateRoute';
-import { useAuthStore } from '../store/auth';
+import { CommonTable, ColumnDef } from '../components/CommonTable';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Application } from '../types/application';
+import { getApplications, getApplication, cancelApplication, ApplicationRequestParams } from '../lib/api';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { ApplicationDetailModal } from '../components/ApplicationDetailModal';
+import { useModalStore } from '../store/modal';
+import axios from 'axios';
+
+const getStatusBadge = (statusId: number) => {
+  switch (statusId) {
+    case 1: return <Badge variant="outline">申請中</Badge>;
+    case 2: return <Badge className="bg-green-100 text-green-800">承認済み</Badge>;
+    case 3: return <Badge variant="destructive">却下</Badge>;
+    case 4: return <Badge variant="secondary">キャンセル</Badge>;
+    default: return <Badge variant="secondary">不明</Badge>;
+  }
+};
 
 const HistoryPageContent = () => {
-  const { user } = useAuthStore();
+  const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<ApplicationRequestParams['sort_by']>('created_at');
+  const [sortOrder, setSortOrder] = useState<ApplicationRequestParams['sort_order']>('desc');
+  const [filterByStatus, setFilterByStatus] = useState<string>('');
+  const [filterByMonth, setFilterByMonth] = useState<string>('');
+
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const showModal = useModalStore((state) => state.showModal);
+
+  const fetchApplications = async () => {
+    setLoading(true);
+    try {
+      const params: ApplicationRequestParams = {
+        sort_by: sortBy,
+        sort_order: sortOrder,
+        filter_by_status: filterByStatus,
+        filter_by_month: filterByMonth,
+      };
+      Object.keys(params).forEach(key => (params[key as keyof ApplicationRequestParams] === '' || params[key as keyof ApplicationRequestParams] === undefined) && delete params[key as keyof ApplicationRequestParams]);
+      const response = await getApplications(params);
+      setApplications(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch applications:', err);
+      setError('申請データの取得に失敗しました。');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // This is just to avoid a blank page on initial load.
-    // The actual data fetching is in ApplicationListTable.
-    const timer = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
+    fetchApplications();
+  }, [sortBy, sortOrder, filterByStatus, filterByMonth]);
 
+  const handleSort = (sortKey: keyof Application | (string & {})) => {
+    const key = sortKey as ApplicationRequestParams['sort_by'];
+    const isAsc = sortBy === key && sortOrder === 'asc';
+    setSortOrder(isAsc ? 'desc' : 'asc');
+    setSortBy(key);
+  };
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
+  const handleOpenDetailModal = async (applicationId: number) => {
+    try {
+      const response = await getApplication(applicationId);
+      setSelectedApplication(response.data);
+      setIsDetailModalOpen(true);
+    } catch (error) {
+      console.error('Failed to fetch application details:', error);
+    }
+  };
+
+  const handleCloseDetailModal = () => {
+    setSelectedApplication(null);
+    setIsDetailModalOpen(false);
+  };
+
+  const handleCancel = async (id: number) => {
+    try {
+      await cancelApplication(id);
+      fetchApplications();
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        showModal({ title: '権限エラー', message: 'この操作を行う権限がありません。', onConfirm: () => {} });
+      } else {
+        console.error('Failed to cancel application:', error);
+      }
+    }
+  };
+
+  const columns: ColumnDef<Application>[] = useMemo(() => [
+    { accessorKey: 'created_at', header: '申請日', enableSorting: true, cell: ({ row }) => new Date(row.created_at ?? '').toLocaleDateString('ja-JP') },
+    { accessorKey: 'date', header: '申請対象日', enableSorting: true, cell: ({ row }) => new Date(row.date).toLocaleDateString('ja-JP') },
+    { accessorKey: 'user', header: '申請者', cell: ({ row }) => row.user.name },
+    { accessorKey: 'application_status_id', header: 'ステータス', enableSorting: true, cell: ({ row }) => getStatusBadge(row.application_status_id ?? 0) },
+    { accessorKey: 'approver_comment', header: '承認者コメント', cell: ({ row }) => row.approver_comment },
+    {
+      accessorKey: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <div className="flex flex-col sm:flex-row gap-1">
+          <Button variant="outline" size="sm" onClick={() => handleOpenDetailModal(row.id)}>詳細</Button>
+          {row.application_status_id === 1 && (
+            <Button variant="outline" size="sm" onClick={() => handleCancel(row.id)}>申請取り消し</Button>
+          )}
+        </div>
+      ),
+    },
+  ], []);
+
+  const monthOptions = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+    return {
+      value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+      label: `${date.getFullYear()}年${date.getMonth() + 1}月`,
+    };
+  });
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <p className="text-red-500">{error}</p>;
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">申請履歴</h1>
-      <ApplicationListTable isAdmin={user?.role?.name === 'admin'} />
+      <div className="flex flex-col sm:flex-row items-center mb-4 gap-4">
+        <div className="flex items-center gap-2">
+          <label htmlFor="month-filter" className="text-sm font-medium">申請月:</label>
+          <Select value={filterByMonth || "all"} onValueChange={(value) => setFilterByMonth(value === "all" ? "" : value)}>
+            <SelectTrigger id="month-filter" className="w-[180px]"><SelectValue placeholder="すべて" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">すべて</SelectItem>
+              {monthOptions.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <label htmlFor="status-filter" className="text-sm font-medium">ステータス:</label>
+          <Select value={filterByStatus || "all"} onValueChange={(value) => setFilterByStatus(value === "all" ? "" : value)}>
+            <SelectTrigger id="status-filter" className="w-[150px]"><SelectValue placeholder="すべて" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">すべて</SelectItem>
+              <SelectItem value="1">申請中</SelectItem>
+              <SelectItem value="2">承認済み</SelectItem>
+              <SelectItem value="3">却下</SelectItem>
+              <SelectItem value="4">キャンセル</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <CommonTable
+        columns={columns}
+        data={applications}
+        title="申請履歴"
+        onSort={handleSort}
+        sortKey={sortBy}
+        sortOrder={sortOrder}
+      />
+      {selectedApplication && (
+        <ApplicationDetailModal
+          isOpen={isDetailModalOpen}
+          onClose={handleCloseDetailModal}
+          application={selectedApplication}
+        />
+      )}
     </div>
   );
-}
-
+};
 
 const HistoryPage = () => {
   return (

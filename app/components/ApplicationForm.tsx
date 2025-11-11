@@ -81,8 +81,8 @@ const ApplicationForm = () => {
 		const payload: ApplicationPayload = {
 			date: format(date, "yyyy-MM-dd"),
 			work_option: workOption,
-			start_time: startTime,
-			end_time: endTime,
+			start_time: workOption === "full_day" ? undefined : startTime,
+			end_time: workOption === "full_day" ? undefined : endTime,
 			is_special: isSpecial,
 			reason: reason,
 			is_overtime: isOvertime,
@@ -118,7 +118,21 @@ const ApplicationForm = () => {
 						</div>
 
 						<div className="grid w-full items-center gap-1.5">
-							<Label>勤務形態</Label>
+							<div className="flex items-center gap-2">
+								<Label>勤務形態</Label>
+								<TooltipProvider>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button variant="ghost" size="icon" className="h-5 w-5">
+												<Info className="h-4 w-4" />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>
+											<p>所定労働時間よりも短い時間で勤務する場合に選択してください。</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
 							<RadioGroup
 								value={workOption}
 								onValueChange={setWorkOption}
@@ -137,9 +151,11 @@ const ApplicationForm = () => {
 									<Label htmlFor="pm_half">午後半休</Label>
 								</div>
 							</RadioGroup>
-							<p className="text-sm text-muted-foreground">
-								※半日勤務は0.5回としてカウントされます
-							</p>
+							{(workOption === "am_half" || workOption === "pm_half") && (
+								<p className="text-sm text-muted-foreground">
+									（0.5日としてカウント）
+								</p>
+							)}
 						</div>
 
 						{workOption !== "full_day" && (
@@ -220,12 +236,26 @@ const ApplicationForm = () => {
 								checked={isOvertime}
 								onCheckedChange={(checked: boolean) => setIsOvertime(checked)}
 							/>
-							<label
-								htmlFor="is-overtime"
-								className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-							>
-								8時間以上の勤務
-							</label>
+							<div className="flex items-center gap-0.5">
+								<label
+									htmlFor="is-overtime"
+									className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+								>
+									8時間以上の勤務
+								</label>
+								<TooltipProvider>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button variant="ghost" size="icon" className="h-5 w-5">
+												<Info className="h-4 w-4" />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>
+											<p>残業や休日出勤など、1日の労働時間が8時間を超える場合に選択してください。</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
 						</div>
 
 						{isOvertime && (

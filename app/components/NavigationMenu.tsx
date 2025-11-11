@@ -10,13 +10,14 @@ import {
   User,
   CheckSquare,
   Shield,
+  FileSearch,
 } from "lucide-react";
 import { useAuthStore } from "@/app/store/auth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-const menuItems = [
+const personalMenuItems = [
   {
     href: "/dashboard",
     icon: Home,
@@ -41,11 +42,20 @@ const menuItems = [
     label: "プロフィール",
     roles: ["applicant", "approver", "admin"],
   },
+];
+
+const adminMenuItems = [
   {
     href: "/approvals",
     icon: CheckSquare,
     label: "承認待ち一覧",
     roles: ["approver", "admin"],
+  },
+  {
+    href: "/admin/applications",
+    icon: FileSearch,
+    label: "申請一覧",
+    roles: ["admin"],
   },
   {
     href: "/admin",
@@ -60,7 +70,11 @@ const NavigationMenu = () => {
   const role = user?.role?.name;
   const pathname = usePathname();
 
-  const filteredMenuItems = menuItems.filter((item) =>
+  const filteredPersonalMenuItems = personalMenuItems.filter((item) =>
+    role ? item.roles.includes(role) : false
+  );
+
+  const filteredAdminMenuItems = adminMenuItems.filter((item) =>
     role ? item.roles.includes(role) : false
   );
 
@@ -71,17 +85,39 @@ const NavigationMenu = () => {
       </div>
       <Separator />
       <nav className="flex flex-col p-2 space-y-1">
-        {filteredMenuItems.map((item) => (
+        <h3 className="px-4 py-2 text-sm font-semibold text-muted-foreground">
+          自分用メニュー
+        </h3>
+        {filteredPersonalMenuItems.map((item) => (
           <Link href={item.href} key={item.href} passHref>
             <Button
               variant={pathname === item.href ? "secondary" : "ghost"}
-              className="w-full justify-start hover:bg-accent hover:text-accent-foreground"
+              className="w-full justify-start hover:bg-gray-200 dark:hover:bg-gray-700"
             >
               <item.icon className="mr-2 h-4 w-4" />
               {item.label}
             </Button>
           </Link>
         ))}
+        {role === "admin" && filteredAdminMenuItems.length > 0 && (
+          <>
+            <Separator className="my-2" />
+            <h3 className="px-4 py-2 text-sm font-semibold text-muted-foreground">
+              管理者用メニュー
+            </h3>
+            {filteredAdminMenuItems.map((item) => (
+              <Link href={item.href} key={item.href} passHref>
+                <Button
+                  variant={pathname === item.href ? "secondary" : "ghost"}
+                  className="w-full justify-start hover:bg-gray-200 dark:hover:bg-gray-700"
+                >
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {item.label}
+                </Button>
+              </Link>
+            ))}
+          </>
+        )}
       </nav>
     </div>
   );

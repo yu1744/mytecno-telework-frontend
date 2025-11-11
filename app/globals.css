@@ -120,3 +120,34 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes bell-shake {
+  0% { transform: rotate(0); }
+  15% { transform: rotate(5deg); }
+  30% { transform: rotate(-5deg); }
+  45% { transform: rotate(4deg); }
+  60% { transform: rotate(-4deg); }
+  75% { transform: rotate(2deg); }
+  85% { transform: rotate(-2deg); }
+  92% { transform: rotate(1deg); }
+  100% { transform: rotate(0); }
+}
+
+.bell-shake {
+  animation: bell-shake 0.8s cubic-bezier(.36,.07,.19,.97) both;
+  transform-origin: top center;
+}
+
+.notification-area {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.notification-area-open {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.notification-area-closed {
+  opacity: 0;
+  transform: translateY(-10px);
+}

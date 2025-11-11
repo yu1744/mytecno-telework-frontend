@@ -1,4 +1,5 @@
 import { Department } from '@/app/types/department';
+import { Application } from '@/app/types/application';
 import { ApplicationPayload } from '@/app/types/application';
 import type { AppNotification } from '@/app/types/application';
 import axios from 'axios';
@@ -138,6 +139,7 @@ export type ApplicationRequestParams = {
   sort_order?: 'asc' | 'desc';
   filter_by_status?: string;
   filter_by_user?: string;
+  filter_by_month?: string;
 };
 
 export const createApplication = (params: ApplicationPayload) => api.post('/applications', { application: params });
@@ -145,6 +147,7 @@ export const getApplications = (params: ApplicationRequestParams = {}) => {
   const query = new URLSearchParams(params as Record<string, string>).toString();
   return api.get(`/applications?${query}`);
 };
+export const getApplication = (id: number) => api.get<Application>(`/applications/${id}`);
 export const cancelApplication = (id: number) => api.delete(`/applications/${id}`);
 export const adminGetApplications = (params: ApplicationRequestParams = {}) => {
   const query = new URLSearchParams(params as Record<string, string>).toString();
@@ -159,9 +162,17 @@ export const getApplicationsByDate = (date: string) => {
   return api.get(`/applications/by_date?date=${date}`);
 };
 // 承認API
-export const getPendingApprovals = () => api.get('/approvals');
-export const updateApprovalStatus = (id: number, status: 'approved' | 'rejected', comment?: string) => api.put(`/approvals/${id}`, { status, comment });
+export const getPendingApprovals = (params: ApplicationRequestParams = {}) => {
+  const query = new URLSearchParams(params as Record<string, string>).toString();
+  return api.get(`/approvals?${query}`);
+};
+export const updateApprovalStatus = (id: number, status: 'approved' | 'rejected', comment?: string) => api.put(`/approvals/${id}`, { approval: { status, comment } });
+export const getPendingApprovalsCount = async () => {
+  const response = await api.get('/approvals');
+  return response.data.length;
+};
 
 // 通知API
 export const getNotifications = () => api.get<AppNotification[]>('/notifications');
 export const markNotificationAsRead = (id: number) => api.put<AppNotification>(`/notifications/${id}`, { read: true });
+export const getUnreadNotifications = () => api.get<AppNotification[]>('/notifications/unread');

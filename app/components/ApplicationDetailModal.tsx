@@ -1,51 +1,118 @@
 'use client';
+import React from 'react';
 
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-
 import { Application } from '@/app/types/application';
-
-interface ModalApplication {
-  id: number;
-  user_name: string;
-  status: string;
-}
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 
 interface Props {
-  date: string;
-  applications: ModalApplication[];
+  application: Application | null;
   isOpen: boolean;
   onClose: () => void;
 }
 
-const statusColorMap: { [key: string]: string } = {
-  '申請中': 'bg-yellow-500',
-  '承認': 'bg-green-500',
-  '却下': 'bg-red-500',
+const getStatusBadge = (statusName: string) => {
+  switch (statusName) {
+    case '申請中': return <Badge variant="outline">申請中</Badge>;
+    case '承認': return <Badge className="bg-green-100 text-green-800">承認済み</Badge>;
+    case '却下': return <Badge variant="destructive">却下</Badge>;
+    case 'キャンセル': return <Badge variant="secondary">キャンセル</Badge>;
+    default: return <Badge variant="secondary">不明</Badge>;
+  }
 };
 
-export function ApplicationDetailModal({ date, applications, isOpen, onClose }: Props) {
+export function ApplicationDetailModal({ application, isOpen, onClose }: Props) {
+  if (!application) {
+    return null;
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{date} の申請詳細</DialogTitle>
+          <DialogTitle>{new Date(application.date).toLocaleDateString('ja-JP')} の申請詳細</DialogTitle>
         </DialogHeader>
         <div className="mt-4 space-y-4">
-          {applications.map((app) => (
-            <div key={app.id} className="flex items-center justify-between p-2 border rounded-md">
-              <div>
-                <p className="font-semibold">{app.user_name}</p>
-              </div>
-              <Badge className={statusColorMap[app.status]}>{app.status}</Badge>
+          <Table>
+            <TableBody>
+              <TableRow>
+                <TableCell className="font-semibold w-1/4">申請者</TableCell>
+                <TableCell>{application.user.name}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-semibold">ステータス</TableCell>
+                <TableCell>
+                  {getStatusBadge(application.application_status.name)}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-semibold">勤務形態</TableCell>
+                <TableCell>{application.work_option}</TableCell>
+              </TableRow>
+              {application.start_time && (
+                <TableRow>
+                  <TableCell className="font-semibold">勤務時間</TableCell>
+                  <TableCell>{application.start_time} - {application.end_time}</TableCell>
+                </TableRow>
+              )}
+               {application.break_time && (
+                <TableRow>
+                  <TableCell className="font-semibold">休憩時間</TableCell>
+                  <TableCell>{application.break_time}分</TableCell>
+                </TableRow>
+              )}
+              <TableRow>
+                <TableCell className="font-semibold">申請理由</TableCell>
+                <TableCell className="whitespace-pre-wrap">{application.reason}</TableCell>
+              </TableRow>
+              {application.is_overtime && (
+                <>
+                  <TableRow>
+                    <TableCell className="font-semibold">残業理由</TableCell>
+                    <TableCell className="whitespace-pre-wrap">{application.overtime_reason}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-semibold">残業終了時間</TableCell>
+                    <TableCell>{application.overtime_end}</TableCell>
+                  </TableRow>
+                </>
+              )}
+            </TableBody>
+          </Table>
+
+          {application.approvals && application.approvals.length > 0 && (
+            <div>
+              <h4 className="font-semibold mb-2">承認情報</h4>
+              <Table>
+                <TableBody>
+                  {application.approvals.map(approval => (
+                    <React.Fragment key={approval.id}>
+                      <TableRow>
+                        <TableCell className="font-semibold w-1/4">承認者</TableCell>
+                        <TableCell>{approval.approver.name}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-semibold">ステータス</TableCell>
+                        <TableCell>{approval.status}</TableCell>
+                      </TableRow>
+                      {approval.comment && (
+                        <TableRow>
+                          <TableCell className="font-semibold">コメント</TableCell>
+                          <TableCell className="whitespace-pre-wrap">{approval.comment}</TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          ))}
+          )}
         </div>
       </DialogContent>
     </Dialog>

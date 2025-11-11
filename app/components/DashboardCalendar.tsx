@@ -8,11 +8,18 @@ import { ja } from 'date-fns/locale';
 import { getCalendarApplications } from '@/app/lib/api';
 import { toast } from 'sonner';
 import { Application } from '@/app/types/application';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface CalendarDayApplication {
   id: number;
   user_name: string;
   status: string;
+  work_style: string;
 }
 
 interface ApplicationData {
@@ -60,6 +67,7 @@ export function DashboardCalendar({ applications = [], onDateSelect }: Dashboard
             id: app.id,
             user_name: app.user.name,
             status: status,
+            work_style: app.work_style,
           });
         });
       }
@@ -78,28 +86,49 @@ export function DashboardCalendar({ applications = [], onDateSelect }: Dashboard
     }
   };
 
-  const footer = (
-    <div className="mt-4 text-sm">
-      <p>日付をクリックすると詳細が表示されます。</p>
-    </div>
-  );
-
   function CustomDay({ day, ...props }: DayProps) {
     const dateStr = day.date.toISOString().split('T')[0];
     const dayData = data[dateStr];
 
+    let dayClassName = '';
+    if (dayData) {
+      if (dayData.rejected > 0) {
+        dayClassName = 'bg-red-200';
+      } else if (dayData.pending > 0) {
+        dayClassName = 'bg-yellow-200';
+      } else if (dayData.approved > 0) {
+        dayClassName = 'bg-green-200';
+      }
+    }
+
+    const dayContent = (
+      <div className={`relative flex h-full w-full flex-col items-center justify-center rounded-md ${dayClassName}`}>
+        <span>{day.date.getDate()}</span>
+      </div>
+    );
+
     return (
       <Day day={day} {...props}>
-        <div className="relative flex h-full w-full flex-col items-center justify-center">
-          <span>{day.date.getDate()}</span>
-          {dayData && (
-            <div className="mt-1 flex space-x-1">
-              {dayData.approved > 0 && <div className="h-2 w-2 rounded-full bg-green-500" title={`承認: ${dayData.approved}件`}></div>}
-              {dayData.pending > 0 && <div className="h-2 w-2 rounded-full bg-yellow-500" title={`申請中: ${dayData.pending}件`}></div>}
-              {dayData.rejected > 0 && <div className="h-2 w-2 rounded-full bg-red-500" title={`却下: ${dayData.rejected}件`}></div>}
-            </div>
-          )}
-        </div>
+        {dayData ? (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {dayContent}
+              </TooltipTrigger>
+              <TooltipContent>
+                <ul>
+                  {dayData.applications.map((app) => (
+                    <li key={app.id}>
+                      {app.user_name}: {app.work_style} ({app.status})
+                    </li>
+                  ))}
+                </ul>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          dayContent
+        )}
       </Day>
     );
   }
@@ -116,7 +145,6 @@ export function DashboardCalendar({ applications = [], onDateSelect }: Dashboard
         components={{
           Day: CustomDay,
         }}
-        footer={footer}
         className="p-3"
       />
     </div>

@@ -17,6 +17,8 @@ import DeleteUserModal from "../components/DeleteUserModal";
 import ReusableModal from "../components/ReusableModal";
 import UserDetailModal from "../components/UserDetailModal";
 import EditUserModal from "../components/EditUserModal";
+import { CommonTable, type ColumnDef } from "../components/CommonTable";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -216,6 +218,65 @@ const AdminPageContent = () => {
 		}
 	};
 
+	const columns: ColumnDef<User>[] = [
+		{
+			accessorKey: "name",
+			header: "名前",
+			cell: ({ row }) => row.name,
+		},
+		{
+			accessorKey: "department",
+			header: "部署",
+			cell: ({ row }) => row.department.name,
+		},
+		{
+			accessorKey: "role",
+			header: "権限",
+			cell: ({ row }) => (
+				<Badge
+					variant={
+						row.role.name === "admin"
+							? "destructive"
+							: row.role.name === "approver"
+							? "default"
+							: "secondary"
+					}
+				>
+					{row.role.name}
+				</Badge>
+			),
+		},
+		{
+			accessorKey: "actions",
+			header: "アクション",
+			cell: ({ row }) => (
+				<div className="flex gap-2">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => handleOpenDetailModal(row.id)}
+					>
+						詳細
+					</Button>
+					<Button
+						variant="secondary"
+						size="sm"
+						onClick={() => handleOpenEditModal(row)}
+					>
+						編集
+					</Button>
+					<Button
+						variant="destructive"
+						size="sm"
+						onClick={() => handleOpenDeleteModal(row)}
+					>
+						削除
+					</Button>
+				</div>
+			),
+		},
+	];
+
 	if (loading) {
 		return <LoadingSpinner />;
 	}
@@ -231,6 +292,7 @@ const AdminPageContent = () => {
 						<TabsTrigger value="user-management">ユーザー管理</TabsTrigger>
 						<TabsTrigger value="usage-analytics">利用状況</TabsTrigger>
 						<TabsTrigger value="department-management">部署管理</TabsTrigger>
+						<TabsTrigger value="system-settings">システム設定</TabsTrigger>
 					</TabsList>
 
 					<TabsContent value="user-management" className="mt-4">
@@ -238,72 +300,19 @@ const AdminPageContent = () => {
 							<CardHeader>
 								<div className="flex justify-between items-center">
 									<CardTitle>ユーザー一覧</CardTitle>
-									<div className="flex gap-2">
-										<Button onClick={() => setRegisterModalOpen(true)}>
-											新規登録
-										</Button>
-										<Button asChild variant="outline">
-											<Link href="/admin/integrations">外部連携設定</Link>
-										</Button>
-										<Button asChild variant="outline">
-											<Link href="/admin/personnel_changes">人事異動の予約・管理</Link>
-										</Button>
-									</div>
 								</div>
 							</CardHeader>
 							<CardContent>
+								<div className="flex justify-end mb-4">
+									<Button onClick={() => setRegisterModalOpen(true)}>
+										新規登録
+									</Button>
+								</div>
 								{error && <p className="text-red-500">{error}</p>}
 								{!error && users.length === 0 ? (
 									<EmptyState message="表示できるユーザーがいません。" />
 								) : (
-									<Table>
-										<TableHeader>
-											<TableRow>
-												<TableHead className="font-bold">名前</TableHead>
-												<TableHead className="font-bold">部署</TableHead>
-												<TableHead className="font-bold">権限</TableHead>
-												<TableHead className="font-bold">アクション</TableHead>
-											</TableRow>
-										</TableHeader>
-										<TableBody>
-											{users.map((user) => (
-												<TableRow key={user.id}>
-													<TableCell>{user.name}</TableCell>
-													<TableCell>
-														{user.department.name}
-													</TableCell>
-													<TableCell>
-														{user.role.name}
-													</TableCell>
-													<TableCell>
-														<div className="flex gap-2">
-															<Button
-																variant="outline"
-																size="sm"
-																onClick={() => handleOpenDetailModal(user.id)}
-															>
-																詳細
-															</Button>
-															<Button
-																variant="outline"
-																size="sm"
-																onClick={() => handleOpenEditModal(user)}
-															>
-																編集
-															</Button>
-															<Button
-																variant="destructive"
-																size="sm"
-																onClick={() => handleOpenDeleteModal(user)}
-															>
-																削除
-															</Button>
-														</div>
-													</TableCell>
-												</TableRow>
-											))}
-										</TableBody>
-									</Table>
+									<CommonTable columns={columns} data={users} />
 								)}
 							</CardContent>
 						</Card>
@@ -357,6 +366,22 @@ const AdminPageContent = () => {
 										))}
 									</TableBody>
 								</Table>
+							</CardContent>
+						</Card>
+					</TabsContent>
+
+					<TabsContent value="system-settings" className="mt-4">
+						<Card>
+							<CardHeader>
+								<CardTitle>システム設定</CardTitle>
+							</CardHeader>
+							<CardContent className="flex flex-col items-start gap-4">
+								<Button asChild variant="outline">
+									<Link href="/admin/integrations">外部連携設定</Link>
+								</Button>
+								<Button asChild variant="outline">
+									<Link href="/admin/personnel_changes">人事異動の予約・管理</Link>
+								</Button>
 							</CardContent>
 						</Card>
 					</TabsContent>

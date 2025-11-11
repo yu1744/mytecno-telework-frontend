@@ -34,7 +34,7 @@ const ReusableModal: React.FC<Props> = ({ open, onClose, title, content, actions
 				<AlertDialogHeader>
 					<AlertDialogTitle>{title}</AlertDialogTitle>
 					<AlertDialogDescription>
-						<div>{content}</div>
+						{content}
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>

@@ -1,8 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
-import { useAuthStore } from '../store/auth';
-import PrivateRoute from '../components/PrivateRoute';
-import { CommonTable, ColumnDef } from '../components/CommonTable';
+import PrivateRoute from '../../components/PrivateRoute';
+import { CommonTable, ColumnDef } from '../../components/CommonTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -12,12 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Application } from '../types/application';
-import { User } from '../types/user';
-import { getPendingApprovals, getApplication, updateApprovalStatus, adminGetUsers, ApplicationRequestParams } from '../lib/api';
-import LoadingSpinner from '../components/LoadingSpinner';
-import { ApplicationDetailModal } from '../components/ApplicationDetailModal';
-import ApprovalCommentModal from '../components/ApprovalCommentModal';
+import { Application } from '../../types/application';
+import { User } from '../../types/user';
+import { adminGetApplications, getApplication, adminGetUsers, ApplicationRequestParams } from '../../lib/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import { ApplicationDetailModal } from '../../components/ApplicationDetailModal';
 
 const getStatusBadge = (statusId: number) => {
   switch (statusId) {
@@ -29,8 +27,7 @@ const getStatusBadge = (statusId: number) => {
   }
 };
 
-const ApprovalsPageContent = () => {
-  const user = useAuthStore((state) => state.user);
+const AdminApplicationsPageContent = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,9 +40,6 @@ const ApprovalsPageContent = () => {
 
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
-  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
-  const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null);
-  const [approvalStatus, setApprovalStatus] = useState<'approved' | 'rejected' | null>(null);
 
   const fetchApplications = async () => {
     setLoading(true);
@@ -58,15 +52,8 @@ const ApprovalsPageContent = () => {
         filter_by_month: filterByMonth,
       };
       Object.keys(params).forEach(key => (params[key as keyof ApplicationRequestParams] === '' || params[key as keyof ApplicationRequestParams] === undefined) && delete params[key as keyof ApplicationRequestParams]);
-      const response = await getPendingApprovals(params);
-      if (user) {
-        const filteredApplications = response.data.filter(
-          (app: Application) => app.user.id !== user.id
-        );
-        setApplications(filteredApplications);
-      } else {
-        setApplications(response.data);
-      }
+      const response = await adminGetApplications(params);
+      setApplications(response.data);
       setError(null);
     } catch (err) {
       console.error('Failed to fetch applications:', err);
@@ -112,25 +99,6 @@ const ApprovalsPageContent = () => {
     setIsDetailModalOpen(false);
   };
 
-  const handleApprovalAction = (id: number, status: 'approved' | 'rejected') => {
-    setSelectedApplicationId(id);
-    setApprovalStatus(status);
-    setIsCommentModalOpen(true);
-  };
-
-  const handleConfirmApprovalAction = async (comment: string, status: 'approved' | 'rejected') => {
-    if (!selectedApplicationId) return;
-    try {
-      await updateApprovalStatus(selectedApplicationId, status, comment);
-      fetchApplications();
-    } catch (error) {
-      console.error(`Failed to ${status} application:`, error);
-    } finally {
-      setIsCommentModalOpen(false);
-      setSelectedApplicationId(null);
-    }
-  };
-
   const columns: ColumnDef<Application>[] = useMemo(() => [
     { accessorKey: 'created_at', header: '申請日', enableSorting: true, cell: ({ row }) => new Date(row.created_at ?? '').toLocaleDateString('ja-JP') },
     { accessorKey: 'date', header: '申請対象日', enableSorting: true, cell: ({ row }) => new Date(row.date).toLocaleDateString('ja-JP') },
@@ -144,23 +112,16 @@ const ApprovalsPageContent = () => {
       }
     },
     { accessorKey: 'application_status_id', header: 'ステータス', enableSorting: true, cell: ({ row }) => getStatusBadge(row.application_status_id ?? 0) },
-    { accessorKey: 'approver_comment', header: '承認者コメント', cell: ({ row }) => row.approver_comment },
     {
       accessorKey: 'actions',
       header: '操作',
       cell: ({ row }) => (
         <div className="flex flex-col sm:flex-row gap-1">
           <Button variant="outline" size="sm" onClick={() => handleOpenDetailModal(row.id)}>詳細</Button>
-          {row.application_status_id === 1 && (
-            <>
-              <Button size="sm" className="bg-green-500 hover:bg-green-600" onClick={() => handleApprovalAction(row.id, 'approved')}>承認</Button>
-              <Button variant="destructive" size="sm" onClick={() => handleApprovalAction(row.id, 'rejected')}>却下</Button>
-            </>
-          )}
         </div>
       ),
     },
-  ], []);
+  ], [users]);
 
   const monthOptions = Array.from({ length: 12 }, (_, i) => {
     const date = new Date();
@@ -176,7 +137,7 @@ const ApprovalsPageContent = () => {
 
   return (
     <div className="container mx-auto p-4 md:p-6">
-      <h1 className="text-2xl font-bold mb-6">申請一覧</h1>
+      <h1 className="text-2xl font-bold mb-6">全申請一覧</h1>
       <div className="flex flex-col sm:flex-row items-center mb-4 gap-4">
         <div className="flex items-center gap-2">
           <label htmlFor="month-filter" className="text-sm font-medium">申請月:</label>
@@ -215,7 +176,7 @@ const ApprovalsPageContent = () => {
       <CommonTable
         columns={columns}
         data={applications}
-        title="承認待ち一覧"
+        title="全申請一覧"
         onSort={handleSort}
         sortKey={sortBy}
         sortOrder={sortOrder}
@@ -227,26 +188,16 @@ const ApprovalsPageContent = () => {
           application={selectedApplication}
         />
       )}
-      <ApprovalCommentModal
-        isOpen={isCommentModalOpen}
-        onClose={() => {
-          setIsCommentModalOpen(false);
-          setApprovalStatus(null);
-        }}
-        onConfirm={handleConfirmApprovalAction}
-        applicationId={selectedApplicationId}
-        status={approvalStatus}
-      />
     </div>
   );
 };
 
-const ApprovalsPage = () => {
+const AdminApplicationsPage = () => {
   return (
-    <PrivateRoute allowedRoles={['admin', 'approver']}>
-      <ApprovalsPageContent />
+    <PrivateRoute allowedRoles={['admin']}>
+      <AdminApplicationsPageContent />
     </PrivateRoute>
   );
 };
 
-export default ApprovalsPage;
+export default AdminApplicationsPage;
