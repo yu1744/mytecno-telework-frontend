@@ -9,10 +9,8 @@ import EmptyState from '../components/EmptyState';
 import api from "@/app/lib/api";
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import MoreTimeIcon from '@mui/icons-material/MoreTime';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
-
-
+// アイコン取得関数
 const getApplicationTypeIcon = (type: string | undefined) => {
   switch (type) {
     case 'over_8_hours':
@@ -31,7 +29,6 @@ const getApplicationTypeIcon = (type: string | undefined) => {
       return null;
   }
 };
-
 
 const style = {
   position: 'absolute',
@@ -58,9 +55,7 @@ const ApprovalsPage = () => {
       setLoading(true);
       try {
         const response = await api.get('/api/v1/approvals');
-        
         console.log('Fetched applications:', response.data);
-        
         setApplications(response.data);
         setError(null);
       } catch (err) {
@@ -89,11 +84,11 @@ const ApprovalsPage = () => {
     try {
       const response = await api.patch(`/api/v1/approvals/${appId}`, {
         status: 'approved',
-        comment: '' 
+        comment: ''
       });
 
       console.log('Approval response:', response.data);
-      
+
       setApplications(prevApps => prevApps.filter(app => app.id !== appId));
       alert('承認しました。');
 
@@ -103,7 +98,7 @@ const ApprovalsPage = () => {
       alert('承認処理に失敗しました。');
     }
   };
-  
+
   const handleReject = async () => {
     if (selectedApp && comment.trim() !== '') {
       try {
@@ -113,7 +108,7 @@ const ApprovalsPage = () => {
         });
 
         console.log('Rejection response:', response.data);
-        
+
         setApplications(prevApps => prevApps.filter(app => app.id !== selectedApp.id));
         alert('却下しました。');
         handleClose();
@@ -161,10 +156,20 @@ const ApprovalsPage = () => {
                       <TableCell component="th" scope="row">
                         {app.user?.name}
                       </TableCell>
-                      <TableCell>{new Date(app.start_date).toLocaleDateString()}</TableCell>
+                      
+                      {/* 名前 */}
+                      <TableCell component="th" scope="row">
+                        {app.user?.name}
+                      </TableCell>
+                      {/* 申請日 */}
+                      <TableCell>{new Date(app.date).toLocaleDateString()}</TableCell>
+                      {/* 申請種別 */}
                       <TableCell>{getApplicationTypeIcon(app.application_type)}</TableCell>
+                      {/* 理由 */}
                       <TableCell>{app.reason}</TableCell>
+                      {/* 今週の申請回数*/}
                       <TableCell align="center">{app.weekly_application_count ?? 'N/A'}</TableCell>
+
                       <TableCell>
                         <Button variant="contained" color="primary" sx={{ mr: 1 }} onClick={() => handleApprove(app.id)}>
                           承認
@@ -172,37 +177,14 @@ const ApprovalsPage = () => {
                         <Button variant="outlined" color="error" onClick={() => handleOpen(app)}>
                           却下
                         </Button>
+
                       </TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {applications.map((app) => (
-                      <TableRow
-                        key={app.id}
-                        sx={{ '&:last-child td, &:last-child th': { border: 0 }, '& td, & th': { borderBottom: (theme) => `1px solid ${theme.palette.divider}` } }}
-                      >
-                        <TableCell component="th" scope="row">
-                          {app.user?.name}
-                        </TableCell>
-                        <TableCell>{new Date(app.start_date).toLocaleDateString()}</TableCell>
-                        <TableCell>{getApplicationTypeIcon(app.application_type)}</TableCell>
-                        <TableCell>{app.reason}</TableCell>
-                        <TableCell align="center">{app.weekly_application_count ?? 'N/A'}</TableCell>
-                        <TableCell>
-                          <Button variant="contained" color="primary" sx={{ mr: 1 }} onClick={() => handleApprove(app.id)}>
-                            承認
-                          </Button>
-                          <Button variant="outlined" color="error" onClick={() => handleOpen(app)}>
-                            却下
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-          </Box>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </Box>
       </Box>
 
