@@ -143,41 +143,49 @@ const ApprovalsPage = () => {
                     <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>日付</TableCell>
                     <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>申請種別</TableCell>
                     <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>理由</TableCell>
-                    <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>今週の申請回数</TableCell>
+                    <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>今週の承認回数</TableCell>
                     <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>操作</TableCell>
                   </TableRow>
                 </TableHead>
-                <TableBody>
-                  {applications.map((app) => (
-                    <TableRow
-                      key={app.id}
-                      sx={{ '&:last-child td, &:last-child th': { border: 0 }, '& td, & th': { borderBottom: (theme) => `1px solid ${theme.palette.divider}` } }}
-                    >          
-                      {/* 名前 */}
-                      <TableCell component="th" scope="row">
-                        {app.user?.name}
-                      </TableCell>
-                      {/* 申請日 */}
-                      <TableCell>{new Date(app.date).toLocaleDateString()}</TableCell>
-                      {/* 申請種別 */}
-                      <TableCell>{getApplicationTypeIcon(app.application_type)}</TableCell>
-                      {/* 理由 */}
-                      <TableCell>{app.reason}</TableCell>
-                      {/* 今週の申請回数*/}
-                      <TableCell align="center">{app.weekly_application_count ?? 'N/A'}</TableCell>
+                  <TableBody>
+      {applications.map((app) => (
+        <TableRow
+          key={app.id}
+          sx={{ '&:last-child td, &:last-child th': { border: 0 }, '& td, & th': { borderBottom: (theme) => `1px solid ${theme.palette.divider}` } }}
+        >
+          {/* 名前 */}
+          <TableCell component="th" scope="row">
+            {app.user?.name}
+          </TableCell>
+          
+          {/* 申請日 */}
+          <TableCell>{new Date(app.date).toLocaleDateString()}</TableCell>
+          
+          {/* 申請種別 */}
+          <TableCell>
+            {app.is_special_case === true ? '特認' : '通常'}
+          </TableCell>
+          
+          {/* 理由 */}
+          <TableCell>
+            {app.is_special_case === true ? app.special_reason : app.reason}
+          </TableCell>
+          
+          {/* 今週の承認回数 */}
+          <TableCell>{app.user_weekly_approval_count ?? 'N/A'}</TableCell>
 
-                      <TableCell>
-                        <Button variant="contained" color="primary" sx={{ mr: 1 }} onClick={() => handleApprove(app.id)}>
-                          承認
-                        </Button>
-                        <Button variant="outlined" color="error" onClick={() => handleOpen(app)}>
-                          却下
-                        </Button>
-
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+          {/* 操作ボタン */}
+          <TableCell>
+            <Button variant="contained" color="primary" sx={{ mr: 1 }} onClick={() => handleApprove(app.id)}>
+              承認
+            </Button>
+            <Button variant="outlined" color="error" onClick={() => handleOpen(app)}>
+              却下
+            </Button>
+          </TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
               </Table>
             </TableContainer>
           )}
