@@ -141,9 +141,11 @@ const ApprovalsPage = () => {
                   <TableRow>
                     <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>申請者</TableCell>
                     <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>日付</TableCell>
+                    <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>始業</TableCell>
+                    <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>終業</TableCell>
                     <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>申請種別</TableCell>
                     <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>理由</TableCell>
-                    <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>今週の承認回数</TableCell>
+                    <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>今週の承認</TableCell>
                     <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>操作</TableCell>
                   </TableRow>
                 </TableHead>
@@ -160,6 +162,16 @@ const ApprovalsPage = () => {
           
           {/* 申請日 */}
           <TableCell>{new Date(app.date).toLocaleDateString()}</TableCell>
+          
+          {/* 始業 */}
+          <TableCell>
+            {new Date(app.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </TableCell>
+
+          {/* 終業 */}
+          <TableCell>
+            {new Date(app.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </TableCell>
           
           {/* 申請種別 */}
           <TableCell>
