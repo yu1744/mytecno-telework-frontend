@@ -145,7 +145,7 @@ const ApprovalsPage = () => {
                     <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>終業</TableCell>
                     <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>申請種別</TableCell>
                     <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>理由</TableCell>
-                    <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>今週の承認</TableCell>
+                    <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>週毎の承認</TableCell>
                     <TableCell sx={{ backgroundColor: (theme) => theme.palette.grey[100], fontWeight: 'bold' }}>操作</TableCell>
                   </TableRow>
                 </TableHead>
@@ -183,7 +183,7 @@ const ApprovalsPage = () => {
             {app.is_special_case === true ? app.special_reason : app.reason}
           </TableCell>
           
-          {/* 今週の承認回数 */}
+          {/* 週毎の承認 */}
           <TableCell>{app.user_weekly_approval_count ?? 'N/A'}</TableCell>
 
           {/* 操作ボタン */}
