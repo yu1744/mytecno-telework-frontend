@@ -18,7 +18,6 @@ import {
 	getPendingApprovals,
 	getApplication,
 	updateApprovalStatus,
-	adminGetUsers,
 	ApplicationRequestParams,
 } from "../lib/api";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -43,7 +42,6 @@ const getStatusBadge = (statusId: number) => {
 const ApprovalsPageContent = () => {
 	const user = useAuthStore((state) => state.user);
 	const [applications, setApplications] = useState<Application[]>([]);
-	const [users, setUsers] = useState<User[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [sortBy, setSortBy] =
@@ -100,18 +98,8 @@ const ApprovalsPageContent = () => {
 		}
 	};
 
-	const fetchUsers = async () => {
-		try {
-			const response = await adminGetUsers();
-			setUsers(response.data);
-		} catch (err) {
-			console.error("Failed to fetch users:", err);
-		}
-	};
-
 	useEffect(() => {
 		fetchApplications();
-		fetchUsers();
 	}, [sortBy, sortOrder, filterByStatus, filterByUser, filterByMonth]);
 
 	const handleSort = (sortKey: keyof Application | (string & {})) => {
@@ -147,8 +135,7 @@ const ApprovalsPageContent = () => {
 		// 管理者が別部署の申請を承認する場合は追加で確認メッセージを表示
 		const isAdminApprovingDifferentDept =
 			user?.role?.name === "admin" &&
-			users.find((u) => u.id === app.user.id)?.department?.id !==
-				user.department?.id;
+			app.user.department?.id !== user.department?.id;
 
 		let confirmMessage =
 			status === "approved"
@@ -189,43 +176,44 @@ const ApprovalsPageContent = () => {
 				accessorKey: "created_at",
 				header: "申請日",
 				enableSorting: true,
-				cell: ({ row }) =>
+				cell: ({ row }: { row: Application }) =>
 					new Date(row.created_at ?? "").toLocaleDateString("ja-JP"),
 			},
 			{
 				accessorKey: "date",
 				header: "申請対象日",
 				enableSorting: true,
-				cell: ({ row }) => new Date(row.date).toLocaleDateString("ja-JP"),
+				cell: ({ row }: { row: Application }) =>
+					new Date(row.date).toLocaleDateString("ja-JP"),
 			},
 			{
 				accessorKey: "user",
 				header: "申請者",
-				cell: ({ row }) => row.user.name,
+				cell: ({ row }: { row: Application }) => row.user.name,
 			},
 			{
 				accessorKey: "user", // userオブジェクト全体を渡す
 				header: "部署",
-				cell: ({ row }) => {
-					const userWithDept = users.find((u) => u.id === row.user.id);
-					return userWithDept?.department?.name || "N/A";
+				cell: ({ row }: { row: Application }) => {
+					return row.user.department?.name || "N/A";
 				},
 			},
 			{
 				accessorKey: "reason",
 				header: "申請理由",
-				cell: ({ row }) => row.reason,
+				cell: ({ row }: { row: Application }) => row.reason,
 			},
 			{
 				accessorKey: "application_status_id",
 				header: "ステータス",
 				enableSorting: true,
-				cell: ({ row }) => getStatusBadge(row.application_status_id ?? 0),
+				cell: ({ row }: { row: Application }) =>
+					getStatusBadge(row.application_status_id ?? 0),
 			},
 			{
 				accessorKey: "actions",
 				header: "操作",
-				cell: ({ row }) => (
+				cell: ({ row }: { row: Application }) => (
 					<div className="flex flex-col sm:flex-row gap-1">
 						<Button
 							variant="outline"
@@ -256,7 +244,7 @@ const ApprovalsPageContent = () => {
 				),
 			},
 		],
-		[users]
+		[]
 	);
 
 	const getRowClassName = (row: Application) => {
@@ -292,7 +280,7 @@ const ApprovalsPageContent = () => {
 
 	return (
 		<div className="container mx-auto p-4 md:p-6">
-			<h1 className="text-2xl font-bold mb-6">申請一覧</h1>
+			<h1 className="text-2xl font-bold mb-6">承認待ち一覧</h1>
 			<div className="flex flex-col sm:flex-row items-center mb-4 gap-4">
 				<div className="flex items-center gap-2">
 					<label htmlFor="month-filter" className="text-sm font-medium">
@@ -339,7 +327,7 @@ const ApprovalsPageContent = () => {
 						</SelectContent>
 					</Select>
 				</div>
-				<div className="flex items-center gap-2">
+				{/* <div className="flex items-center gap-2">
 					<label htmlFor="user-filter" className="text-sm font-medium">
 						申請者:
 					</label>
@@ -361,7 +349,7 @@ const ApprovalsPageContent = () => {
 							))}
 						</SelectContent>
 					</Select>
-				</div>
+				</div> */}
 			</div>
 			<CommonTable
 				columns={columns}

@@ -20,25 +20,25 @@ const personalMenuItems = [
 		href: "/dashboard",
 		icon: Home,
 		label: "ダッシュボード",
-		roles: ["applicant", "approver", "admin"],
+		roles: ["applicant", "approver", "admin", "user"],
 	},
 	{
 		href: "/apply",
 		icon: FileText,
 		label: "在宅勤務申請",
-		roles: ["applicant", "approver", "admin"],
+		roles: ["applicant", "approver", "admin", "user"],
 	},
 	{
 		href: "/history",
 		icon: History,
 		label: "申請履歴",
-		roles: ["applicant", "approver", "admin"],
+		roles: ["applicant", "approver", "admin", "user"],
 	},
 	{
 		href: "/profile",
 		icon: User,
 		label: "プロフィール",
-		roles: ["applicant", "approver", "admin"],
+		roles: ["applicant", "approver", "admin", "user"],
 	},
 ];
 
@@ -53,7 +53,7 @@ const adminMenuItems = [
 		href: "/admin/applications",
 		icon: FileSearch,
 		label: "申請一覧",
-		roles: ["admin"],
+		roles: ["admin", "approver"],
 	},
 	{
 		href: "/admin",
@@ -65,12 +65,16 @@ const adminMenuItems = [
 
 const NavigationMenu = () => {
 	const user = useAuthStore((state) => state.user);
-	const role = user?.role?.name;
 	const pathname = usePathname();
+	if (!user) {
+		return null;
+	}
+	const role = user?.role?.name;
 
-	const filteredPersonalMenuItems = personalMenuItems.filter((item) =>
-		role ? item.roles.includes(role) : false
-	);
+	const filteredPersonalMenuItems = personalMenuItems.filter((item) => {
+		const userRole = role || "user";
+		return item.roles.includes(userRole);
+	});
 
 	const filteredAdminMenuItems = adminMenuItems.filter((item) =>
 		role ? item.roles.includes(role) : false
@@ -93,7 +97,7 @@ const NavigationMenu = () => {
 						</Button>
 					</Link>
 				))}
-				{role === "admin" && filteredAdminMenuItems.length > 0 && (
+				{filteredAdminMenuItems.length > 0 && (
 					<>
 						<h3 className="px-4 py-2 text-sm font-semibold text-muted-foreground">
 							管理者メニュー

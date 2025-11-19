@@ -175,11 +175,10 @@ export const deleteDepartment = (id: number) =>
 
 // 申請API
 export type ApplicationRequestParams = {
-	sort_by?: "created_at" | "date" | "status";
+	sort_by?: "created_at" | "start_date" | "end_date";
 	sort_order?: "asc" | "desc";
-	filter_by_status?: string;
-	filter_by_user?: string;
-	filter_by_month?: string;
+	status?: string;
+	user_name?: string;
 };
 
 export const createApplication = (

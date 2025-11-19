@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
+import { useAuthStore } from "../../store/auth";
 import PrivateRoute from "../../components/PrivateRoute";
 import { CommonTable, ColumnDef } from "../../components/CommonTable";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ const getStatusBadge = (statusId: number) => {
 };
 
 const AdminApplicationsPageContent = () => {
+	const { user } = useAuthStore();
 	const [applications, setApplications] = useState<Application[]>([]);
 	const [users, setUsers] = useState<User[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -48,7 +50,6 @@ const AdminApplicationsPageContent = () => {
 		useState<ApplicationRequestParams["sort_order"]>("desc");
 	const [filterByStatus, setFilterByStatus] = useState<string>("");
 	const [filterByUser, setFilterByUser] = useState<string>("");
-	const [filterByMonth, setFilterByMonth] = useState<string>("");
 
 	const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 	const [selectedApplication, setSelectedApplication] =
@@ -60,16 +61,13 @@ const AdminApplicationsPageContent = () => {
 			const params: ApplicationRequestParams = {
 				sort_by: sortBy,
 				sort_order: sortOrder,
-				filter_by_status: filterByStatus,
-				filter_by_user: filterByUser,
-				filter_by_month: filterByMonth,
 			};
-			Object.keys(params).forEach(
-				(key) =>
-					(params[key as keyof ApplicationRequestParams] === "" ||
-						params[key as keyof ApplicationRequestParams] === undefined) &&
-					delete params[key as keyof ApplicationRequestParams]
-			);
+			if (filterByStatus) {
+				params.status = filterByStatus;
+			}
+			if (filterByUser) {
+				params.user_name = filterByUser;
+			}
 			const response = await adminGetApplications(params);
 			setApplications(response.data);
 			setError(null);
@@ -92,8 +90,10 @@ const AdminApplicationsPageContent = () => {
 
 	useEffect(() => {
 		fetchApplications();
-		fetchUsers();
-	}, [sortBy, sortOrder, filterByStatus, filterByUser, filterByMonth]);
+		if (user?.role?.name === "admin") {
+			fetchUsers();
+		}
+	}, [sortBy, sortOrder, filterByStatus, filterByUser]);
 
 	const handleSort = (sortKey: keyof Application | (string & {})) => {
 		const key = sortKey as ApplicationRequestParams["sort_by"];
@@ -193,18 +193,6 @@ const AdminApplicationsPageContent = () => {
 		return "";
 	};
 
-	const monthOptions = Array.from({ length: 12 }, (_, i) => {
-		const date = new Date();
-		date.setMonth(date.getMonth() - i);
-		return {
-			value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-				2,
-				"0"
-			)}`,
-			label: `${date.getFullYear()}年${date.getMonth() + 1}月`,
-		};
-	});
-
 	if (loading) return <LoadingSpinner />;
 	if (error) return <p className="text-red-500">{error}</p>;
 
@@ -212,29 +200,6 @@ const AdminApplicationsPageContent = () => {
 		<div className="container mx-auto p-4 md:p-6">
 			<h1 className="text-2xl font-bold mb-6">全申請一覧</h1>
 			<div className="flex flex-col sm:flex-row items-center mb-4 gap-4">
-				<div className="flex items-center gap-2">
-					<label htmlFor="month-filter" className="text-sm font-medium">
-						申請月:
-					</label>
-					<Select
-						value={filterByMonth || "all"}
-						onValueChange={(value) =>
-							setFilterByMonth(value === "all" ? "" : value)
-						}
-					>
-						<SelectTrigger id="month-filter" className="w-[180px]">
-							<SelectValue placeholder="すべて" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">すべて</SelectItem>
-							{monthOptions.map((option) => (
-								<SelectItem key={option.value} value={option.value}>
-									{option.label}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-				</div>
 				<div className="flex items-center gap-2">
 					<label htmlFor="status-filter" className="text-sm font-medium">
 						ステータス:
@@ -257,29 +222,31 @@ const AdminApplicationsPageContent = () => {
 						</SelectContent>
 					</Select>
 				</div>
-				<div className="flex items-center gap-2">
-					<label htmlFor="user-filter" className="text-sm font-medium">
-						申請者:
-					</label>
-					<Select
-						value={filterByUser || "all"}
-						onValueChange={(value) =>
-							setFilterByUser(value === "all" ? "" : value)
-						}
-					>
-						<SelectTrigger id="user-filter" className="w-[200px]">
-							<SelectValue placeholder="すべて" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">すべて</SelectItem>
-							{users.map((user) => (
-								<SelectItem key={user.id} value={user.id.toString()}>
-									{user.name}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-				</div>
+				{user?.role?.name === "admin" && (
+					<div className="flex items-center gap-2">
+						<label htmlFor="user-filter" className="text-sm font-medium">
+							申請者:
+						</label>
+						<Select
+							value={filterByUser || "all"}
+							onValueChange={(value) =>
+								setFilterByUser(value === "all" ? "" : value)
+							}
+						>
+							<SelectTrigger id="user-filter" className="w-[200px]">
+								<SelectValue placeholder="すべて" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">すべて</SelectItem>
+								{users.map((user) => (
+									<SelectItem key={user.id} value={user.id.toString()}>
+										{user.name}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
+				)}
 			</div>
 			<CommonTable
 				columns={columns}
@@ -303,7 +270,7 @@ const AdminApplicationsPageContent = () => {
 
 const AdminApplicationsPage = () => {
 	return (
-		<PrivateRoute allowedRoles={["admin"]}>
+		<PrivateRoute allowedRoles={["admin", "approver"]}>
 			<AdminApplicationsPageContent />
 		</PrivateRoute>
 	);

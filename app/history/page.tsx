@@ -340,7 +340,7 @@ const HistoryPageContent = () => {
 
 const HistoryPage = () => {
 	return (
-		<PrivateRoute allowedRoles={["admin", "approver", "applicant"]}>
+		<PrivateRoute allowedRoles={["admin", "approver", "applicant", "user"]}>
 			<HistoryPageContent />
 		</PrivateRoute>
 	);

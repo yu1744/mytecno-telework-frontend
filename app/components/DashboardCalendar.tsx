@@ -95,23 +95,25 @@ export function DashboardCalendar({
 		const dateStr = `${year}-${month}-${dayOfMonth}`;
 		const dayData = data[dateStr];
 
-		let dayClassName = "";
-		if (dayData) {
-			if (dayData.rejected > 0) {
-				dayClassName = "bg-red-200";
-			} else if (dayData.pending > 0) {
-				dayClassName = "bg-yellow-200";
-			} else if (dayData.approved > 0) {
-				dayClassName = "bg-green-200";
-			}
-		}
-
 		const dayContent = (
 			<div
-				className={`relative flex h-full w-full flex-col items-center justify-center rounded-md cursor-pointer hover:opacity-80 transition-opacity ${dayClassName}`}
+				className="relative flex h-full w-full flex-col items-center justify-center rounded-md cursor-pointer p-2 hover:bg-gray-100 transition-colors duration-200"
 				onClick={() => handleDateClick(day.date)}
 			>
 				<span>{day.date.getDate()}</span>
+				{dayData && (
+					<div className="absolute bottom-1 flex space-x-1">
+						{dayData.approved > 0 && (
+							<div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+						)}
+						{dayData.pending > 0 && (
+							<div className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
+						)}
+						{dayData.rejected > 0 && (
+							<div className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+						)}
+					</div>
+				)}
 			</div>
 		);
 
@@ -125,10 +127,11 @@ export function DashboardCalendar({
 							</Day>
 						</TooltipTrigger>
 						<TooltipContent>
-							<ul>
+							<ul className="space-y-1">
 								{dayData.applications.map((app) => (
-									<li key={app.id}>
-										{app.user_name}: {app.work_style} ({app.status})
+									<li key={app.id} className="text-sm">
+										<span className="font-semibold">{app.user_name}</span>:{" "}
+										{app.work_style} ({app.status})
 									</li>
 								))}
 							</ul>
@@ -161,7 +164,7 @@ export function DashboardCalendar({
 				components={{
 					Day: CustomDay,
 				}}
-				className="p-3 flex-grow"
+				className="p-4 flex-grow"
 				classNames={{
 					root: "h-full flex flex-col",
 					months: "flex-grow",
@@ -169,7 +172,27 @@ export function DashboardCalendar({
 					table: "h-full",
 					tbody: "h-full",
 				}}
+				captionLayout="dropdown-buttons"
+				fromYear={new Date().getFullYear() - 5}
+				toYear={new Date().getFullYear() + 5}
 			/>
+			<div className="p-3 border-t">
+				<h3 className="text-sm font-medium mb-2">凡例</h3>
+				<div className="flex items-center space-x-4 text-xs">
+					<div className="flex items-center">
+						<span className="h-3 w-3 rounded-full bg-blue-400 mr-1.5"></span>
+						承認済み
+					</div>
+					<div className="flex items-center">
+						<span className="h-3 w-3 rounded-full bg-yellow-400 mr-1.5"></span>
+						申請中
+					</div>
+					<div className="flex items-center">
+						<span className="h-3 w-3 rounded-full bg-gray-400 mr-1.5"></span>
+						却下
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 }
