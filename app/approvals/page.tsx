@@ -23,6 +23,7 @@ import {
 import LoadingSpinner from "../components/LoadingSpinner";
 import { ApplicationDetailModal } from "../components/ApplicationDetailModal";
 import ApprovalCommentModal from "../components/ApprovalCommentModal";
+import { toast } from "sonner";
 
 const getStatusBadge = (statusId: number) => {
 	switch (statusId) {
@@ -63,6 +64,7 @@ const ApprovalsPageContent = () => {
 	const [approvalStatus, setApprovalStatus] = useState<
 		"approved" | "rejected" | null
 	>(null);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const fetchApplications = async () => {
 		setLoading(true);
@@ -125,12 +127,23 @@ const ApprovalsPageContent = () => {
 	};
 
 	const handleApprovalAction = (
+		e: React.MouseEvent<HTMLButtonElement>,
 		id: number,
 		status: "approved" | "rejected"
 	) => {
+		e.preventDefault();
+		e.stopPropagation();
+		console.log("handleApprovalAction called", { id, status });
+
 		// 最初に確認メッセージを表示
 		const app = applications.find((a) => a.id === id);
-		if (!app) return;
+		if (!app) {
+			console.error("Application not found in list (stale closure?)", {
+				id,
+				appCount: applications.length,
+			});
+			return;
+		}
 
 		// 管理者が別部署の申請を承認する場合は追加で確認メッセージを表示
 		const isAdminApprovingDifferentDept =
@@ -159,12 +172,19 @@ const ApprovalsPageContent = () => {
 		status: "approved" | "rejected"
 	) => {
 		if (!selectedApplicationId) return;
+		setIsSubmitting(true);
+		console.log(
+			`Starting approval action: id=${selectedApplicationId}, status=${status}`
+		);
 		try {
 			await updateApprovalStatus(selectedApplicationId, status, comment);
+			toast.success(status === "approved" ? "承認しました" : "却下しました");
 			fetchApplications();
 		} catch (error) {
 			console.error(`Failed to ${status} application:`, error);
+			toast.error("処理に失敗しました");
 		} finally {
+			setIsSubmitting(false);
 			setIsCommentModalOpen(false);
 			setSelectedApplicationId(null);
 		}
@@ -225,16 +245,22 @@ const ApprovalsPageContent = () => {
 						{row.application_status_id === 1 && (
 							<>
 								<Button
+									type="button"
 									size="sm"
 									className="bg-green-500 hover:bg-green-600"
-									onClick={() => handleApprovalAction(row.id, "approved")}
+									onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
+										handleApprovalAction(e, row.id, "approved")
+									}
 								>
 									承認
 								</Button>
 								<Button
+									type="button"
 									variant="destructive"
 									size="sm"
-									onClick={() => handleApprovalAction(row.id, "rejected")}
+									onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
+										handleApprovalAction(e, row.id, "rejected")
+									}
 								>
 									却下
 								</Button>
@@ -244,7 +270,7 @@ const ApprovalsPageContent = () => {
 				),
 			},
 		],
-		[]
+		[applications]
 	);
 
 	const getRowClassName = (row: Application) => {
@@ -376,6 +402,7 @@ const ApprovalsPageContent = () => {
 				onConfirm={handleConfirmApprovalAction}
 				applicationId={selectedApplicationId}
 				status={approvalStatus}
+				isSubmitting={isSubmitting}
 			/>
 		</div>
 	);

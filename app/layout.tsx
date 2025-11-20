@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import { useAuthStore } from "./store/auth";
 import { useModalStore } from "./store/modal";
 import ReusableModal from "./components/ReusableModal";
+import { Toaster } from "@/components/ui/sonner";
 
 const notoSansJp = Noto_Sans_JP({
 	subsets: ["latin"],
@@ -94,6 +95,7 @@ export default function RootLayout({
 						},
 					]}
 				/>
+				<Toaster />
 			</body>
 		</html>
 	);

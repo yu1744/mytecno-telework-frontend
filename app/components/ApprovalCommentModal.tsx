@@ -17,6 +17,7 @@ interface ApprovalCommentModalProps {
 	onConfirm: (comment: string, status: "approved" | "rejected") => void;
 	applicationId: number | null;
 	status: "approved" | "rejected" | null;
+	isSubmitting: boolean;
 }
 
 const ApprovalCommentModal: React.FC<ApprovalCommentModalProps> = ({
@@ -25,6 +26,7 @@ const ApprovalCommentModal: React.FC<ApprovalCommentModalProps> = ({
 	onConfirm,
 	applicationId,
 	status,
+	isSubmitting,
 }) => {
 	const [comment, setComment] = useState("");
 	const [error, setError] = useState("");
@@ -68,9 +70,13 @@ const ApprovalCommentModal: React.FC<ApprovalCommentModalProps> = ({
 				</div>
 				<DialogFooter>
 					<DialogClose asChild>
-						<Button variant="outline">キャンセル</Button>
+						<Button variant="outline" disabled={isSubmitting}>
+							キャンセル
+						</Button>
 					</DialogClose>
-					<Button onClick={handleConfirm}>送信</Button>
+					<Button onClick={handleConfirm} disabled={isSubmitting}>
+						{isSubmitting ? "処理中..." : "送信"}
+					</Button>
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>
