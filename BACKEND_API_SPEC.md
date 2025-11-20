@@ -129,6 +129,31 @@
     - `PUT /api/v1/admin/tenant_settings/:id`
 - **説明:** テナント全体の外部連携設定を管理する。
 
+### 3.7. カレンダー表示用データ取得
+
+- **エンドポイント:** `GET /api/v1/applications/calendar`
+- **説明:** 指定された期間の申請データをカレンダー表示用に取得する。ユーザーのロールに応じて返すデータが異なる。
+    - **admin:** 全ユーザーの申請
+    - **approver:** 所属部署のユーザーの申請
+    - **applicant:** 自身の申請
+- **クエリパラメータ:**
+    - `start_date` (string, YYYY-MM-DD): 取得期間の開始日
+    - `end_date` (string, YYYY-MM-DD): 取得期間の終了日
+- **レスポンス:**
+  ```json
+  [
+    {
+      "id": 1,
+      "title": "山田太郎 - 在宅勤務",
+      "start": "2023-12-01",
+      "end": "2023-12-01",
+      "status": "承認",
+      "backgroundColor": "#22c55e",
+      "borderColor": "#22c55e",
+      "allDay": true
+    }
+  ]
+  ```
 ### 3.7. 通知機能
 
 - **実装方針:**
