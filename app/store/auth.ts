@@ -8,11 +8,8 @@ interface AuthState {
   accessToken: string | null;
   client: string | null;
   uid: string | null;
-  isSessionTimeoutModalOpen: boolean;
   setAuth: (user: User, headers: { [key: string]: string }) => void;
   clearAuth: () => void;
-  showSessionTimeoutModal: () => void;
-  hideSessionTimeoutModal: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -23,7 +20,6 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       client: null,
       uid: null,
-      isSessionTimeoutModalOpen: false,
       setAuth: (user, headers) => set({
         isAuthenticated: true,
         user,
@@ -37,10 +33,7 @@ export const useAuthStore = create<AuthState>()(
         accessToken: null,
         client: null,
         uid: null,
-        isSessionTimeoutModalOpen: false,
       }),
-      showSessionTimeoutModal: () => set({ isSessionTimeoutModalOpen: true }),
-      hideSessionTimeoutModal: () => set({ isSessionTimeoutModalOpen: false }),
     }),
     {
       name: 'auth-storage',

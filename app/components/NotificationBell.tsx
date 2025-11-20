@@ -1,113 +1,89 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from 'react';
-import { IconButton, Badge, Popover, List, ListItem, ListItemText, Typography, Divider, Box, ListItemButton } from '@mui/material';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import { useRouter } from 'next/navigation';
-import { getNotifications, markNotificationAsRead } from '@/app/lib/api';
-import { AppNotification } from '@/app/types/application';
+import React, { useState, useEffect, useRef } from 'react';
+import { Bell } from 'lucide-react';
+import { getUnreadNotifications } from '@/app/lib/api';
+import type { AppNotification } from '@/app/types/application';
+import Link from 'next/link';
 
 const NotificationBell = () => {
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const router = useRouter();
-
-  const fetchNotifications = async () => {
-    try {
-      const response = await getNotifications();
-      setNotifications(response.data);
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error);
-    }
-  };
+  const [isOpen, setIsOpen] = useState(false);
+  const notificationAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000); // 60秒ごとに通知をポーリング
-    return () => clearInterval(interval);
+    const fetchUnreadNotifications = async () => {
+      try {
+        const response = await getUnreadNotifications();
+        setNotifications(response.data);
+      } catch (error) {
+        console.error('Failed to fetch unread notifications:', error);
+      }
+    };
+
+    fetchUnreadNotifications();
   }, []);
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleNotificationClick = async (notification: AppNotification) => {
-    try {
-      if (!notification.read) {
-        await markNotificationAsRead(notification.id);
-        const newNotifications = notifications.map(n =>
-          n.id === notification.id ? { ...n, read: true } : n
-        );
-        setNotifications(newNotifications);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        notificationAreaRef.current &&
+        !notificationAreaRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
       }
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
-    }
-    
-    if (notification.link) {
-      router.push(notification.link);
-    }
-    handleClose();
-  };
+    };
 
-  const open = Boolean(anchorEl);
-  const id = open ? 'notification-popover' : undefined;
-  const unreadCount = notifications.filter(n => !n.read).length;
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const unreadCount = notifications.length;
 
   return (
-    <div>
-      <IconButton color="inherit" onClick={handleClick}>
-        <Badge badgeContent={unreadCount} color="error">
-          <NotificationsIcon />
-        </Badge>
-      </IconButton>
-      <Popover
-        id={id}
-        open={open}
-        anchorEl={anchorEl}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-      >
-        <Box sx={{ width: 360 }}>
-          <Typography sx={{ p: 2, fontWeight: 'bold' }}>通知</Typography>
-          <Divider />
-          <List sx={{ p: 0 }}>
+    <div className="relative" ref={notificationAreaRef}>
+      <button onClick={() => setIsOpen(!isOpen)} className="relative">
+        <div className={unreadCount > 0 ? 'bell-shake' : ''}>
+          <Bell className="h-6 w-6 text-gray-600" />
+        </div>
+        {unreadCount > 0 && (
+          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+            {unreadCount}
+          </span>
+        )}
+      </button>
+      {isOpen && (
+        <div
+          className={`notification-area absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-10 ${
+            isOpen ? 'notification-area-open' : 'notification-area-closed'
+          }`}
+        >
+          <div className="py-1">
+            <div className="px-4 py-2 text-sm text-gray-700 font-semibold">
+              未読の通知
+            </div>
+            <div className="border-t border-gray-200"></div>
             {notifications.length > 0 ? (
-              notifications.map((notification, index) => (
-                <React.Fragment key={notification.id}>
-                  <ListItem
-                    disablePadding
-                    key={notification.id}
-                  >
-                    <ListItemButton
-                      onClick={() => handleNotificationClick(notification)}
-                      sx={{ backgroundColor: notification.read ? 'inherit' : 'action.hover' }}
-                    >
-                      <ListItemText primary={notification.message} />
-                    </ListItemButton>
-                  </ListItem>
-                  {index < notifications.length - 1 && <Divider />}
-                </React.Fragment>
+              notifications.map((notification) => (
+                <Link
+                  href={notification.link || '#'}
+                  key={notification.id}
+                  onClick={() => setIsOpen(false)}
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  {notification.message}
+                </Link>
               ))
             ) : (
-              <ListItem>
-                <ListItemText primary="新しい通知はありません。" />
-              </ListItem>
+              <div className="px-4 py-2 text-sm text-gray-500">
+                新しい通知はありません
+              </div>
             )}
-          </List>
-        </Box>
-      </Popover>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,18 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Container,
-  Typography,
-  TextField,
-  Button,
-  Paper,
-  Box,
-  CircularProgress,
-  Alert,
-} from '@mui/material';
 import PrivateRoute from '@/app/components/PrivateRoute';
 import LoadingSpinner from '@/app/components/LoadingSpinner';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 // API通信を想定したダミー関数
 const fetchTenantSettings = async () => {
@@ -101,70 +95,69 @@ function IntegrationsPage() {
   }
 
   return (
-    <Container maxWidth="md">
-      <Typography variant="h4" component="h1" gutterBottom sx={{ mt: 4, mb: 4 }}>
+    <div className="container mx-auto p-4 sm:p-6">
+      <h1 className="text-2xl font-bold mb-6">
         外部連携設定
-      </Typography>
+      </h1>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+      {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">{error}</div>}
+      {success && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">{success}</div>}
 
-      <Paper sx={{ p: 4 }}>
-        <form onSubmit={handleSubmit}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {/* Outlook連携設定 */}
-            <Box>
-              <Typography variant="h6" component="h2" gutterBottom>
-                Outlook連携
-              </Typography>
-              <TextField
-                label="APIキー"
-                variant="outlined"
-                fullWidth
-                value={outlookApiKey}
-                onChange={(e) => setOutlookApiKey(e.target.value)}
-                margin="normal"
-              />
-              <TextField
-                label="テナントID"
-                variant="outlined"
-                fullWidth
-                value={outlookTenantId}
-                onChange={(e) => setOutlookTenantId(e.target.value)}
-                margin="normal"
-              />
-            </Box>
+      <Card>
+        <CardContent className="pt-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Outlook連携</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="outlook-api-key">APIキー</Label>
+                  <Input
+                    id="outlook-api-key"
+                    value={outlookApiKey}
+                    onChange={(e) => setOutlookApiKey(e.target.value)}
+                    placeholder="APIキーを入力"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="outlook-tenant-id">テナントID</Label>
+                  <Input
+                    id="outlook-tenant-id"
+                    value={outlookTenantId}
+                    onChange={(e) => setOutlookTenantId(e.target.value)}
+                    placeholder="テナントIDを入力"
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-            {/* 路線情報連携設定 */}
-            <Box>
-              <Typography variant="h6" component="h2" gutterBottom>
-                路線情報連携
-              </Typography>
-              <TextField
-                label="APIキー"
-                variant="outlined"
-                fullWidth
-                value={transportApiKey}
-                onChange={(e) => setTransportApiKey(e.target.value)}
-                margin="normal"
-              />
-            </Box>
+            <Card>
+              <CardHeader>
+                <CardTitle>路線情報連携</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="transport-api-key">APIキー</Label>
+                  <Input
+                    id="transport-api-key"
+                    value={transportApiKey}
+                    onChange={(e) => setTransportApiKey(e.target.value)}
+                    placeholder="APIキーを入力"
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-            <Box sx={{ mt: 2 }}>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={saving}
-                fullWidth
-              >
-                {saving ? <CircularProgress size={24} /> : '保存'}
+            <div className="flex justify-end">
+              <Button type="submit" disabled={saving}>
+                {saving ? '保存中...' : '保存'}
               </Button>
-            </Box>
-          </Box>
-        </form>
-      </Paper>
-    </Container>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

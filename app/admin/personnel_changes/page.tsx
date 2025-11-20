@@ -1,26 +1,27 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Edit, Trash2 } from "lucide-react";
+
+import api from "@/app/lib/api";
+import EmptyState from "@/app/components/EmptyState";
+import LoadingSpinner from "@/app/components/LoadingSpinner";
+import PrivateRoute from "@/app/components/PrivateRoute";
+import { Button } from "@/components/ui/button";
 import {
-	Container,
-	Typography,
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import {
 	Table,
 	TableBody,
 	TableCell,
-	TableContainer,
 	TableHead,
+	TableHeader,
 	TableRow,
-	Paper,
-	Button,
-	IconButton,
-	Box,
-} from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import api from "@/app/lib/api";
-import PrivateRoute from "@/app/components/PrivateRoute";
-import LoadingSpinner from "@/app/components/LoadingSpinner";
-import EmptyState from "@/app/components/EmptyState";
+} from "@/components/ui/table";
 
 interface Department {
 	id: number;
@@ -115,73 +116,70 @@ const PersonnelChangesPage = () => {
 
 	return (
 		<PrivateRoute allowedRoles={["admin"]}>
-			<Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-				<Box
-					sx={{
-						display: "flex",
-						justifyContent: "space-between",
-						alignItems: "center",
-						mb: 2,
-					}}
-				>
-					<Typography variant="h4" component="h1">
-						人事異動の予約・管理
-					</Typography>
-					<Button variant="contained" color="primary">
-						新規予約作成
-					</Button>
-				</Box>
-				{error && <Typography color="error">{error}</Typography>}
+			<div className="container mx-auto py-10">
+				<div className="flex justify-between items-center mb-4">
+					<h1 className="text-2xl font-bold">人事異動の予約・管理</h1>
+					<Button>新規予約作成</Button>
+				</div>
+				{error && <p className="text-red-500">{error}</p>}
 				{!error && changes.length === 0 ? (
 					<EmptyState message="予約されている人事異動はありません。" />
 				) : (
-					<TableContainer component={Paper}>
-						<Table>
-							<TableHead>
-								<TableRow>
-									<TableCell>対象ユーザー</TableCell>
-									<TableCell>変更前</TableCell>
-									<TableCell>変更後</TableCell>
-									<TableCell>変更反映日</TableCell>
-									<TableCell>操作</TableCell>
-								</TableRow>
-							</TableHead>
-							<TableBody>
-								{changes.map((change) => (
-									<TableRow key={change.id}>
-										<TableCell>{change.user_name}</TableCell>
-										<TableCell>
-											所属: {change.old_department}
-											<br />
-											権限: {change.old_role}
-										</TableCell>
-										<TableCell>
-											所属: {change.new_department}
-											<br />
-											権限: {change.new_role}
-										</TableCell>
-										<TableCell>{change.effective_date}</TableCell>
-										<TableCell>
-											<IconButton
-												onClick={() => handleEdit(change.id)}
-												color="primary"
-											>
-												<EditIcon />
-											</IconButton>
-											<IconButton
-												onClick={() => handleDelete(change.id)}
-												color="error"
-											>
-												<DeleteIcon />
-											</IconButton>
-										</TableCell>
+					<Card>
+						<CardHeader>
+							<CardTitle>予約一覧</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead>対象ユーザー</TableHead>
+										<TableHead>変更前</TableHead>
+										<TableHead>変更後</TableHead>
+										<TableHead>変更反映日</TableHead>
+										<TableHead>操作</TableHead>
 									</TableRow>
-								))}
-							</TableBody>
-						</Table>
-					</TableContainer>
+								</TableHeader>
+								<TableBody>
+									{changes.map((change) => (
+										<TableRow key={change.id}>
+											<TableCell>{change.user_name}</TableCell>
+											<TableCell>
+												所属: {change.old_department}
+												<br />
+												権限: {change.old_role}
+											</TableCell>
+											<TableCell>
+												所属: {change.new_department}
+												<br />
+												権限: {change.new_role}
+											</TableCell>
+											<TableCell>{change.effective_date}</TableCell>
+											<TableCell className="flex items-center">
+												<Button
+													variant="ghost"
+													size="icon"
+													onClick={() => handleEdit(change.id)}
+												>
+													<Edit className="h-4 w-4" />
+												</Button>
+												<Button
+													variant="ghost"
+													size="icon"
+													onClick={() => handleDelete(change.id)}
+													className="text-red-500 hover:text-red-600"
+												>
+													<Trash2 className="h-4 w-4" />
+												</Button>
+											</TableCell>
+										</TableRow>
+									))}
+								</TableBody>
+							</Table>
+						</CardContent>
+					</Card>
 				)}
-			</Container>
+			</div>
 		</PrivateRoute>
 	);
 };

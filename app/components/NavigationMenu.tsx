@@ -1,117 +1,122 @@
 "use client";
 
 import React from "react";
-import {
-	Drawer,
-	List,
-	ListItem,
-	ListItemButton,
-	ListItemIcon,
-	ListItemText,
-	Toolbar,
-	Divider,
-} from "@mui/material";
 import Link from "next/link";
-import HomeIcon from "@mui/icons-material/Home";
-import DescriptionIcon from "@mui/icons-material/Description";
-import HistoryIcon from "@mui/icons-material/History";
-import ApprovalIcon from "@mui/icons-material/Approval";
-import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { usePathname } from "next/navigation";
+import {
+	Home,
+	FileText,
+	History,
+	User,
+	CheckSquare,
+	Shield,
+	FileSearch,
+} from "lucide-react";
 import { useAuthStore } from "@/app/store/auth";
+import { Button } from "@/components/ui/button";
 
-const drawerWidth = 240;
+const personalMenuItems = [
+	{
+		href: "/dashboard",
+		icon: Home,
+		label: "ダッシュボード",
+		roles: ["applicant", "approver", "admin", "user"],
+	},
+	{
+		href: "/apply",
+		icon: FileText,
+		label: "在宅勤務申請",
+		roles: ["applicant", "approver", "admin", "user"],
+	},
+	{
+		href: "/history",
+		icon: History,
+		label: "申請履歴",
+		roles: ["applicant", "approver", "admin", "user"],
+	},
+	{
+		href: "/profile",
+		icon: User,
+		label: "プロフィール",
+		roles: ["applicant", "approver", "admin", "user"],
+	},
+];
+
+const adminMenuItems = [
+	{
+		href: "/approvals",
+		icon: CheckSquare,
+		label: "承認待ち一覧",
+		roles: ["approver", "admin"],
+	},
+	{
+		href: "/admin/applications",
+		icon: FileSearch,
+		label: "申請一覧",
+		roles: ["admin", "approver"],
+	},
+	{
+		href: "/admin",
+		icon: Shield,
+		label: "管理者画面",
+		roles: ["admin"],
+	},
+];
 
 const NavigationMenu = () => {
 	const user = useAuthStore((state) => state.user);
+	const pathname = usePathname();
+	if (!user) {
+		return null;
+	}
 	const role = user?.role?.name;
 
-	const applicantMenuItems = (
-		<>
-			<ListItem disablePadding>
-				<ListItemButton component={Link} href="/dashboard">
-					<ListItemIcon>
-						<HomeIcon />
-					</ListItemIcon>
-					<ListItemText primary="ダッシュボード" />
-				</ListItemButton>
-			</ListItem>
-			<ListItem disablePadding>
-				<ListItemButton component={Link} href="/apply">
-					<ListItemIcon>
-						<DescriptionIcon />
-					</ListItemIcon>
-					<ListItemText primary="在宅勤務申請" />
-				</ListItemButton>
-			</ListItem>
-			<ListItem disablePadding>
-				<ListItemButton component={Link} href="/history">
-					<ListItemIcon>
-						<HistoryIcon />
-					</ListItemIcon>
-					<ListItemText primary="申請履歴" />
-				</ListItemButton>
-			</ListItem>
-			<ListItem disablePadding>
-				<ListItemButton component={Link} href="/profile">
-					<ListItemIcon>
-						<AccountCircleIcon />
-					</ListItemIcon>
-					<ListItemText primary="プロフィール" />
-				</ListItemButton>
-			</ListItem>
-		</>
-	);
+	const filteredPersonalMenuItems = personalMenuItems.filter((item) => {
+		const userRole = role || "user";
+		return item.roles.includes(userRole);
+	});
 
-	const approverMenuItems = (
-		<>
-			{applicantMenuItems}
-			<ListItem disablePadding>
-				<ListItemButton component={Link} href="/approvals">
-					<ListItemIcon>
-						<ApprovalIcon />
-					</ListItemIcon>
-					<ListItemText primary="承認待ち一覧" />
-				</ListItemButton>
-			</ListItem>
-		</>
-	);
-
-	const adminMenuItems = (
-		<>
-			{approverMenuItems}
-			<ListItem disablePadding>
-				<ListItemButton component={Link} href="/admin">
-					<ListItemIcon>
-						<AdminPanelSettingsIcon />
-					</ListItemIcon>
-					<ListItemText primary="管理者画面" />
-				</ListItemButton>
-			</ListItem>
-		</>
+	const filteredAdminMenuItems = adminMenuItems.filter((item) =>
+		role ? item.roles.includes(role) : false
 	);
 
 	return (
-		<Drawer
-			variant="permanent"
-			sx={{
-				width: drawerWidth,
-				flexShrink: 0,
-				[`& .MuiDrawer-paper`]: {
-					width: drawerWidth,
-					boxSizing: "border-box",
-					bgcolor: "#f5f5f5",
-				},
-			}}
-		>
-			<Toolbar />
-			<Divider />
-			<List>
-				{role === "admin" && adminMenuItems}
-				{role === "approver" && approverMenuItems}
-				{role === "applicant" && applicantMenuItems}
-			</List>
-		</Drawer>
+		<div className="w-64 h-full border-r">
+			<nav className="flex flex-col p-2 space-y-1">
+				<h3 className="px-4 py-2 text-sm font-semibold text-muted-foreground">
+					メニュー
+				</h3>
+				{filteredPersonalMenuItems.map((item) => (
+					<Link href={item.href} key={item.href} passHref>
+						<Button
+							variant={pathname === item.href ? "secondary" : "ghost"}
+							className="w-full justify-start hover:bg-gray-200 dark:hover:bg-gray-700"
+						>
+							<item.icon className="mr-2 h-4 w-4" />
+							{item.label}
+						</Button>
+					</Link>
+				))}
+				{filteredAdminMenuItems.length > 0 && (
+					<>
+						<h3 className="px-4 py-2 text-sm font-semibold text-muted-foreground">
+							管理者メニュー
+						</h3>
+						{filteredAdminMenuItems.map((item) => (
+							<Link href={item.href} key={item.href} passHref>
+								<Button
+									variant={pathname === item.href ? "secondary" : "ghost"}
+									className="w-full justify-start hover:bg-gray-200 dark:hover:bg-gray-700"
+								>
+									<item.icon className="mr-2 h-4 w-4" />
+									{item.label}
+								</Button>
+							</Link>
+						))}
+					</>
+				)}
+			</nav>
+		</div>
 	);
 };
 

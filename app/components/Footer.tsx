@@ -1,27 +1,17 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
 
 const Footer = () => {
   return (
-    <Box
-      component="footer"
-      sx={{
-        py: 3,
-        px: 2,
-        mt: 'auto',
-        backgroundColor: (theme) =>
-          theme.palette.mode === 'light'
-            ? theme.palette.grey[200]
-            : theme.palette.grey[800],
-      }}
-    >
-      <Typography variant="body2" color="text.secondary" align="center">
-        {'Copyright © '}
-        在宅勤務申請システム
-        {new Date().getFullYear()}
-        {'.'}
-      </Typography>
-    </Box>
+    <footer className="bg-gray-200 dark:bg-gray-800 py-3 px-2 mt-auto">
+      <div className="container mx-auto">
+        <p className="text-sm text-gray-500 text-center">
+          {'Copyright © '}
+          在宅勤務申請システム
+          {new Date().getFullYear()}
+          {'.'}
+        </p>
+      </div>
+    </footer>
   );
 };
 

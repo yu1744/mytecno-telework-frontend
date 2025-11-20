@@ -1,34 +1,43 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import {
-	TextField,
-	Button,
-	Box,
-	Typography,
-	CircularProgress,
-	Radio,
-	RadioGroup,
-	FormControlLabel,
-	FormControl,
-	FormLabel,
-	Checkbox,
-	Collapse,
-	FormHelperText,
-} from "@mui/material";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import toast, { Toaster } from "react-hot-toast";
+	Card,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
+import { toast, Toaster } from "react-hot-toast";
 import { format } from "date-fns";
 import { createApplication } from "@/app/lib/api";
 import { ApplicationPayload } from "@/app/types/application";
- 
- const ApplicationForm = () => {
- 	const [date, setDate] = useState<Date | null>(null);
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Loader2, Info } from "lucide-react";
+import { useModalStore } from "@/app/store/modal";
+import { useNotificationStore } from "@/app/store/notificationStore";
+
+const ApplicationForm = () => {
+	const router = useRouter();
+	const [date, setDate] = useState<Date | undefined>(undefined);
 	const [workOption, setWorkOption] = useState("full_day");
 	const [reason, setReason] = useState("");
 	const [isSpecial, setIsSpecial] = useState(false);
+	const [specialReason, setSpecialReason] = useState("");
 	const [isOvertime, setIsOvertime] = useState(false);
 	const [overtimeReason, setOvertimeReason] = useState("");
 	const [overtimeEnd, setOvertimeEnd] = useState("");
@@ -42,6 +51,8 @@ import { ApplicationPayload } from "@/app/types/application";
 		const end = endTime ? parseInt(endTime.split(":")[0], 10) : 0;
 		return start >= 22 || start < 5 || end >= 22 || end < 5;
 	}, [startTime, endTime]);
+
+	const requiresSpecialReason = isSpecial || isLateNightWork;
 
 	useEffect(() => {
 		if (date) {
@@ -65,6 +76,12 @@ import { ApplicationPayload } from "@/app/types/application";
 		}
 	}, [startTime, endTime]);
 
+	useEffect(() => {
+		if (!requiresSpecialReason) {
+			setSpecialReason("");
+		}
+	}, [requiresSpecialReason]);
+
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!date) {
@@ -77,178 +94,284 @@ import { ApplicationPayload } from "@/app/types/application";
 		const payload: ApplicationPayload = {
 			date: format(date, "yyyy-MM-dd"),
 			work_option: workOption,
-			start_time: startTime,
-			end_time: endTime,
-			is_special: isSpecial,
+			start_time: workOption === "full_day" ? undefined : startTime,
+			end_time: workOption === "full_day" ? undefined : endTime,
+			is_special: requiresSpecialReason,
 			reason: reason,
+			special_reason: requiresSpecialReason ? specialReason : undefined,
 			is_overtime: isOvertime,
 			overtime_reason: isOvertime ? overtimeReason : undefined,
 			overtime_end: isOvertime ? overtimeEnd : undefined,
 		};
 
+		let isModalShown = false;
 		try {
 			await createApplication(payload);
-			toast.success("申請を送信しました");
-			// フォームをリセットするなどの処理をここに追加できます
-		} catch (error) {
+			useNotificationStore.getState().setMessage("申請を送信しました");
+			router.push("/history");
+		} catch (error: any) {
 			console.error("申請の送信に失敗しました", error);
-			toast.error("申請の送信に失敗しました");
+
+			// 上限エラーか判定
+			const isLimitError = error.response?.data?.is_limit_error;
+			if (isLimitError) {
+				isModalShown = true;
+				// 確認ダイアログを表示
+				useModalStore.getState().showModal({
+					title: "申請上限超過の確認",
+					message:
+						error.response?.data?.errors?.join("\n") +
+						"\n\n上限を超えて申請してよろしいですか？",
+					confirmText: "申請",
+					cancelText: "キャンセル",
+					onConfirm: async () => {
+						setLoading(true);
+						try {
+							await createApplication(payload, true); // skip_limit_check=true で再試行
+							useNotificationStore.getState().setMessage("申請を送信しました");
+							useModalStore.getState().hideModal();
+							router.push("/history");
+						} catch (retryError: any) {
+							const retryErrorMessage =
+								retryError.response?.data?.errors?.join("\n") ||
+								retryError.message ||
+								"申請の送信に失敗しました";
+							toast.error(retryErrorMessage);
+						} finally {
+							setLoading(false);
+						}
+					},
+					onCancel: () => {
+						useModalStore.getState().hideModal();
+						setLoading(false);
+					},
+				});
+			} else {
+				// その他のエラー
+				const errorMessage =
+					error.response?.data?.errors?.join("\n") ||
+					error.message ||
+					"申請の送信に失敗しました";
+				toast.error(errorMessage);
+			}
 		} finally {
-			setLoading(false);
+			if (!isModalShown) {
+				setLoading(false);
+			}
 		}
 	};
 
 	return (
 		<>
 			<Toaster />
-			<Box
-				component="form"
-				onSubmit={handleSubmit}
-				sx={{
-					display: "flex",
-					flexDirection: "column",
-					gap: 2,
-					maxWidth: 500,
-					m: "auto",
-				}}
-				noValidate
-				autoComplete="off"
-			>
-				<Typography variant="h5" component="h2" gutterBottom>
-					在宅勤務申請
-				</Typography>
+			<Card className="w-full max-w-2xl mx-auto my-8 bg-white shadow-md rounded-lg">
+				<CardHeader>
+					<CardTitle>在宅勤務申請</CardTitle>
+					<CardDescription>
+						必要事項を入力して申請してください。
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<form onSubmit={handleSubmit} className="flex flex-col gap-6">
+						<div className="grid w-full items-center gap-1.5">
+							<Label htmlFor="work-date">勤務日</Label>
+							<DatePicker date={date} setDate={setDate} />
+						</div>
 
-				<FormControl fullWidth>
-					<FormLabel>勤務日</FormLabel>
-					<LocalizationProvider dateAdapter={AdapterDateFns}>
-						<DatePicker
-							value={date}
-							onChange={(newValue) => setDate(newValue)}
-						/>
-					</LocalizationProvider>
-				</FormControl>
+						<div className="grid w-full items-center gap-1.5">
+							<div className="flex items-center gap-2">
+								<Label>勤務形態</Label>
+								<TooltipProvider>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button variant="ghost" size="icon" className="h-5 w-5">
+												<Info className="h-4 w-4" />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>
+											<p>
+												所定労働時間よりも短い時間で勤務する場合に選択してください。
+											</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
+							<RadioGroup
+								value={workOption}
+								onValueChange={setWorkOption}
+								className="flex gap-4"
+							>
+								<div className="flex items-center space-x-2">
+									<RadioGroupItem value="full_day" id="full_day" />
+									<Label htmlFor="full_day">終日</Label>
+								</div>
+								<div className="flex items-center space-x-2">
+									<RadioGroupItem value="am_half" id="am_half" />
+									<Label htmlFor="am_half">午前半休</Label>
+								</div>
+								<div className="flex items-center space-x-2">
+									<RadioGroupItem value="pm_half" id="pm_half" />
+									<Label htmlFor="pm_half">午後半休</Label>
+								</div>
+							</RadioGroup>
+							{(workOption === "am_half" || workOption === "pm_half") && (
+								<p className="text-sm text-muted-foreground">
+									（0.5日としてカウント）
+								</p>
+							)}
+						</div>
 
-				<FormControl component="fieldset">
-					<FormLabel component="legend">勤務形態</FormLabel>
-					<RadioGroup
-						row
-						name="workOption"
-						value={workOption}
-						onChange={(e) => setWorkOption(e.target.value)}
-					>
-						<FormControlLabel
-							value="full_day"
-							control={<Radio />}
-							label="終日"
-						/>
-						<FormControlLabel
-							value="am_half"
-							control={<Radio />}
-							label="午前半休"
-						/>
-						<FormControlLabel
-							value="pm_half"
-							control={<Radio />}
-							label="午後半休"
-						/>
-					</RadioGroup>
-					<FormHelperText>※半日勤務は0.5回としてカウントされます</FormHelperText>
-				</FormControl>
+						{workOption !== "full_day" && (
+							<div className="flex gap-4">
+								<div className="grid w-1/2 items-center gap-1.5">
+									<Label htmlFor="start-time">勤務開始時間</Label>
+									<Input
+										id="start-time"
+										type="time"
+										value={startTime}
+										onChange={(e) => setStartTime(e.target.value)}
+									/>
+								</div>
+								<div className="grid w-1/2 items-center gap-1.5">
+									<Label htmlFor="end-time">勤務終了時間</Label>
+									<Input
+										id="end-time"
+										type="time"
+										value={endTime}
+										onChange={(e) => setEndTime(e.target.value)}
+									/>
+								</div>
+							</div>
+						)}
 
-				<Box sx={{ display: "flex", gap: 2 }}>
-					<FormControl fullWidth>
-						<FormLabel>勤務開始時間</FormLabel>
-						<TextField
-							type="time"
-							value={startTime}
-							onChange={(e) => setStartTime(e.target.value)}
-							InputLabelProps={{ shrink: true }}
-						/>
-					</FormControl>
-					<FormControl fullWidth>
-						<FormLabel>勤務終了時間</FormLabel>
-						<TextField
-							type="time"
-							value={endTime}
-							onChange={(e) => setEndTime(e.target.value)}
-							InputLabelProps={{ shrink: true }}
-						/>
-					</FormControl>
-				</Box>
+						{isLateNightWork && (
+							<p className="text-sm text-destructive">
+								特認申請として扱われ、所属長の承認が必要です
+							</p>
+						)}
 
-				{isLateNightWork && (
-					<Typography color="error" variant="body2">
-						特認申請として扱われ、所属長の承認が必要です
-					</Typography>
-				)}
-
-				<FormControl fullWidth>
-					<FormLabel required={isSpecial || isLateNightWork}>申請理由</FormLabel>
-					<TextField
-						required={isSpecial || isLateNightWork}
-						id="reason"
-						multiline
-						rows={4}
-						value={reason}
-						onChange={(e) => setReason(e.target.value)}
-					/>
-				</FormControl>
-
-				<FormControlLabel
-					control={
-						<Checkbox
-							checked={isSpecial}
-							onChange={(e) => setIsSpecial(e.target.checked)}
-						/>
-					}
-					label="特認申請"
-				/>
-
-				<FormControlLabel
-					control={
-						<Checkbox
-							checked={isOvertime}
-							onChange={(e) => setIsOvertime(e.target.checked)}
-						/>
-					}
-					label="8時間以上の勤務"
-				/>
-
-				<Collapse in={isOvertime}>
-					<Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-						<FormControl fullWidth>
-							<FormLabel required={isOvertime}>超過理由</FormLabel>
-							<TextField
-								required={isOvertime}
-								value={overtimeReason}
-								onChange={(e) => setOvertimeReason(e.target.value)}
-								fullWidth
+						<div className="grid w-full gap-1.5">
+							<Label htmlFor="reason">申請理由</Label>
+							<Textarea
+								id="reason"
+								required={requiresSpecialReason}
+								value={reason}
+								onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+									setReason(e.target.value)
+								}
+								placeholder="申請理由を入力してください"
 							/>
-						</FormControl>
-						<FormControl fullWidth>
-							<FormLabel required={isOvertime}>業務終了予定時間</FormLabel>
-							<TextField
-								required={isOvertime}
-								type="time"
-								value={overtimeEnd}
-								onChange={(e) => setOvertimeEnd(e.target.value)}
-								InputLabelProps={{ shrink: true }}
-								fullWidth
-							/>
-						</FormControl>
-					</Box>
-				</Collapse>
+						</div>
 
-				<Button
-					type="submit"
-					variant="contained"
-					color="primary"
-					sx={{ mt: 2 }}
-					disabled={loading || !date}
-				>
-					{loading ? <CircularProgress size={24} /> : "申請する"}
-				</Button>
-			</Box>
+						{requiresSpecialReason && (
+							<div className="grid w-full gap-1.5">
+								<Label htmlFor="special-reason">特任申請理由</Label>
+								<Textarea
+									id="special-reason"
+									required={requiresSpecialReason}
+									value={specialReason}
+									onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+										setSpecialReason(e.target.value)
+									}
+									placeholder="特任申請の背景や理由を記載してください"
+								/>
+							</div>
+						)}
+
+						<div className="flex items-center space-x-2">
+							<Checkbox
+								id="is-special"
+								checked={isSpecial}
+								onCheckedChange={(checked: boolean) => setIsSpecial(checked)}
+							/>
+							<div className="grid gap-1.5 leading-none">
+								<label
+									htmlFor="is-special"
+									className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+								>
+									特認申請
+								</label>
+							</div>
+							<TooltipProvider>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Button variant="ghost" size="icon" className="h-5 w-5">
+											<Info className="h-4 w-4" />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent>
+										<p>所定の時間を超える場合や、休日申請の場合など</p>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
+						</div>
+
+						<div className="flex items-center space-x-2">
+							<Checkbox
+								id="is-overtime"
+								checked={isOvertime}
+								onCheckedChange={(checked: boolean) => setIsOvertime(checked)}
+							/>
+							<div className="flex items-center gap-0.5">
+								<label
+									htmlFor="is-overtime"
+									className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+								>
+									8時間以上の勤務
+								</label>
+								<TooltipProvider>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button variant="ghost" size="icon" className="h-5 w-5">
+												<Info className="h-4 w-4" />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>
+											<p>
+												残業や休日出勤など、1日の労働時間が8時間を超える場合に選択してください。
+											</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
+						</div>
+
+						{isOvertime && (
+							<div className="flex flex-col gap-4 mt-1 p-4 border rounded-md">
+								<div className="grid w-full gap-1.5">
+									<Label htmlFor="overtime-reason">超過理由</Label>
+									<Input
+										id="overtime-reason"
+										required={isOvertime}
+										value={overtimeReason}
+										onChange={(e) => setOvertimeReason(e.target.value)}
+									/>
+								</div>
+								<div className="grid w-full gap-1.5">
+									<Label htmlFor="overtime-end">業務終了予定時間</Label>
+									<Input
+										id="overtime-end"
+										required={isOvertime}
+										type="time"
+										value={overtimeEnd}
+										onChange={(e) => setOvertimeEnd(e.target.value)}
+									/>
+								</div>
+							</div>
+						)}
+
+						<CardFooter className="flex justify-end gap-2 p-0">
+							<Button type="button" variant="outline">
+								キャンセル
+							</Button>
+							<Button type="submit" disabled={loading || !date}>
+								{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+								申請する
+							</Button>
+						</CardFooter>
+					</form>
+				</CardContent>
+			</Card>
 		</>
 	);
 };

@@ -1,5 +1,17 @@
 import React from "react";
-import { Modal, Box, Typography, Button } from "@mui/material";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+
+type ButtonVariant = "link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined;
 
 interface Props {
 	open: boolean;
@@ -9,46 +21,41 @@ interface Props {
 	actions: {
 		text: string;
 		onClick: () => void;
-		color?: "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning";
-		variant?: "text" | "outlined" | "contained";
+		variant?: ButtonVariant;
 	}[];
 }
 
 const ReusableModal: React.FC<Props> = ({ open, onClose, title, content, actions }) => {
+	if (!open) return null;
+
 	return (
-		<Modal open={open} onClose={onClose}>
-			<Box
-				sx={{
-					position: "absolute",
-					top: "50%",
-					left: "50%",
-					transform: "translate(-50%, -50%)",
-					width: 400,
-					bgcolor: "background.paper",
-					border: "2px solid #000",
-					boxShadow: 24,
-					p: 4,
-				}}
-			>
-				<Typography variant="h6" component="h2">
-					{title}
-				</Typography>
-				<Typography component="div" sx={{ mt: 2 }}>{content}</Typography>
-				<Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-					{actions.map((action, index) => (
-						<Button
-							key={index}
-							variant={action.variant || "contained"}
-							color={action.color || "primary"}
-							onClick={action.onClick}
-							sx={{ ml: 1 }}
-						>
-							{action.text}
-						</Button>
-					))}
-				</Box>
-			</Box>
-		</Modal>
+		<AlertDialog open={open} onOpenChange={onClose}>
+			<AlertDialogContent>
+				<AlertDialogHeader>
+					<AlertDialogTitle>{title}</AlertDialogTitle>
+					<AlertDialogDescription>
+						{content}
+					</AlertDialogDescription>
+				</AlertDialogHeader>
+				<AlertDialogFooter>
+					{actions.map((action, index) => {
+						const isCancel = action.variant === "ghost" || action.text === "キャンセル";
+						if (isCancel) {
+							return (
+								<AlertDialogCancel key={index} onClick={action.onClick} asChild>
+									<Button variant={action.variant}>{action.text}</Button>
+								</AlertDialogCancel>
+							);
+						}
+						return (
+							<AlertDialogAction key={index} onClick={action.onClick} asChild>
+								<Button variant={action.variant}>{action.text}</Button>
+							</AlertDialogAction>
+						);
+					})}
+				</AlertDialogFooter>
+			</AlertDialogContent>
+		</AlertDialog>
 	);
 };
 

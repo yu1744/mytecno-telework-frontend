@@ -1,256 +1,183 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
-  Container,
-  Typography,
-  Paper,
-  TextField,
-  Button,
-  Switch,
-  FormControlLabel,
-  Box,
-  CircularProgress,
-  Snackbar,
-  Alert,
-  IconButton,
-} from '@mui/material';
-import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
-import PrivateRoute from '../components/PrivateRoute';
-import { useAuthStore } from '../store/auth';
-import api from '../lib/api';
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { getProfile, updateUser, UpdateUserParams } from "@/app/lib/api";
+import { User } from "@/app/types/user";
+import LoadingSpinner from "@/app/components/LoadingSpinner";
+import EditProfileModal from "@/app/components/EditProfileModal";
+import { toast } from "sonner";
+import {
+  User as UserIcon,
+  Building,
+  Mail,
+  Briefcase,
+  CreditCard,
+  Train,
+  ArrowRight,
+} from "lucide-react";
 
-const ProfilePage = () => {
-  const user = useAuthStore((state) => state.user);
+export default function ProfilePage() {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userInfo, setUserInfo] = useState({
-    department: '',
-    yearsOfService: 0,
-    weeklyLimit: 0,
-    monthlyLimit: 0,
-  });
-  const [settings, setSettings] = useState({
-    outlook連携: false,
-    commuteRoutes: [''],
-    pushNotifications: false,
-  });
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await getProfile();
+      setUser(response.data);
+    } catch (error) {
+      console.error("Failed to fetch profile", error);
+      toast.error("プロフィールの取得に失敗しました。");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) return;
-      try {
-        const [profileRes, limitRes] = await Promise.all([
-          api.get(`/users/${user.id}/profile`),
-          api.get(`/users/${user.id}/application_limit`),
-        ]);
-
-        const profileData = profileRes.data;
-        const limitData = limitRes.data;
-
-        setUserInfo({
-          department: user.department?.name || 'N/A',
-          yearsOfService: profileData.years_of_service || 0,
-          weeklyLimit: limitData.weekly_limit || 0,
-          monthlyLimit: limitData.monthly_limit || 0,
-        });
-
-        const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.getSubscription();
-        setSettings({
-          outlook連携: profileData.outlook_setting?.enabled || false,
-          commuteRoutes: profileData.commute_routes?.length > 0 ? profileData.commute_routes : [''],
-          pushNotifications: !!subscription,
-        });
-      } catch (error) {
-        console.error('Failed to fetch profile:', error);
-        setSnackbar({ open: true, message: 'データの表示に失敗しました。時間をおいてページを再読み込みしてください。問題が解決しない場合は、システム管理者にお問い合わせください。', severity: 'error' });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
-  }, [user]);
+  }, []);
 
-  const handleSettingsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSettings({
-      ...settings,
-      [event.target.name]: event.target.checked,
-    });
-  };
-
-  const handleRouteChange = (index: number, value: string) => {
-    const newRoutes = [...settings.commuteRoutes];
-    newRoutes[index] = value;
-    setSettings({ ...settings, commuteRoutes: newRoutes });
-  };
-
-  const handleRouteAdd = () => {
-    setSettings({ ...settings, commuteRoutes: [...settings.commuteRoutes, ''] });
-  };
-
-  const handleRouteRemove = (index: number) => {
-    const newRoutes = settings.commuteRoutes.filter((_, i) => i !== index);
-    setSettings({ ...settings, commuteRoutes: newRoutes });
-  };
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!user) return;
-
+  const handleUpdateUser = async (params: UpdateUserParams) => {
     try {
-      await api.put(`/users/${user.id}/profile`, {
-        outlook_setting: { enabled: settings.outlook連携 },
-        commute_routes: settings.commuteRoutes.filter(route => route.trim() !== ''),
-      });
-      setSnackbar({ open: true, message: '設定を保存しました。', severity: 'success' });
+      await updateUser(params.id, params);
+      toast.success("プロフィールを更新しました。");
+      fetchProfile();
     } catch (error) {
-      console.error('Failed to save profile:', error);
-      setSnackbar({ open: true, message: '設定の保存に失敗しました。', severity: 'error' });
+      console.error("Failed to update profile", error);
+      toast.error("プロフィールの更新に失敗しました。");
     }
-  };
-
-  const handlePushSubscription = async () => {
-    if (!('serviceWorker' in navigator)) {
-      setSnackbar({ open: true, message: 'プッシュ通知はこのブラウザではサポートされていません。', severity: 'error' });
-      return;
-    }
-
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-
-    if (subscription) {
-      // Unsubscribe
-      await subscription.unsubscribe();
-      await api.post('/unregister_push', { endpoint: subscription.endpoint });
-      setSettings({ ...settings, pushNotifications: false });
-      setSnackbar({ open: true, message: 'プッシュ通知をオフにしました。', severity: 'success' });
-    } else {
-      // Subscribe
-      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-      if (!vapidPublicKey) {
-        setSnackbar({ open: true, message: 'プッシュ通知の設定に失敗しました。', severity: 'error' });
-        return;
-      }
-      const newSubscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: vapidPublicKey,
-      });
-      await api.post('/register_push', { subscription: newSubscription });
-      setSettings({ ...settings, pushNotifications: true });
-      setSnackbar({ open: true, message: 'プッシュ通知をオンにしました。', severity: 'success' });
-    }
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
   };
 
   if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingSpinner />;
+  }
+
+  if (!user) {
+    return <div>ユーザー情報の取得に失敗しました。</div>;
   }
 
   return (
-    <PrivateRoute>
-      <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, sm: 3 }, marginTop: { xs: '56px', sm: '64px' } }}>
-        <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ mb: { xs: 2, sm: 4 } }}>
-            ユーザープロファイル
-          </Typography>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">プロフィール</h1>
 
-          <Paper sx={{ p: 3, mb: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              社員情報
-            </Typography>
-            <Box sx={{ '& > *': { mb: 1 } }}>
-              <Typography><strong>所属部署:</strong> {userInfo.department}</Typography>
-              <Typography><strong>勤続年数:</strong> {userInfo.yearsOfService}年</Typography>
-              <Typography><strong>申請上限（週）:</strong> {userInfo.weeklyLimit}回</Typography>
-              <Typography><strong>申請上限（月）:</strong> {userInfo.monthlyLimit}回</Typography>
-            </Box>
-          </Paper>
+      <div className="space-y-8">
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle>プロフィール</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex items-center space-x-4">
+                <UserIcon className="h-6 w-6 text-gray-500" />
+                <div>
+                  <p className="text-sm text-gray-500">氏名</p>
+                  <p className="font-semibold">{user.name}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <CreditCard className="h-6 w-6 text-gray-500" />
+                <div>
+                  <p className="text-sm text-gray-500">社員番号</p>
+                  <p className="font-semibold">{user.employee_number}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <Building className="h-6 w-6 text-gray-500" />
+                <div>
+                  <p className="text-sm text-gray-500">部署</p>
+                  <p className="font-semibold">{user.department.name}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <Briefcase className="h-6 w-6 text-gray-500" />
+                <div>
+                  <p className="text-sm text-gray-500">役職</p>
+                  <p className="font-semibold">{user.role.name}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4 md:col-span-2">
+                <Mail className="h-6 w-6 text-gray-500" />
+                <div>
+                  <p className="text-sm text-gray-500">メールアドレス</p>
+                  <p className="font-semibold">{user.email}</p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <Button onClick={() => setIsModalOpen(true)}>
+                プロフィールを編集する
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              設定
-            </Typography>
-            <Box component="form" onSubmit={handleSubmit} noValidate>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.outlook連携}
-                    onChange={handleSettingsChange}
-                    name="outlook連携"
-                  />
-                }
-                label="Outlookカレンダー連携"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.pushNotifications}
-                    onChange={handlePushSubscription}
-                    name="pushNotifications"
-                  />
-                }
-                label="プッシュ通知"
-              />
-              <Typography variant="subtitle1" sx={{ mt: 3, mb: 1 }}>
-                通勤経路（路線）
-              </Typography>
-              {settings.commuteRoutes.map((route, index) => (
-                <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    value={route}
-                    onChange={(e) => handleRouteChange(index, e.target.value)}
-                    placeholder={`路線 ${index + 1}`}
-                  />
-                  <IconButton onClick={() => handleRouteRemove(index)} disabled={settings.commuteRoutes.length <= 1}>
-                    <RemoveCircleOutline />
-                  </IconButton>
-                </Box>
-              ))}
-              <Button
-                startIcon={<AddCircleOutline />}
-                onClick={handleRouteAdd}
-                sx={{ mt: 1 }}
-              >
-                路線を追加
-              </Button>
-              <Button
-                type="submit"
-                variant="contained"
-                sx={{ mt: 3, mb: 2, display: 'block' }}
-              >
-                設定を保存
-              </Button>
-            </Box>
-          </Paper>
-          <Snackbar
-            open={snackbar.open}
-            autoHideDuration={6000}
-            onClose={handleCloseSnackbar}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          >
-            <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
-              {snackbar.message}
-            </Alert>
-          </Snackbar>
-        </Box>
-      </Box>
-    </PrivateRoute>
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle>通勤経路情報</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {user.transport_routes && user.transport_routes.length > 0 ? (
+              <>
+                {user.transport_routes.map((route, index) => (
+                  <Card key={route.id}>
+                    <CardContent className="pt-6">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold mb-2">
+                            経路{index + 1}
+                          </h3>
+                          <div className="flex items-center space-x-2 text-gray-600">
+                            <span>{route.departure_station}</span>
+                            <ArrowRight className="h-4 w-4" />
+                            {route.via_station && (
+                              <>
+                                <span>{route.via_station}</span>
+                                <ArrowRight className="h-4 w-4" />
+                              </>
+                            )}
+                            <span>{route.arrival_station}</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center space-x-2">
+                            <Train className="h-5 w-5 text-gray-500" />
+                            <span>{route.transport_type}</span>
+                          </div>
+                          <p className="font-semibold text-lg">
+                            {route.fare.toLocaleString()}円
+                            <span className="text-sm text-gray-500">/月</span>
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                <div className="mt-6 flex justify-end">
+                  <Button>編集する</Button>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <p className="mb-4">通勤経路情報は登録されていません。</p>
+                <Button>登録する</Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      <EditProfileModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        user={user}
+        onUpdate={handleUpdateUser}
+      />
+    </div>
   );
-};
-
-export default ProfilePage;
+}
