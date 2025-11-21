@@ -22,7 +22,8 @@ import {
 } from "../lib/api";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { ApplicationDetailModal } from "../components/ApplicationDetailModal";
-import ApprovalCommentModal from "../components/ApprovalCommentModal";
+import { ApprovalModal } from "../components/ApprovalModal";
+import { RejectModal } from "../components/RejectModal";
 import { toast } from "sonner";
 
 const getStatusBadge = (statusId: number) => {
@@ -53,17 +54,10 @@ const ApprovalsPageContent = () => {
 	const [filterByUser, setFilterByUser] = useState<string>("");
 	const [filterByMonth, setFilterByMonth] = useState<string>("");
 
-	const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-	const [selectedApplication, setSelectedApplication] =
+	const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+	const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+	const [selectedApplicationForAction, setSelectedApplicationForAction] =
 		useState<Application | null>(null);
-	const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
-	const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-	const [selectedApplicationId, setSelectedApplicationId] = useState<
-		number | null
-	>(null);
-	const [approvalStatus, setApprovalStatus] = useState<
-		"approved" | "rejected" | null
-	>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const fetchApplications = async () => {
@@ -111,6 +105,10 @@ const ApprovalsPageContent = () => {
 		setSortBy(key);
 	};
 
+	const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+	const [selectedApplication, setSelectedApplication] =
+		useState<Application | null>(null);
+
 	const handleOpenDetailModal = async (applicationId: number) => {
 		try {
 			const response = await getApplication(applicationId);
@@ -126,67 +124,65 @@ const ApprovalsPageContent = () => {
 		setIsDetailModalOpen(false);
 	};
 
-	const handleApprovalAction = (
+	const handleApprovalClick = (
 		e: React.MouseEvent<HTMLButtonElement>,
-		id: number,
-		status: "approved" | "rejected"
+		application: Application
 	) => {
 		e.preventDefault();
 		e.stopPropagation();
-		console.log("handleApprovalAction called", { id, status });
+		setSelectedApplicationForAction(application);
+		setIsApprovalModalOpen(true);
+	};
 
-		// 最初に確認メッセージを表示
-		const app = applications.find((a) => a.id === id);
-		if (!app) {
-			console.error("Application not found in list (stale closure?)", {
-				id,
-				appCount: applications.length,
-			});
-			return;
-		}
+	const handleRejectClick = (
+		e: React.MouseEvent<HTMLButtonElement>,
+		application: Application
+	) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setSelectedApplicationForAction(application);
+		setIsRejectModalOpen(true);
+	};
 
-		// 管理者が別部署の申請を承認する場合は追加で確認メッセージを表示
-		const isAdminApprovingDifferentDept =
-			user?.role?.name === "admin" &&
-			app.user.department?.id !== user.department?.id;
-
-		let confirmMessage =
-			status === "approved"
-				? `申請ID: ${id} を承認します。よろしいですか？`
-				: `申請ID: ${id} を却下します。よろしいですか？`;
-
-		if (isAdminApprovingDifferentDept) {
-			confirmMessage +=
-				"\n\n※ この申請は別部署のため、追加で承認確認が必要です。";
-		}
-
-		if (window.confirm(confirmMessage)) {
-			setSelectedApplicationId(id);
-			setApprovalStatus(status);
-			setIsCommentModalOpen(true);
+	const handleApprovalConfirm = async (comment?: string) => {
+		if (!selectedApplicationForAction) return;
+		setIsSubmitting(true);
+		try {
+			await updateApprovalStatus(
+				selectedApplicationForAction.id,
+				"approved",
+				comment || ""
+			);
+			toast.success("申請を承認しました");
+			fetchApplications();
+			setIsApprovalModalOpen(false);
+			setSelectedApplicationForAction(null);
+		} catch (error) {
+			console.error("Failed to approve application:", error);
+			toast.error("承認処理に失敗しました");
+		} finally {
+			setIsSubmitting(false);
 		}
 	};
 
-	const handleConfirmApprovalAction = async (
-		comment: string,
-		status: "approved" | "rejected"
-	) => {
-		if (!selectedApplicationId) return;
+	const handleRejectConfirm = async (comment: string) => {
+		if (!selectedApplicationForAction) return;
 		setIsSubmitting(true);
-		console.log(
-			`Starting approval action: id=${selectedApplicationId}, status=${status}`
-		);
 		try {
-			await updateApprovalStatus(selectedApplicationId, status, comment);
-			toast.success(status === "approved" ? "承認しました" : "却下しました");
+			await updateApprovalStatus(
+				selectedApplicationForAction.id,
+				"rejected",
+				comment
+			);
+			toast.success("申請を却下しました");
 			fetchApplications();
+			setIsRejectModalOpen(false);
+			setSelectedApplicationForAction(null);
 		} catch (error) {
-			console.error(`Failed to ${status} application:`, error);
-			toast.error("処理に失敗しました");
+			console.error("Failed to reject application:", error);
+			toast.error("却下処理に失敗しました");
 		} finally {
 			setIsSubmitting(false);
-			setIsCommentModalOpen(false);
-			setSelectedApplicationId(null);
 		}
 	};
 
@@ -248,9 +244,7 @@ const ApprovalsPageContent = () => {
 									type="button"
 									size="sm"
 									className="bg-green-500 hover:bg-green-600"
-									onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
-										handleApprovalAction(e, row.id, "approved")
-									}
+									onClick={(e) => handleApprovalClick(e, row)}
 								>
 									承認
 								</Button>
@@ -258,9 +252,7 @@ const ApprovalsPageContent = () => {
 									type="button"
 									variant="destructive"
 									size="sm"
-									onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
-										handleApprovalAction(e, row.id, "rejected")
-									}
+									onClick={(e) => handleRejectClick(e, row)}
 								>
 									却下
 								</Button>
@@ -393,17 +385,31 @@ const ApprovalsPageContent = () => {
 					application={selectedApplication}
 				/>
 			)}
-			<ApprovalCommentModal
-				isOpen={isCommentModalOpen}
-				onClose={() => {
-					setIsCommentModalOpen(false);
-					setApprovalStatus(null);
-				}}
-				onConfirm={handleConfirmApprovalAction}
-				applicationId={selectedApplicationId}
-				status={approvalStatus}
-				isSubmitting={isSubmitting}
-			/>
+
+			{selectedApplicationForAction && (
+				<>
+					<ApprovalModal
+						open={isApprovalModalOpen}
+						onClose={() => {
+							setIsApprovalModalOpen(false);
+							setSelectedApplicationForAction(null);
+						}}
+						onConfirm={handleApprovalConfirm}
+						applicationId={selectedApplicationForAction.id}
+						applicantName={selectedApplicationForAction.user.name}
+					/>
+					<RejectModal
+						open={isRejectModalOpen}
+						onClose={() => {
+							setIsRejectModalOpen(false);
+							setSelectedApplicationForAction(null);
+						}}
+						onConfirm={handleRejectConfirm}
+						applicationId={selectedApplicationForAction.id}
+						applicantName={selectedApplicationForAction.user.name}
+					/>
+				</>
+			)}
 		</div>
 	);
 };

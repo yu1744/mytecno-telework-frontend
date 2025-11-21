@@ -1,27 +1,24 @@
-# 依存関係
-node_modules
-npm-debug.log
-yarn-error.log
-
-# Next.js
-.next
-out
-*.tsbuildinfo
-
-# Git
+# Ignore git files
 .git
 .gitignore
 
-# 環境変数
-.env*.local
+# Ignore docker related files
+Dockerfile
+docker-compose.yml
 
-# テスト
-coverage
-.nyc_output
+# Ignore temporary files
+.next/
+out/
+build/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
 
-# その他
-.DS_Store
-*.log
-.vscode
-.idea
-README.md
+# Ignore dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
