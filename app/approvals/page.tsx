@@ -192,15 +192,21 @@ const ApprovalsPageContent = () => {
 				accessorKey: "created_at",
 				header: "申請日",
 				enableSorting: true,
-				cell: ({ row }: { row: Application }) =>
-					new Date(row.created_at ?? "").toLocaleDateString("ja-JP"),
+				cell: ({ row }: { row: Application }) => {
+					if (!row.created_at) return "-";
+					const date = new Date(row.created_at);
+					return isNaN(date.getTime()) ? "-" : date.toLocaleDateString("ja-JP");
+				},
 			},
 			{
 				accessorKey: "date",
 				header: "申請対象日",
 				enableSorting: true,
-				cell: ({ row }: { row: Application }) =>
-					new Date(row.date).toLocaleDateString("ja-JP"),
+				cell: ({ row }: { row: Application }) => {
+					if (!row.date) return "-";
+					const date = new Date(row.date);
+					return isNaN(date.getTime()) ? "-" : date.toLocaleDateString("ja-JP");
+				},
 			},
 			{
 				accessorKey: "user",
@@ -211,7 +217,7 @@ const ApprovalsPageContent = () => {
 				accessorKey: "user", // userオブジェクト全体を渡す
 				header: "部署",
 				cell: ({ row }: { row: Application }) => {
-					return row.user.department?.name || "N/A";
+					return row.user.department?.name || "部署なし";
 				},
 			},
 			{
@@ -298,7 +304,7 @@ const ApprovalsPageContent = () => {
 
 	return (
 		<div className="container mx-auto p-4 md:p-6">
-			<h1 className="text-2xl font-bold mb-6">承認待ち一覧</h1>
+			<h1 className="text-2xl font-bold mb-6">承認待ち</h1>
 			<div className="flex flex-col sm:flex-row items-center mb-4 gap-4">
 				<div className="flex items-center gap-2">
 					<label htmlFor="month-filter" className="text-sm font-medium">

@@ -123,14 +123,21 @@ const AdminApplicationsPageContent = () => {
 				accessorKey: "created_at",
 				header: "申請日",
 				enableSorting: true,
-				cell: ({ row }) =>
-					new Date(row.created_at ?? "").toLocaleDateString("ja-JP"),
+				cell: ({ row }) => {
+					if (!row.created_at) return "-";
+					const date = new Date(row.created_at);
+					return isNaN(date.getTime()) ? "-" : date.toLocaleDateString("ja-JP");
+				},
 			},
 			{
 				accessorKey: "date",
 				header: "申請対象日",
 				enableSorting: true,
-				cell: ({ row }) => new Date(row.date).toLocaleDateString("ja-JP"),
+				cell: ({ row }) => {
+					if (!row.date) return "-";
+					const date = new Date(row.date);
+					return isNaN(date.getTime()) ? "-" : date.toLocaleDateString("ja-JP");
+				},
 			},
 			{
 				accessorKey: "user",
@@ -141,8 +148,7 @@ const AdminApplicationsPageContent = () => {
 				accessorKey: "user", // userオブジェクト全体を渡す
 				header: "部署",
 				cell: ({ row }) => {
-					const userWithDept = users.find((u) => u.id === row.user.id);
-					return userWithDept?.department?.name || "N/A";
+					return row.user.department?.name || "部署なし";
 				},
 			},
 			{

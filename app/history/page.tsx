@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import PrivateRoute from "../components/PrivateRoute";
 import { CommonTable, ColumnDef } from "../components/CommonTable";
 import { Button } from "@/components/ui/button";
@@ -138,6 +139,16 @@ const HistoryPageContent = () => {
 		fetchApplications();
 	}, [sortBy, sortOrder, filterByStatus, filterByMonth]);
 
+	const searchParams = useSearchParams();
+	const router = useRouter();
+
+	useEffect(() => {
+		if (searchParams.get("submitted") === "true") {
+			toast.success("申請を送信しました");
+			router.replace("/history");
+		}
+	}, [searchParams, router]);
+
 	useEffect(() => {
 		if (message) {
 			toast.success(message);
@@ -146,25 +157,6 @@ const HistoryPageContent = () => {
 	}, [message, clearMessage]);
 
 	const handleSort = (sortKey: keyof Application | (string & {})) => {
-		const key = sortKey as ApplicationRequestParams["sort_by"];
-		const isAsc = sortBy === key && sortOrder === "asc";
-		setSortOrder(isAsc ? "desc" : "asc");
-		setSortBy(key);
-	};
-
-	const handleOpenDetailModal = async (applicationId: number) => {
-		try {
-			const response = await getApplication(applicationId);
-			setSelectedApplication(response.data);
-			setIsDetailModalOpen(true);
-		} catch (error) {
-			console.error("Failed to fetch application details:", error);
-		}
-	};
-
-	const handleCloseDetailModal = () => {
-		setSelectedApplication(null);
-		setIsDetailModalOpen(false);
 	};
 
 	const handleCancel = async (id: number) => {
@@ -176,7 +168,7 @@ const HistoryPageContent = () => {
 				showModal({
 					title: "権限エラー",
 					message: "この操作を行う権限がありません。",
-					onConfirm: () => {},
+					onConfirm: () => { },
 				});
 			} else {
 				console.error("Failed to cancel application:", error);
@@ -190,14 +182,21 @@ const HistoryPageContent = () => {
 				accessorKey: "created_at",
 				header: "申請日",
 				enableSorting: true,
-				cell: ({ row }) =>
-					new Date(row.created_at ?? "").toLocaleDateString("ja-JP"),
+				cell: ({ row }) => {
+					if (!row.created_at) return "-";
+					const date = new Date(row.created_at);
+					return isNaN(date.getTime()) ? "-" : date.toLocaleDateString("ja-JP");
+				},
 			},
 			{
 				accessorKey: "date",
 				header: "申請対象日",
 				enableSorting: true,
-				cell: ({ row }) => new Date(row.date).toLocaleDateString("ja-JP"),
+				cell: ({ row }) => {
+					if (!row.date) return "-";
+					const date = new Date(row.date);
+					return isNaN(date.getTime()) ? "-" : date.toLocaleDateString("ja-JP");
+				},
 			},
 			{
 				accessorKey: "start_time",
