@@ -32,20 +32,12 @@ const schema = z
 		name: z.string().min(1, "名前は必須です。"),
 		employee_number: z.string().min(1, "社員番号は必須です。"),
 		hired_date: z.string().min(1, "入社日は必須です。"),
-		password: z.string().min(8, "パスワードは8文字以上で入力してください。"),
-		password_confirmation: z
-			.string()
-			.min(8, "パスワード（確認）は8文字以上で入力してください。"),
 		department_id: z.string().min(1, "所属部署を選択してください。"),
 		role_id: z.string().min(1, "権限を選択してください。"),
 		group_id: z.string().optional(),
 		position: z.string().optional(),
 		is_caregiver: z.boolean().optional(),
 		has_child_under_elementary: z.boolean().optional(),
-	})
-	.refine((data) => data.password === data.password_confirmation, {
-		message: "パスワードが一致しません。",
-		path: ["password_confirmation"],
 	});
 
 type FormData = z.infer<typeof schema>;
@@ -80,8 +72,6 @@ const RegisterUserModal: React.FC<Props> = ({
 			name: "",
 			employee_number: "",
 			hired_date: "",
-			password: "",
-			password_confirmation: "",
 			department_id: "",
 			role_id: "",
 			group_id: "",
@@ -192,53 +182,7 @@ const RegisterUserModal: React.FC<Props> = ({
 							</p>
 						)}
 					</div>
-					<div className="grid grid-cols-4 items-center gap-4">
-						<Label htmlFor="password" className="text-right whitespace-nowrap">
-							パスワード
-						</Label>
-						<Controller
-							name="password"
-							control={control}
-							render={({ field }) => (
-								<Input
-									id="password"
-									type="password"
-									{...field}
-									className="col-span-3"
-								/>
-							)}
-						/>
-						{errors.password && (
-							<p className="col-span-4 text-red-500 text-sm text-right">
-								{errors.password.message}
-							</p>
-						)}
-					</div>
-					<div className="grid grid-cols-4 items-center gap-4">
-						<Label
-							htmlFor="password_confirmation"
-							className="text-right whitespace-nowrap"
-						>
-							パスワード(確認)
-						</Label>
-						<Controller
-							name="password_confirmation"
-							control={control}
-							render={({ field }) => (
-								<Input
-									id="password_confirmation"
-									type="password"
-									{...field}
-									className="col-span-3"
-								/>
-							)}
-						/>
-						{errors.password_confirmation && (
-							<p className="col-span-4 text-red-500 text-sm text-right">
-								{errors.password_confirmation.message}
-							</p>
-						)}
-					</div>
+
 					<div className="grid grid-cols-4 items-center gap-4">
 						<Label htmlFor="department_id" className="text-right">
 							所属部署

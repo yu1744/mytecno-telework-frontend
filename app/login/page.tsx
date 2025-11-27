@@ -7,17 +7,29 @@ import { useAuthStore } from "@/app/store/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import Link from "next/link";
+import { Loader2 } from "lucide-react";
 
 const LoginPage = () => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
+	const [loading, setLoading] = useState(false);
 	const setAuth = useAuthStore((state) => state.setAuth);
 	const router = useRouter();
 
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		setError("");
+		setLoading(true); // Set loading to true when submission starts
 		try {
 			const response = await api.post("/auth/sign_in", {
 				email,
@@ -77,51 +89,66 @@ const LoginPage = () => {
 	};
 
 	return (
-		<div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-950">
-			<div className="mx-auto grid w-[350px] gap-6">
-				<div className="grid gap-2 text-center">
-					<h1 className="text-3xl font-bold">在宅勤務申請システム</h1>
-					<p className="text-balance text-muted-foreground">
+		<div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-950 p-4">
+			<Card className="w-full max-w-md shadow-lg">
+				<CardHeader className="space-y-1">
+					<CardTitle className="text-2xl font-bold text-center">
+						在宅勤務申請システム
+					</CardTitle>
+					<CardDescription className="text-center">
 						メールアドレスとパスワードを入力してログインしてください
-					</p>
-				</div>
-				{error && (
-					<div
-						className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-						role="alert"
-					>
-						<span className="block sm:inline">{error}</span>
-					</div>
-				)}
-				<form onSubmit={handleSubmit} className="grid gap-4">
-					<div className="grid gap-2">
-						<Label htmlFor="email">メールアドレス</Label>
-						<Input
-							id="email"
-							type="email"
-							placeholder="m@example.com"
-							required
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
-						/>
-					</div>
-					<div className="grid gap-2">
-						<div className="flex items-center">
-							<Label htmlFor="password">パスワード</Label>
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					{error && (
+						<div
+							className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+							role="alert"
+						>
+							<span className="block sm:inline">{error}</span>
 						</div>
-						<Input
-							id="password"
-							type="password"
-							required
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-						/>
-					</div>
-					<Button type="submit" className="w-full">
-						ログイン
-					</Button>
-				</form>
-			</div>
+					)}
+					<form onSubmit={handleSubmit} className="grid gap-4">
+						<div className="grid gap-2">
+							<Label htmlFor="email">メールアドレス</Label>
+							<Input
+								id="email"
+								type="email"
+								placeholder="m@example.com"
+								required
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+							/>
+						</div>
+						<div className="grid gap-2">
+							<div className="flex items-center justify-between">
+								<Label htmlFor="password">パスワード</Label>
+							</div>
+							<Input
+								id="password"
+								type="password"
+								required
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+							/>
+						</div>
+						<Button type="submit" className="w-full" disabled={loading}>
+							{loading ? (
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+							) : null}
+							ログイン
+						</Button>
+						<div className="text-center mt-4">
+							<Link
+								href="/activate"
+								className="text-sm text-blue-600 hover:underline"
+							>
+								初回ログイン・パスワード設定はこちら
+							</Link>
+						</div>
+					</form>
+				</CardContent>
+			</Card>
 		</div>
 	);
 };
