@@ -4,8 +4,8 @@ FROM node:20-alpine AS base
 
 # 依存関係のインストール（BuildKitキャッシュマウント活用）
 FROM base AS deps
-# libc6-compat might be needed for some deps
-RUN apk add --no-cache libc6-compat
+# libc6-compat might be needed for some deps, and python3 for native builds
+RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
 
 COPY package.json yarn.lock* package-lock.json* ./
@@ -25,6 +25,8 @@ COPY . .
 # Next.jsの設定最適化
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=development
+# lightningcss WASM fallback for Alpine Linux compatibility
+ENV CSS_TRANSFORMER_WASM=1
 
 # ポート公開
 EXPOSE 3000
