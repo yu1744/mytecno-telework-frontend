@@ -22,7 +22,9 @@ import {
 } from "../lib/api";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { ApplicationDetailModal } from "../components/ApplicationDetailModal";
-import ApprovalCommentModal from "../components/ApprovalCommentModal";
+import { ApprovalModal } from "../components/ApprovalModal";
+import { RejectModal } from "../components/RejectModal";
+import { toast } from "sonner";
 
 const getStatusBadge = (statusId: number) => {
 	switch (statusId) {
@@ -52,17 +54,11 @@ const ApprovalsPageContent = () => {
 	const [filterByUser, setFilterByUser] = useState<string>("");
 	const [filterByMonth, setFilterByMonth] = useState<string>("");
 
-	const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-	const [selectedApplication, setSelectedApplication] =
+	const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+	const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+	const [selectedApplicationForAction, setSelectedApplicationForAction] =
 		useState<Application | null>(null);
-	const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
-	const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-	const [selectedApplicationId, setSelectedApplicationId] = useState<
-		number | null
-	>(null);
-	const [approvalStatus, setApprovalStatus] = useState<
-		"approved" | "rejected" | null
-	>(null);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const fetchApplications = async () => {
 		setLoading(true);
@@ -109,6 +105,10 @@ const ApprovalsPageContent = () => {
 		setSortBy(key);
 	};
 
+	const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+	const [selectedApplication, setSelectedApplication] =
+		useState<Application | null>(null);
+
 	const handleOpenDetailModal = async (applicationId: number) => {
 		try {
 			const response = await getApplication(applicationId);
@@ -124,49 +124,65 @@ const ApprovalsPageContent = () => {
 		setIsDetailModalOpen(false);
 	};
 
-	const handleApprovalAction = (
-		id: number,
-		status: "approved" | "rejected"
+	const handleApprovalClick = (
+		e: React.MouseEvent<HTMLButtonElement>,
+		application: Application
 	) => {
-		// 最初に確認メッセージを表示
-		const app = applications.find((a) => a.id === id);
-		if (!app) return;
+		e.preventDefault();
+		e.stopPropagation();
+		setSelectedApplicationForAction(application);
+		setIsApprovalModalOpen(true);
+	};
 
-		// 管理者が別部署の申請を承認する場合は追加で確認メッセージを表示
-		const isAdminApprovingDifferentDept =
-			user?.role?.name === "admin" &&
-			app.user.department?.id !== user.department?.id;
+	const handleRejectClick = (
+		e: React.MouseEvent<HTMLButtonElement>,
+		application: Application
+	) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setSelectedApplicationForAction(application);
+		setIsRejectModalOpen(true);
+	};
 
-		let confirmMessage =
-			status === "approved"
-				? `申請ID: ${id} を承認します。よろしいですか？`
-				: `申請ID: ${id} を却下します。よろしいですか？`;
-
-		if (isAdminApprovingDifferentDept) {
-			confirmMessage +=
-				"\n\n※ この申請は別部署のため、追加で承認確認が必要です。";
-		}
-
-		if (window.confirm(confirmMessage)) {
-			setSelectedApplicationId(id);
-			setApprovalStatus(status);
-			setIsCommentModalOpen(true);
+	const handleApprovalConfirm = async (comment?: string) => {
+		if (!selectedApplicationForAction) return;
+		setIsSubmitting(true);
+		try {
+			await updateApprovalStatus(
+				selectedApplicationForAction.id,
+				"approved",
+				comment || ""
+			);
+			toast.success("申請を承認しました");
+			fetchApplications();
+			setIsApprovalModalOpen(false);
+			setSelectedApplicationForAction(null);
+		} catch (error) {
+			console.error("Failed to approve application:", error);
+			toast.error("承認処理に失敗しました");
+		} finally {
+			setIsSubmitting(false);
 		}
 	};
 
-	const handleConfirmApprovalAction = async (
-		comment: string,
-		status: "approved" | "rejected"
-	) => {
-		if (!selectedApplicationId) return;
+	const handleRejectConfirm = async (comment: string) => {
+		if (!selectedApplicationForAction) return;
+		setIsSubmitting(true);
 		try {
-			await updateApprovalStatus(selectedApplicationId, status, comment);
+			await updateApprovalStatus(
+				selectedApplicationForAction.id,
+				"rejected",
+				comment
+			);
+			toast.success("申請を却下しました");
 			fetchApplications();
+			setIsRejectModalOpen(false);
+			setSelectedApplicationForAction(null);
 		} catch (error) {
-			console.error(`Failed to ${status} application:`, error);
+			console.error("Failed to reject application:", error);
+			toast.error("却下処理に失敗しました");
 		} finally {
-			setIsCommentModalOpen(false);
-			setSelectedApplicationId(null);
+			setIsSubmitting(false);
 		}
 	};
 
@@ -176,15 +192,21 @@ const ApprovalsPageContent = () => {
 				accessorKey: "created_at",
 				header: "申請日",
 				enableSorting: true,
-				cell: ({ row }: { row: Application }) =>
-					new Date(row.created_at ?? "").toLocaleDateString("ja-JP"),
+				cell: ({ row }: { row: Application }) => {
+					if (!row.created_at) return "-";
+					const date = new Date(row.created_at);
+					return isNaN(date.getTime()) ? "-" : date.toLocaleDateString("ja-JP");
+				},
 			},
 			{
 				accessorKey: "date",
 				header: "申請対象日",
 				enableSorting: true,
-				cell: ({ row }: { row: Application }) =>
-					new Date(row.date).toLocaleDateString("ja-JP"),
+				cell: ({ row }: { row: Application }) => {
+					if (!row.date) return "-";
+					const date = new Date(row.date);
+					return isNaN(date.getTime()) ? "-" : date.toLocaleDateString("ja-JP");
+				},
 			},
 			{
 				accessorKey: "user",
@@ -195,7 +217,7 @@ const ApprovalsPageContent = () => {
 				accessorKey: "user", // userオブジェクト全体を渡す
 				header: "部署",
 				cell: ({ row }: { row: Application }) => {
-					return row.user.department?.name || "N/A";
+					return row.user.department?.name || "部署なし";
 				},
 			},
 			{
@@ -225,16 +247,18 @@ const ApprovalsPageContent = () => {
 						{row.application_status_id === 1 && (
 							<>
 								<Button
+									type="button"
 									size="sm"
 									className="bg-green-500 hover:bg-green-600"
-									onClick={() => handleApprovalAction(row.id, "approved")}
+									onClick={(e) => handleApprovalClick(e, row)}
 								>
 									承認
 								</Button>
 								<Button
+									type="button"
 									variant="destructive"
 									size="sm"
-									onClick={() => handleApprovalAction(row.id, "rejected")}
+									onClick={(e) => handleRejectClick(e, row)}
 								>
 									却下
 								</Button>
@@ -244,7 +268,7 @@ const ApprovalsPageContent = () => {
 				),
 			},
 		],
-		[]
+		[applications]
 	);
 
 	const getRowClassName = (row: Application) => {
@@ -280,7 +304,7 @@ const ApprovalsPageContent = () => {
 
 	return (
 		<div className="container mx-auto p-4 md:p-6">
-			<h1 className="text-2xl font-bold mb-6">承認待ち一覧</h1>
+			<h1 className="text-2xl font-bold mb-6">承認待ち</h1>
 			<div className="flex flex-col sm:flex-row items-center mb-4 gap-4">
 				<div className="flex items-center gap-2">
 					<label htmlFor="month-filter" className="text-sm font-medium">
@@ -367,16 +391,31 @@ const ApprovalsPageContent = () => {
 					application={selectedApplication}
 				/>
 			)}
-			<ApprovalCommentModal
-				isOpen={isCommentModalOpen}
-				onClose={() => {
-					setIsCommentModalOpen(false);
-					setApprovalStatus(null);
-				}}
-				onConfirm={handleConfirmApprovalAction}
-				applicationId={selectedApplicationId}
-				status={approvalStatus}
-			/>
+
+			{selectedApplicationForAction && (
+				<>
+					<ApprovalModal
+						open={isApprovalModalOpen}
+						onClose={() => {
+							setIsApprovalModalOpen(false);
+							setSelectedApplicationForAction(null);
+						}}
+						onConfirm={handleApprovalConfirm}
+						applicationId={selectedApplicationForAction.id}
+						applicantName={selectedApplicationForAction.user.name}
+					/>
+					<RejectModal
+						open={isRejectModalOpen}
+						onClose={() => {
+							setIsRejectModalOpen(false);
+							setSelectedApplicationForAction(null);
+						}}
+						onConfirm={handleRejectConfirm}
+						applicationId={selectedApplicationForAction.id}
+						applicantName={selectedApplicationForAction.user.name}
+					/>
+				</>
+			)}
 		</div>
 	);
 };

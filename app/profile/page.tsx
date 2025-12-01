@@ -12,6 +12,7 @@ import { getProfile, updateUser, UpdateUserParams } from "@/app/lib/api";
 import { User } from "@/app/types/user";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
 import EditProfileModal from "@/app/components/EditProfileModal";
+import { NotificationSettings } from "@/app/components/NotificationSettings";
 import { toast } from "sonner";
 import {
   User as UserIcon,
@@ -171,6 +172,9 @@ export default function ProfilePage() {
             )}
           </CardContent>
         </Card>
+
+        {/* プッシュ通知設定 */}
+        <NotificationSettings />
       </div>
       <EditProfileModal
         open={isModalOpen}

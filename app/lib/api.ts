@@ -95,7 +95,6 @@ api.interceptors.response.use(
 						window.location.href = "/login";
 						useModalStore.getState().hideModal();
 					},
-					showCancelButton: false,
 				});
 			}
 		}
@@ -179,6 +178,8 @@ export type ApplicationRequestParams = {
 	sort_order?: "asc" | "desc";
 	status?: string;
 	user_name?: string;
+	filter_by_status?: string;
+	filter_by_month?: string;
 };
 
 export const createApplication = (
@@ -201,6 +202,10 @@ export const getApplication = (id: number) =>
 	api.get<Application>(`/applications/${id}`);
 export const cancelApplication = (id: number) =>
 	api.delete(`/applications/${id}`);
+export const adminImportUsers = (formData: FormData) => {
+	return api.post("/admin/users/import_csv", formData);
+};
+
 export const adminGetApplications = (params: ApplicationRequestParams = {}) => {
 	const query = new URLSearchParams(
 		params as Record<string, string>
@@ -238,3 +243,14 @@ export const markNotificationAsRead = (id: number) =>
 	api.put<AppNotification>(`/notifications/${id}`, { read: true });
 export const getUnreadNotifications = () =>
 	api.get<AppNotification[]>("/notifications/unread");
+
+// アカウント有効化API
+export const checkActivation = (email: string, employee_number: string) =>
+	api.post("/auth/activation/check", { email, employee_number });
+
+export const setupAccount = (params: {
+	email: string;
+	employee_number: string;
+	password: string;
+	password_confirmation: string;
+}) => api.post("/auth/activation/setup", params);
