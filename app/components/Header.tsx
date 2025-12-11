@@ -3,6 +3,7 @@
 import React from 'react';
 import { useAuthStore } from '@/app/store/auth';
 import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import api from '@/app/lib/api';
 import NotificationBell from './NotificationBell';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,10 @@ const Header = () => {
       localStorage.removeItem('access-token');
       localStorage.removeItem('client');
       localStorage.removeItem('uid');
+      
+      // NextAuthのセッションもクリア
+      await signOut({ redirect: false });
+      
       router.push('/login');
     }
   };

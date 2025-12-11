@@ -8,14 +8,6 @@ const nextConfig: NextConfig = {
 	// パフォーマンス最適化
 	reactStrictMode: true,
 
-	// SWC Minifier（高速化）
-	swcMinify: true,
-
-	// 画像最適化
-	images: {
-		domains: [],
-		formats: ["image/avif", "image/webp"],
-	},
 
 	// 開発環境での高速リフレッシュ
 	experimental: {
