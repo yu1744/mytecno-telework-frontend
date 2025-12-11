@@ -1,28 +1,22 @@
 "use client";
 
-import type { Metadata } from "next";
 import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header";
 import InstallPrompt from "./components/InstallPrompt";
 import NavigationMenu from "./components/NavigationMenu";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useAuthStore } from "./store/auth";
 import { useModalStore } from "./store/modal";
 import ReusableModal from "./components/ReusableModal";
-import { Toaster } from "@/components/ui/sonner";
+import { SessionProvider } from "next-auth/react"; // frontendsa由来
+import { Toaster } from "@/components/ui/sonner"; // main由来
 
 const notoSansJp = Noto_Sans_JP({
 	subsets: ["latin"],
 	weight: ["400", "700"],
 });
-
-// metadataはサーバーコンポーネントでしか使えないため、ここでは定義のみ
-// export const metadata: Metadata = {
-//   title: "在宅勤務管理システム",
-//   description: "MYTECNO在宅勤務管理システム",
-// };
 
 export default function RootLayout({
 	children,
@@ -74,39 +68,42 @@ export default function RootLayout({
 				<meta name="mobile-web-app-capable" content="yes" />
 			</head>
 			<body className={`${notoSansJp.className} bg-gray-100`}>
-				{isLoginPage ? (
-					<div className="flex items-center justify-center min-h-screen">
-						{children}
-					</div>
-				) : (
-					<div className="flex flex-col h-screen">
-						<Header />
-						<div className="flex flex-1">
-							<NavigationMenu />
-							<main className="flex-1 overflow-y-auto p-8">{children}</main>
+				{/* SessionProviderでラップし、内部にToasterなども配置 */}
+				<SessionProvider>
+					{isLoginPage ? (
+						<div className="flex items-center justify-center min-h-screen">
+							{children}
 						</div>
-					</div>
-				)}
-				<ReusableModal
-					open={isOpen}
-					onClose={hideModal}
-					title={title}
-					content={message}
-					actions={[
-						{
-							text: cancelText || "キャンセル",
-							onClick: handleCancel,
-							variant: "ghost",
-						},
-						{
-							text: confirmText || "申請",
-							onClick: handleConfirm,
-							variant: "default",
-						},
-					]}
-				/>
-				<InstallPrompt />
-				<Toaster />
+					) : (
+						<div className="flex flex-col h-screen">
+							<Header />
+							<div className="flex flex-1">
+								<NavigationMenu />
+								<main className="flex-1 overflow-y-auto p-8">{children}</main>
+							</div>
+						</div>
+					)}
+					<ReusableModal
+						open={isOpen}
+						onClose={hideModal}
+						title={title}
+						content={message}
+						actions={[
+							{
+								text: cancelText || "キャンセル",
+								onClick: handleCancel,
+								variant: "ghost",
+							},
+							{
+								text: confirmText || "申請",
+								onClick: handleConfirm,
+								variant: "default",
+							},
+						]}
+					/>
+					<InstallPrompt />
+					<Toaster />
+				</SessionProvider>
 			</body>
 		</html>
 	);
