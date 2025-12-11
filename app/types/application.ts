@@ -1,4 +1,5 @@
 import { User } from "./user";
+import { Department } from "./department";
 
 export interface ApplicationStatus {
 	id: number;
@@ -40,6 +41,7 @@ export interface Application {
 		id: number;
 		name: string;
 		transport_routes: TransportRoute[];
+		department?: Department;
 	};
 	application_status: ApplicationStatus;
 	approvals: Approval[];

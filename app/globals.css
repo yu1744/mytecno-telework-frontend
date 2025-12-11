@@ -151,3 +151,115 @@
   opacity: 0;
   transform: translateY(-10px);
 }
+
+/* PWA 関連のアニメーション */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* モバイルファースト：レスポンシブデザイン */
+@layer utilities {
+  /* タッチフレンドリーなボタンサイズ */
+  .touch-friendly {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* モバイルでのスクロール最適化 */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* PWAセーフエリア対応 */
+  .safe-area {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* レスポンシブメディアクエリ */
+@media (max-width: 768px) {
+  /* モバイル用のフォントサイズ調整 */
+  body {
+    font-size: 14px;
+  }
+
+  /* ナビゲーションメニューをモバイルで非表示 */
+  .w-64 {
+    width: 0;
+    display: none;
+  }
+
+  /* メインコンテンツの余白調整 */
+  main {
+    padding: 1rem !important;
+  }
+
+  /* テーブルのレスポンシブ対応 */
+  table {
+    font-size: 12px;
+  }
+
+  /* カードの余白調整 */
+  .p-8 {
+    padding: 1rem !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* タブレット用の調整 */
+  .w-64 {
+    width: 12rem;
+  }
+}
+
+/* ダークモード対応の改善 */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    color-scheme: dark;
+  }
+}
+
+/* 高コントラストモード */
+@media (prefers-contrast: high) {
+  * {
+    border-width: 2px !important;
+  }
+}
+
+/* モーション低減 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* プリント対応 */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}

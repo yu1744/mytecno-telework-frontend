@@ -1,9 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Plus } from "lucide-react";
+import { toast } from "react-hot-toast";
 
-import api from "@/app/lib/api";
+import api, {
+	adminGetUsers,
+	getDepartments,
+	getRoles,
+	adminCreateInfoChange,
+} from "@/app/lib/api";
 import EmptyState from "@/app/components/EmptyState";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
 import PrivateRoute from "@/app/components/PrivateRoute";
@@ -22,6 +28,22 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Department {
 	id: number;
@@ -36,14 +58,14 @@ interface Role {
 interface User {
 	id: number;
 	name: string;
+	department?: Department;
+	role?: Role;
 }
 
 interface PersonnelChangeResponse {
 	id: number;
 	user: User;
-	old_department: Department | null;
 	new_department: Department;
-	old_role: Role | null;
 	new_role: Role;
 	effective_date: string;
 }
@@ -60,37 +82,88 @@ interface PersonnelChange {
 
 const PersonnelChangesPage = () => {
 	const [changes, setChanges] = useState<PersonnelChange[]>([]);
+	const [users, setUsers] = useState<User[]>([]);
+	const [departments, setDepartments] = useState<Department[]>([]);
+	const [roles, setRoles] = useState<Role[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
-	useEffect(() => {
-		const fetchPersonnelChanges = async () => {
-			try {
-				setLoading(true);
-				const response = await api.get<PersonnelChangeResponse[]>(
-					"/admin/user_info_changes"
-				);
-				const formattedData = response.data.map((item) => ({
-					id: item.id,
-					user_name: item.user.name,
-					old_department: item.old_department?.name || "N/A",
-					new_department: item.new_department.name,
-					old_role: item.old_role?.name || "N/A",
-					new_role: item.new_role.name,
-					effective_date: item.effective_date,
-				}));
-				setChanges(formattedData);
-				setError(null);
-			} catch (error) {
-				setError("データの表示に失敗しました。");
-				console.error("Failed to fetch personnel changes:", error);
-			} finally {
-				setLoading(false);
-			}
-		};
+	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+	const [newChange, setNewChange] = useState({
+		user_id: "",
+		new_department_id: "",
+		new_role_id: "",
+		effective_date: "",
+	});
 
-		fetchPersonnelChanges();
+	const fetchData = async () => {
+		try {
+			setLoading(true);
+			const [changesRes, usersRes, deptsRes, rolesRes] = await Promise.all([
+				api.get<PersonnelChangeResponse[]>("/admin/user_info_changes"),
+				adminGetUsers(),
+				getDepartments(),
+				getRoles(),
+			]);
+
+			const formattedData = changesRes.data.map((item) => ({
+				id: item.id,
+				user_name: item.user.name,
+				old_department: item.user.department?.name || "N/A",
+				new_department: item.new_department.name,
+				old_role: item.user.role?.name || "N/A",
+				new_role: item.new_role.name,
+				effective_date: item.effective_date,
+			}));
+			setChanges(formattedData);
+			setUsers(usersRes.data);
+			setDepartments(deptsRes.data);
+			setRoles(rolesRes.data as any); // roles API might return different structure, casting for now
+			setError(null);
+		} catch (error) {
+			setError("データの取得に失敗しました。");
+			console.error("Failed to fetch data:", error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		fetchData();
 	}, []);
+
+	const handleCreate = async () => {
+		if (
+			!newChange.user_id ||
+			!newChange.new_department_id ||
+			!newChange.new_role_id ||
+			!newChange.effective_date
+		) {
+			toast.error("すべての項目を入力してください");
+			return;
+		}
+
+		try {
+			await adminCreateInfoChange({
+				user_id: Number(newChange.user_id),
+				new_department_id: Number(newChange.new_department_id),
+				new_role_id: Number(newChange.new_role_id),
+				effective_date: newChange.effective_date,
+			});
+			toast.success("予約を作成しました");
+			setIsCreateModalOpen(false);
+			setNewChange({
+				user_id: "",
+				new_department_id: "",
+				new_role_id: "",
+				effective_date: "",
+			});
+			fetchData();
+		} catch (error) {
+			console.error("Failed to create change:", error);
+			toast.error("予約の作成に失敗しました");
+		}
+	};
 
 	const handleEdit = (id: number) => {
 		// TODO: 編集機能の実装
@@ -102,10 +175,10 @@ const PersonnelChangesPage = () => {
 			try {
 				await api.delete(`/admin/user_info_changes/${id}`);
 				setChanges(changes.filter((change) => change.id !== id));
-				alert("予約を取り消しました。");
+				toast.success("予約を取り消しました");
 			} catch (error) {
 				console.error("Failed to delete personnel change:", error);
-				alert("予約の取消に失敗しました。");
+				toast.error("予約の取消に失敗しました");
 			}
 		}
 	};
@@ -119,7 +192,95 @@ const PersonnelChangesPage = () => {
 			<div className="container mx-auto py-10">
 				<div className="flex justify-between items-center mb-4">
 					<h1 className="text-2xl font-bold">人事異動の予約・管理</h1>
-					<Button>新規予約作成</Button>
+					<Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+						<DialogTrigger asChild>
+							<Button>
+								<Plus className="mr-2 h-4 w-4" /> 新規予約作成
+							</Button>
+						</DialogTrigger>
+						<DialogContent>
+							<DialogHeader>
+								<DialogTitle>新規人事異動予約</DialogTitle>
+							</DialogHeader>
+							<div className="grid gap-4 py-4">
+								<div className="grid gap-2">
+									<Label htmlFor="user">対象ユーザー</Label>
+									<Select
+										value={newChange.user_id}
+										onValueChange={(value) =>
+											setNewChange({ ...newChange, user_id: value })
+										}
+									>
+										<SelectTrigger>
+											<SelectValue placeholder="ユーザーを選択" />
+										</SelectTrigger>
+										<SelectContent>
+											{users.map((user) => (
+												<SelectItem key={user.id} value={user.id.toString()}>
+													{user.name}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+								<div className="grid gap-2">
+									<Label htmlFor="department">新部署</Label>
+									<Select
+										value={newChange.new_department_id}
+										onValueChange={(value) =>
+											setNewChange({ ...newChange, new_department_id: value })
+										}
+									>
+										<SelectTrigger>
+											<SelectValue placeholder="部署を選択" />
+										</SelectTrigger>
+										<SelectContent>
+											{departments.map((dept) => (
+												<SelectItem key={dept.id} value={dept.id.toString()}>
+													{dept.name}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+								<div className="grid gap-2">
+									<Label htmlFor="role">新役職</Label>
+									<Select
+										value={newChange.new_role_id}
+										onValueChange={(value) =>
+											setNewChange({ ...newChange, new_role_id: value })
+										}
+									>
+										<SelectTrigger>
+											<SelectValue placeholder="役職を選択" />
+										</SelectTrigger>
+										<SelectContent>
+											{roles.map((role) => (
+												<SelectItem key={role.id} value={role.id.toString()}>
+													{role.name}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+								<div className="grid gap-2">
+									<Label htmlFor="date">変更反映日</Label>
+									<Input
+										id="date"
+										type="date"
+										value={newChange.effective_date}
+										onChange={(e) =>
+											setNewChange({
+												...newChange,
+												effective_date: e.target.value,
+											})
+										}
+									/>
+								</div>
+								<Button onClick={handleCreate}>予約作成</Button>
+							</div>
+						</DialogContent>
+					</Dialog>
 				</div>
 				{error && <p className="text-red-500">{error}</p>}
 				{!error && changes.length === 0 ? (

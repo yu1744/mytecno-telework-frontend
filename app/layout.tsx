@@ -3,13 +3,15 @@
 import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header";
+import InstallPrompt from "./components/InstallPrompt";
 import NavigationMenu from "./components/NavigationMenu";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useAuthStore } from "./store/auth";
 import { useModalStore } from "./store/modal";
 import ReusableModal from "./components/ReusableModal";
-import { SessionProvider } from "next-auth/react";
+import { SessionProvider } from "next-auth/react"; // frontendsa由来
+import { Toaster } from "@/components/ui/sonner"; // main由来
 
 const notoSansJp = Noto_Sans_JP({
 	subsets: ["latin"],
@@ -53,10 +55,20 @@ export default function RootLayout({
 	return (
 		<html lang="ja">
 			<head>
+				<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+				<meta name="description" content="在宅勤務の申請や承認を行うためのアプリケーションです" />
+				<meta name="theme-color" content="#0f172a" />
 				<link rel="manifest" href="/manifest.json" />
-				<meta name="theme-color" content="#000000" />
+				<link rel="icon" href="/favicon.ico" />
+				<link rel="apple-touch-icon" href="/icon-192x192.png" />
+				<meta name="apple-mobile-web-app-capable" content="yes" />
+				<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+				<meta name="apple-mobile-web-app-title" content="在宅管理" />
+				<meta name="format-detection" content="telephone=no" />
+				<meta name="mobile-web-app-capable" content="yes" />
 			</head>
 			<body className={`${notoSansJp.className} bg-gray-100`}>
+				{/* SessionProviderでラップし、内部にToasterなども配置 */}
 				<SessionProvider>
 					{isLoginPage ? (
 						<div className="flex items-center justify-center min-h-screen">
@@ -89,6 +101,8 @@ export default function RootLayout({
 							},
 						]}
 					/>
+					<InstallPrompt />
+					<Toaster />
 				</SessionProvider>
 			</body>
 		</html>

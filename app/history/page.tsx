@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import PrivateRoute from "../components/PrivateRoute";
 import { CommonTable, ColumnDef } from "../components/CommonTable";
 import { Button } from "@/components/ui/button";
@@ -54,21 +55,26 @@ const renderSpecialNote = (application: Application) => {
 
 	if (isExceeded && isSpecial) {
 		return (
-			<Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100/80">
-				超過・特任
-			</Badge>
+			<div className="flex gap-1">
+				<Badge className="bg-red-100 text-red-800 hover:bg-red-100/80">
+					特任
+				</Badge>
+				<Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80">
+					超過
+				</Badge>
+			</div>
 		);
 	}
 	if (isExceeded) {
 		return (
-			<Badge className="bg-red-100 text-red-800 hover:bg-red-100/80">
+			<Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80">
 				8h超過
 			</Badge>
 		);
 	}
 	if (isSpecial) {
 		return (
-			<Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100/80">
+			<Badge className="bg-red-100 text-red-800 hover:bg-red-100/80">
 				特任
 			</Badge>
 		);
@@ -108,6 +114,22 @@ const HistoryPageContent = () => {
 	const showModal = useModalStore((state) => state.showModal);
 	const { message, clearMessage } = useNotificationStore();
 
+	const handleOpenDetailModal = async (applicationId: number) => {
+		try {
+			const response = await getApplication(applicationId);
+			setSelectedApplication(response.data);
+			setIsDetailModalOpen(true);
+		} catch (error) {
+			console.error("Failed to fetch application details:", error);
+			toast.error("申請詳細の取得に失敗しました");
+		}
+	};
+
+	const handleCloseDetailModal = () => {
+		setSelectedApplication(null);
+		setIsDetailModalOpen(false);
+	};
+
 	const fetchApplications = async () => {
 		setLoading(true);
 		try {
@@ -138,6 +160,16 @@ const HistoryPageContent = () => {
 		fetchApplications();
 	}, [sortBy, sortOrder, filterByStatus, filterByMonth]);
 
+	const searchParams = useSearchParams();
+	const router = useRouter();
+
+	// useEffect(() => {
+	// 	if (searchParams.get("submitted") === "true") {
+	// 		toast.success("申請を送信しました");
+	// 		router.replace("/history");
+	// 	}
+	// }, [searchParams, router]);
+
 	useEffect(() => {
 		if (message) {
 			toast.success(message);
@@ -146,42 +178,27 @@ const HistoryPageContent = () => {
 	}, [message, clearMessage]);
 
 	const handleSort = (sortKey: keyof Application | (string & {})) => {
-		const key = sortKey as ApplicationRequestParams["sort_by"];
-		const isAsc = sortBy === key && sortOrder === "asc";
-		setSortOrder(isAsc ? "desc" : "asc");
-		setSortBy(key);
-	};
-
-	const handleOpenDetailModal = async (applicationId: number) => {
-		try {
-			const response = await getApplication(applicationId);
-			setSelectedApplication(response.data);
-			setIsDetailModalOpen(true);
-		} catch (error) {
-			console.error("Failed to fetch application details:", error);
-		}
-	};
-
-	const handleCloseDetailModal = () => {
-		setSelectedApplication(null);
-		setIsDetailModalOpen(false);
 	};
 
 	const handleCancel = async (id: number) => {
-		try {
-			await cancelApplication(id);
-			fetchApplications();
-		} catch (error) {
-			if (axios.isAxiosError(error) && error.response?.status === 403) {
-				showModal({
-					title: "権限エラー",
-					message: "この操作を行う権限がありません。",
-					onConfirm: () => {},
-				});
-			} else {
-				console.error("Failed to cancel application:", error);
-			}
-		}
+		showModal({
+			title: "申請取り消しの確認",
+			message: "この申請を取り消してもよろしいですか？この操作は取り消せません。",
+			onConfirm: async () => {
+				try {
+					await cancelApplication(id);
+					toast.success("申請を取り消しました");
+					fetchApplications();
+				} catch (error) {
+					if (axios.isAxiosError(error) && error.response?.status === 403) {
+						toast.error("この操作を行う権限がありません");
+					} else {
+						console.error("Failed to cancel application:", error);
+						toast.error("申請の取り消しに失敗しました");
+					}
+				}
+			},
+		});
 	};
 
 	const columns: ColumnDef<Application>[] = useMemo(
@@ -190,14 +207,21 @@ const HistoryPageContent = () => {
 				accessorKey: "created_at",
 				header: "申請日",
 				enableSorting: true,
-				cell: ({ row }) =>
-					new Date(row.created_at ?? "").toLocaleDateString("ja-JP"),
+				cell: ({ row }) => {
+					if (!row.created_at) return "-";
+					const date = new Date(row.created_at);
+					return isNaN(date.getTime()) ? "-" : date.toLocaleDateString("ja-JP");
+				},
 			},
 			{
 				accessorKey: "date",
 				header: "申請対象日",
 				enableSorting: true,
-				cell: ({ row }) => new Date(row.date).toLocaleDateString("ja-JP"),
+				cell: ({ row }) => {
+					if (!row.date) return "-";
+					const date = new Date(row.date);
+					return isNaN(date.getTime()) ? "-" : date.toLocaleDateString("ja-JP");
+				},
 			},
 			{
 				accessorKey: "start_time",
