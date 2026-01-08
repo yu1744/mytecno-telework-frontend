@@ -86,37 +86,47 @@ const AdminUsagePage = () => {
   }, [user, accessToken, client, uid]);
 
   const handleExportCsv = async () => {
+    console.log("handleExportCsv called");
+    console.log("Auth info:", { accessToken: !!accessToken, client: !!client, uid: !!uid });
+
     if (!accessToken || !client || !uid) {
       setError("認証情報がありません。");
+      console.error("Missing auth info");
       return;
     }
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/admin/usage_stats/export`,
-        {
-          headers: {
-            "access-token": accessToken,
-            client: client,
-            uid: uid,
-          },
-        }
-      );
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/admin/usage_stats/export`;
+      console.log("Fetching:", url);
+
+      const response = await fetch(url, {
+        headers: {
+          "access-token": accessToken,
+          client: client,
+          uid: uid,
+        },
+      });
+
+      console.log("Response status:", response.status);
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Response error:", errorText);
         throw new Error("CSVエクスポートに失敗しました。");
       }
 
-      const data = await response.json();
-      const blob = new Blob([data.csv], { type: "text/csv;charset=utf-8;" });
-      const url = window.URL.createObjectURL(blob);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
+      a.href = blobUrl;
       a.download = "usage_stats.csv";
       document.body.appendChild(a);
       a.click();
-      a.remove();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+      console.log("CSV download triggered");
     } catch (err) {
+      console.error("Export error:", err);
       setError(
         err instanceof Error
           ? err.message
