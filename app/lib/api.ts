@@ -234,7 +234,14 @@ export const updateApprovalStatus = (
 	id: number,
 	status: "approved" | "rejected",
 	comment?: string
-) => api.put(`/approvals/${id}`, { approval: { status, comment } });
+) => {
+	const payload: { status: string; comment?: string } = { status };
+	// commentが指定されている場合のみペイロードに含める
+	if (comment !== undefined && comment !== null && comment !== "") {
+		payload.comment = comment;
+	}
+	return api.put(`/approvals/${id}`, { approval: payload });
+};
 export const getPendingApprovalsCount = () => {
 	return api.get("/approvals/pending_count");
 };
