@@ -10,7 +10,6 @@ import {
 	getApplicationStats,
 	getRecentApplications,
 	getCalendarApplications,
-	getPendingApprovalsCount,
 } from "@/app/lib/api";
 import { Application } from "@/app/types/application";
 import { useAuthStore } from "@/app/store/auth";
@@ -21,7 +20,6 @@ interface Stats {
 	pending: number;
 	approved: number;
 	rejected: number;
-	pendingApprovals?: number;
 }
 
 const DashboardPage = () => {
@@ -53,7 +51,6 @@ const DashboardPage = () => {
 				let statsRes = null;
 				let recentRes = null;
 				let calendarRes = null;
-				let pendingApprovalsCountRes = null;
 
 				try {
 					statsRes = await getApplicationStats();
@@ -73,20 +70,7 @@ const DashboardPage = () => {
 					console.error("Failed to fetch calendar applications:", err);
 				}
 
-				if (user?.role?.name === "approver" || user?.role?.name === "admin") {
-					try {
-						pendingApprovalsCountRes = await getPendingApprovalsCount();
-					} catch (err) {
-						console.error("Failed to fetch pending approvals count:", err);
-					}
-				}
-
-				setStats({
-					...(statsRes?.data || { pending: 0, approved: 0, rejected: 0 }),
-					pendingApprovals: pendingApprovalsCountRes?.data?.pending_count as
-						| number
-						| undefined,
-				});
+				setStats(statsRes?.data || { pending: 0, approved: 0, rejected: 0 });
 				setRecentApplications(recentRes?.data || []);
 				const calendarData = calendarRes?.data || {};
 				const flattenedApplications: Application[] = [];
@@ -132,7 +116,7 @@ const DashboardPage = () => {
 		};
 
 		fetchData();
-	}, [user]);
+	}, []);
 
 	const handleDateSelect = (date: Date) => {
 		setSelectedDate(date);
@@ -148,7 +132,6 @@ const DashboardPage = () => {
 			const day = String(selectedDate.getDate()).padStart(2, "0");
 			const selectedDateStr = `${year}-${month}-${day}`;
 
-			// app.date は 'YYYY-MM-DD' 形式の文字列なので、時差を考慮せず直接比較
 			// app.date は 'YYYY-MM-DD' 形式の文字列なので、時差を考慮せず直接比較
 			const appDateStr = app.date.split("T")[0];
 
@@ -167,19 +150,12 @@ const DashboardPage = () => {
 	return (
 		<div className="p-6">
 			<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-				<h1 className="text-2xl font-bold">ダッシュボード</h1>
+				<h1 className="text-2xl font-bold">申請ダッシュボード</h1>
 				<Button asChild className="w-full sm:w-auto">
 					<Link href="/apply">新規申請</Link>
 				</Button>
 			</div>
 			<div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 mb-6">
-				{(user?.role?.name === "approver" || user?.role?.name === "admin") && (
-					<StatCard
-						title="承認待ち件数"
-						value={stats.pendingApprovals ?? 0}
-						description="あなたが承認する必要がある申請"
-					/>
-				)}
 				<StatCard
 					title="未処理"
 					value={stats.pending}

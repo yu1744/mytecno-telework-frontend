@@ -151,7 +151,7 @@ const ApprovalsPageContent = () => {
 			await updateApprovalStatus(
 				selectedApplicationForAction.id,
 				"approved",
-				comment || ""
+				undefined
 			);
 			toast.success("申請を承認しました");
 			fetchApplications();

@@ -107,7 +107,6 @@ const ApplicationForm = () => {
 		let isModalShown = false;
 		try {
 			await createApplication(payload);
-			await createApplication(payload);
 			// useNotificationStore.getState().setMessage("申請を送信しました"); // Removing this as we will handle it in history page
 			router.push("/history?submitted=true");
 		} catch (error: any) {
@@ -128,7 +127,6 @@ const ApplicationForm = () => {
 					onConfirm: async () => {
 						setLoading(true);
 						try {
-							await createApplication(payload, true); // skip_limit_check=true で再試行
 							await createApplication(payload, true); // skip_limit_check=true で再試行
 							// useNotificationStore.getState().setMessage("申請を送信しました");
 							useModalStore.getState().hideModal();
