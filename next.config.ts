@@ -18,6 +18,17 @@ const nextConfig: NextConfig = {
 	compiler: {
 		removeConsole: process.env.NODE_ENV === "production",
 	},
+
+	// WSL環境でのホットリロード対応
+	webpack: (config, { dev }) => {
+		if (dev) {
+			config.watchOptions = {
+				poll: 1000, // 1秒ごとにファイル変更をチェック
+				aggregateTimeout: 300, // 変更検知後の待機時間
+			};
+		}
+		return config;
+	},
 };
 
 export default withPWA_({

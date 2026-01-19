@@ -68,14 +68,22 @@ api.interceptors.response.use(
 		return response;
 	},
 	(error) => {
+		// エラーオブジェクトをより詳しくログ出力
+		const errorDetails = {
+			message: error.message,
+			code: error.code,
+			status: error.response?.status,
+			statusText: error.response?.statusText,
+			data: error.response?.data,
+			config: {
+				url: error.config?.url,
+				method: error.config?.method,
+			}
+		};
+		
 		console.error(
 			`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}`,
-			{
-				message: error.message,
-				code: error.code,
-				status: error.response?.status,
-				statusText: error.response?.statusText,
-			}
+			errorDetails
 		);
 
 		if (error.response && error.response.status === 401) {
@@ -265,50 +273,9 @@ export const setupAccount = (params: {
 	password_confirmation: string;
 }) => api.post("/auth/activation/setup", params);
 
-// 操作ログAPI
-export interface OperationLog {
-	id: number;
-	user_id: number | null;
-	user_name: string;
-	action: string;
-	action_label: string;
-	target_type: string | null;
-	target_id: number | null;
-	details: Record<string, unknown>;
-	ip_address: string;
-	created_at: string;
-}
+// 利用統計API
+export const adminExportUsageStats = () =>
+	api.get("/admin/usage_stats/export", { responseType: "blob" });
 
-export interface OperationLogResponse {
-	logs: OperationLog[];
-	total: number;
-	page: number;
-	per_page: number;
-}
-
-export interface OperationLogParams {
-	user_id?: number;
-	action_type?: string;
-	start_date?: string;
-	end_date?: string;
-	page?: number;
-	per_page?: number;
-}
-
-export const getOperationLogs = (params: OperationLogParams = {}) => {
-	const query = new URLSearchParams(
-		Object.fromEntries(
-			Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
-		) as Record<string, string>
-	).toString();
-	return api.get<OperationLogResponse>(`/admin/operation_logs?${query}`);
-};
-
-export const exportOperationLogs = (params: OperationLogParams = {}) => {
-	const query = new URLSearchParams(
-		Object.fromEntries(
-			Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
-		) as Record<string, string>
-	).toString();
-	return api.get(`/admin/operation_logs/export?${query}`, { responseType: 'blob' });
-};
+export const adminGetUsageStats = (params?: { start_date?: string; end_date?: string; department_id?: string }) =>
+	api.get("/admin/usage_stats", { params });
