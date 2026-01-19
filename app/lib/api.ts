@@ -121,6 +121,7 @@ export type CreateUserParams = {
 	role_id: number;
 	department_id: number;
 	hired_date?: string;
+	microsoft_account_id?: string;
 };
 export type UpdateUserParams = {
 	id: number;
@@ -138,6 +139,7 @@ export type UpdateUserParams = {
 	employee_number?: string;
 	manager_id?: number;
 	hired_date?: string;
+	microsoft_account_id?: string;
 };
 
 export const adminGetUsers = () => api.get<User[]>("/admin/users");

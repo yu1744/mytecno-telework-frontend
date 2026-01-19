@@ -38,6 +38,7 @@ export interface User {
   has_child_under_elementary?: boolean;
   address?: string;
   phone_number?: string;
+  microsoft_account_id?: string;
   role: Role;
   department: Department;
   group?: Group;
