@@ -20,8 +20,7 @@ import {
   Mail,
   Briefcase,
   CreditCard,
-  Train,
-  ArrowRight,
+  KeyRound,
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -48,11 +47,11 @@ export default function ProfilePage() {
   const handleUpdateUser = async (params: UpdateUserParams) => {
     try {
       await updateUser(params.id, params);
-      toast.success("プロフィールを更新しました。");
+      toast.success("パスワードを更新しました。");
       fetchProfile();
     } catch (error) {
       console.error("Failed to update profile", error);
-      toast.error("プロフィールの更新に失敗しました。");
+      toast.error("パスワードの更新に失敗しました。");
     }
   };
 
@@ -112,64 +111,11 @@ export default function ProfilePage() {
               </div>
             </div>
             <div className="mt-6 flex justify-end">
-              <Button onClick={() => setIsModalOpen(true)}>
-                プロフィールを編集する
+              <Button onClick={() => setIsModalOpen(true)} variant="outline">
+                <KeyRound className="h-4 w-4 mr-2" />
+                パスワードを変更
               </Button>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle>通勤経路情報</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {user.transport_routes && user.transport_routes.length > 0 ? (
-              <>
-                {user.transport_routes.map((route, index) => (
-                  <Card key={route.id}>
-                    <CardContent className="pt-6">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-semibold mb-2">
-                            経路{index + 1}
-                          </h3>
-                          <div className="flex items-center space-x-2 text-gray-600">
-                            <span>{route.departure_station}</span>
-                            <ArrowRight className="h-4 w-4" />
-                            {route.via_station && (
-                              <>
-                                <span>{route.via_station}</span>
-                                <ArrowRight className="h-4 w-4" />
-                              </>
-                            )}
-                            <span>{route.arrival_station}</span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex items-center space-x-2">
-                            <Train className="h-5 w-5 text-gray-500" />
-                            <span>{route.transport_type}</span>
-                          </div>
-                          <p className="font-semibold text-lg">
-                            {route.fare.toLocaleString()}円
-                            <span className="text-sm text-gray-500">/月</span>
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                <div className="mt-6 flex justify-end">
-                  <Button>編集する</Button>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <p className="mb-4">通勤経路情報は登録されていません。</p>
-                <Button>登録する</Button>
-              </div>
-            )}
           </CardContent>
         </Card>
 

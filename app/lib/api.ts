@@ -48,8 +48,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
 	(response) => {
 		console.log(
-			`[API Response] ${response.config.method?.toUpperCase()} ${
-				response.config.url
+			`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url
 			}`,
 			{
 				status: response.status,
@@ -157,7 +156,7 @@ export interface UserInfoChangeParams {
 	effective_date: string;
 }
 export const adminCreateInfoChange = (params: UserInfoChangeParams) =>
-	api.post("/admin/user_info_changes", params);
+	api.post("/admin/user_info_changes", { user_info_change: params });
 
 // 部署・役職API
 export const getDepartments = () => api.get<Department[]>("/departments");
@@ -203,7 +202,11 @@ export const getApplication = (id: number) =>
 export const cancelApplication = (id: number) =>
 	api.delete(`/applications/${id}`);
 export const adminImportUsers = (formData: FormData) => {
-	return api.post("/admin/users/import_csv", formData);
+	return api.post("/admin/users/import_csv", formData, {
+		headers: {
+			"Content-Type": "multipart/form-data",
+		},
+	});
 };
 
 export const adminGetApplications = (params: ApplicationRequestParams = {}) => {
@@ -254,3 +257,51 @@ export const setupAccount = (params: {
 	password: string;
 	password_confirmation: string;
 }) => api.post("/auth/activation/setup", params);
+
+// 操作ログAPI
+export interface OperationLog {
+	id: number;
+	user_id: number | null;
+	user_name: string;
+	action: string;
+	action_label: string;
+	target_type: string | null;
+	target_id: number | null;
+	details: Record<string, unknown>;
+	ip_address: string;
+	created_at: string;
+}
+
+export interface OperationLogResponse {
+	logs: OperationLog[];
+	total: number;
+	page: number;
+	per_page: number;
+}
+
+export interface OperationLogParams {
+	user_id?: number;
+	action_type?: string;
+	start_date?: string;
+	end_date?: string;
+	page?: number;
+	per_page?: number;
+}
+
+export const getOperationLogs = (params: OperationLogParams = {}) => {
+	const query = new URLSearchParams(
+		Object.fromEntries(
+			Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
+		) as Record<string, string>
+	).toString();
+	return api.get<OperationLogResponse>(`/admin/operation_logs?${query}`);
+};
+
+export const exportOperationLogs = (params: OperationLogParams = {}) => {
+	const query = new URLSearchParams(
+		Object.fromEntries(
+			Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
+		) as Record<string, string>
+	).toString();
+	return api.get(`/admin/operation_logs/export?${query}`, { responseType: 'blob' });
+};
