@@ -14,14 +14,28 @@ const NotificationBell = () => {
   useEffect(() => {
     const fetchUnreadNotifications = async () => {
       try {
+        console.debug('[NotificationBell] Fetching unread notifications...');
         const response = await getUnreadNotifications();
-        setNotifications(response.data);
-      } catch (error) {
-        console.error('Failed to fetch unread notifications:', error);
+        console.debug('[NotificationBell] Success:', response);
+        console.debug('[NotificationBell] response.data:', response.data);
+        setNotifications(Array.isArray(response.data) ? response.data : []);
+      } catch (error: any) {
+        // APIエラーは既にコンソールに出力されているので、ここでは静かに処理する
+        // 通知の取得に失敗してもUIは表示し続ける
+        console.debug('[NotificationBell] Fetch failed:', {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data,
+        });
+        setNotifications([]);
       }
     };
 
     fetchUnreadNotifications();
+    
+    // 定期的に通知を更新（30秒ごと）
+    const interval = setInterval(fetchUnreadNotifications, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {

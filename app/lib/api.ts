@@ -48,8 +48,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
 	(response) => {
 		console.log(
-			`[API Response] ${response.config.method?.toUpperCase()} ${
-				response.config.url
+			`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url
 			}`,
 			{
 				status: response.status,
@@ -69,14 +68,22 @@ api.interceptors.response.use(
 		return response;
 	},
 	(error) => {
+		// エラーオブジェクトをより詳しくログ出力
+		const errorDetails = {
+			message: error.message,
+			code: error.code,
+			status: error.response?.status,
+			statusText: error.response?.statusText,
+			data: error.response?.data,
+			config: {
+				url: error.config?.url,
+				method: error.config?.method,
+			}
+		};
+		
 		console.error(
 			`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}`,
-			{
-				message: error.message,
-				code: error.code,
-				status: error.response?.status,
-				statusText: error.response?.statusText,
-			}
+			errorDetails
 		);
 
 		if (error.response && error.response.status === 401) {
@@ -256,3 +263,10 @@ export const setupAccount = (params: {
 	password: string;
 	password_confirmation: string;
 }) => api.post("/auth/activation/setup", params);
+
+// 利用統計API
+export const adminExportUsageStats = () =>
+	api.get("/admin/usage_stats/export", { responseType: "blob" });
+
+export const adminGetUsageStats = (params?: { start_date?: string; end_date?: string; department_id?: string }) =>
+	api.get("/admin/usage_stats", { params });
