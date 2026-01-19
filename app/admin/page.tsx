@@ -180,19 +180,34 @@ const AdminPageContent = () => {
 					</TabsContent>
 
 					<TabsContent value="system-settings" className="mt-4">
-						<Card>
-							<CardHeader>
-								<CardTitle>システム設定</CardTitle>
-							</CardHeader>
-							<CardContent className="flex flex-col items-start gap-4">
-								<Button asChild variant="outline">
-									<Link href="/admin/integrations">外部連携設定</Link>
-								</Button>
-								<Button asChild variant="outline">
-									<Link href="/admin/personnel_changes">人事異動の予約・管理</Link>
-								</Button>
-							</CardContent>
-						</Card>
+						<div className="grid gap-4 md:grid-cols-2">
+							<Card className="hover:shadow-md transition-shadow">
+								<CardHeader>
+									<CardTitle className="text-lg">人事異動の予約・管理</CardTitle>
+								</CardHeader>
+								<CardContent>
+									<p className="text-sm text-muted-foreground mb-4">
+										社員の部署異動や役職変更を予約し、指定日に自動反映します。
+									</p>
+									<Button asChild>
+										<Link href="/admin/personnel_changes">管理画面へ</Link>
+									</Button>
+								</CardContent>
+							</Card>
+							<Card className="hover:shadow-md transition-shadow">
+								<CardHeader>
+									<CardTitle className="text-lg">操作ログ</CardTitle>
+								</CardHeader>
+								<CardContent>
+									<p className="text-sm text-muted-foreground mb-4">
+										システム内の操作履歴を確認し、CSVエクスポートできます。
+									</p>
+									<Button asChild>
+										<Link href="/admin/logs">ログを確認</Link>
+									</Button>
+								</CardContent>
+							</Card>
+						</div>
 					</TabsContent>
 				</Tabs>
 

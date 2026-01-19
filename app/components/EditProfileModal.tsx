@@ -14,18 +14,15 @@ import {
 	DialogTitle,
 	DialogFooter,
 	DialogClose,
+	DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const schema = z
 	.object({
-		name: z.string().min(1, "名前は必須です。"),
-		email: z.string().email("有効なメールアドレスを入力してください。"),
-		address: z.string().optional(),
-		phone_number: z.string().optional(),
-		password: z.string().optional(),
-		password_confirmation: z.string().optional(),
+		password: z.string().min(6, "パスワードは6文字以上で入力してください。"),
+		password_confirmation: z.string().min(1, "確認用パスワードを入力してください。"),
 	})
 	.refine((data) => data.password === data.password_confirmation, {
 		message: "パスワードが一致しません。",
@@ -55,25 +52,19 @@ const EditProfileModal: React.FC<Props> = ({
 	} = useForm<FormData>({
 		resolver: zodResolver(schema),
 		defaultValues: {
-			name: "",
-			email: "",
-			address: "",
-			phone_number: "",
 			password: "",
 			password_confirmation: "",
 		},
 	});
 
 	useEffect(() => {
-		if (user) {
+		if (open) {
 			reset({
-				name: user.name,
-				email: user.email,
-				address: user.address || "",
-				phone_number: user.phone_number || "",
+				password: "",
+				password_confirmation: "",
 			});
 		}
-	}, [user, reset]);
+	}, [open, reset]);
 
 	const handleClose = () => {
 		reset();
@@ -82,17 +73,10 @@ const EditProfileModal: React.FC<Props> = ({
 
 	const onSubmit = (data: FormData) => {
 		if (!user) return;
-		const { name, email, address, phone_number, password, password_confirmation } = data;
 		const updateData: Omit<UpdateUserParams, "id"> = {
-			name,
-			email,
-			address,
-			phone_number,
+			password: data.password,
+			password_confirmation: data.password_confirmation,
 		};
-		if (password) {
-			updateData.password = password;
-			updateData.password_confirmation = password_confirmation;
-		}
 		onUpdate({ ...updateData, id: user.id });
 		handleClose();
 	};
@@ -104,70 +88,29 @@ const EditProfileModal: React.FC<Props> = ({
 		>
 			<DialogContent className="sm:max-w-[425px]">
 				<DialogHeader>
-					<DialogTitle>プロフィール編集</DialogTitle>
+					<DialogTitle>パスワード変更</DialogTitle>
+					<DialogDescription>
+						新しいパスワードを入力してください。
+					</DialogDescription>
 				</DialogHeader>
-				<form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 py-4">
-					<div className="grid grid-cols-4 items-center gap-4">
-						<Label htmlFor="name" className="text-right">
-							名前
-						</Label>
-						<Controller
-							name="name"
-							control={control}
-							render={({ field }) => (
-								<Input id="name" {...field} className="col-span-3" />
-							)}
-						/>
-						{errors.name && (
-							<p className="col-span-4 text-red-500 text-sm text-right">
-								{errors.name.message}
-							</p>
-						)}
+
+				{/* 読み取り専用のユーザー情報 */}
+				<div className="py-4 border-b mb-4">
+					<p className="text-sm text-muted-foreground mb-2">アカウント情報</p>
+					<div className="grid grid-cols-4 gap-2 text-sm">
+						<span className="text-muted-foreground">名前:</span>
+						<span className="col-span-3">{user?.name}</span>
+						<span className="text-muted-foreground">メール:</span>
+						<span className="col-span-3">{user?.email}</span>
+						<span className="text-muted-foreground">部署:</span>
+						<span className="col-span-3">{user?.department?.name || "-"}</span>
 					</div>
-					<div className="grid grid-cols-4 items-center gap-4">
-						<Label htmlFor="email" className="text-right">
-							メールアドレス
-						</Label>
-						<Controller
-							name="email"
-							control={control}
-							render={({ field }) => (
-								<Input id="email" {...field} className="col-span-3" />
-							)}
-						/>
-						{errors.email && (
-							<p className="col-span-4 text-red-500 text-sm text-right">
-								{errors.email.message}
-							</p>
-						)}
-					</div>
-					<div className="grid grid-cols-4 items-center gap-4">
-						<Label htmlFor="address" className="text-right">
-							住所
-						</Label>
-						<Controller
-							name="address"
-							control={control}
-							render={({ field }) => (
-								<Input id="address" {...field} className="col-span-3" />
-							)}
-						/>
-					</div>
-					<div className="grid grid-cols-4 items-center gap-4">
-						<Label htmlFor="phone_number" className="text-right">
-							電話番号
-						</Label>
-						<Controller
-							name="phone_number"
-							control={control}
-							render={({ field }) => (
-								<Input id="phone_number" {...field} className="col-span-3" />
-							)}
-						/>
-					</div>
+				</div>
+
+				<form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
 					<div className="grid grid-cols-4 items-center gap-4">
 						<Label htmlFor="password" className="text-right whitespace-nowrap">
-							パスワード
+							新しいパスワード
 						</Label>
 						<Controller
 							name="password"
@@ -178,7 +121,7 @@ const EditProfileModal: React.FC<Props> = ({
 									type="password"
 									{...field}
 									className="col-span-3"
-									placeholder="変更する場合のみ入力"
+									placeholder="6文字以上で入力"
 								/>
 							)}
 						/>
@@ -204,7 +147,7 @@ const EditProfileModal: React.FC<Props> = ({
 									type="password"
 									{...field}
 									className="col-span-3"
-									placeholder="変更する場合のみ入力"
+									placeholder="もう一度入力"
 								/>
 							)}
 						/>
@@ -220,7 +163,7 @@ const EditProfileModal: React.FC<Props> = ({
 								キャンセル
 							</Button>
 						</DialogClose>
-						<Button type="submit">更新</Button>
+						<Button type="submit">パスワードを変更</Button>
 					</DialogFooter>
 				</form>
 			</DialogContent>
