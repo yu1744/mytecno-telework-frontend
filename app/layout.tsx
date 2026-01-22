@@ -78,7 +78,9 @@ export default function RootLayout({
 						<div className="flex flex-col h-screen">
 							<Header />
 							<div className="flex flex-1">
-								<NavigationMenu />
+								<div className="hidden md:block h-full">
+									<NavigationMenu />
+								</div>
 								<main className="flex-1 overflow-y-auto p-8">{children}</main>
 							</div>
 						</div>

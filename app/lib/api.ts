@@ -29,17 +29,9 @@ api.interceptors.request.use(
 			config.headers["uid"] = uid;
 		}
 
-		// デバッグログ
-		console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
-			url: config.url,
-			baseURL: config.baseURL,
-			headers: config.headers,
-		});
-
 		return config;
 	},
 	(error) => {
-		console.error("[API Request Error]", error);
 		return Promise.reject(error);
 	}
 );
@@ -47,15 +39,6 @@ api.interceptors.request.use(
 // レスポンスインターセプター
 api.interceptors.response.use(
 	(response) => {
-		console.log(
-			`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url
-			}`,
-			{
-				status: response.status,
-				statusText: response.statusText,
-			}
-		);
-
 		if (response.headers["access-token"]) {
 			localStorage.setItem("access-token", response.headers["access-token"]);
 		}
