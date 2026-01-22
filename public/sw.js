@@ -69,7 +69,7 @@ if (!self.define) {
 }
 define(['./workbox-bd7e3b9b'], (function (workbox) { 'use strict';
 
-  importScripts();
+  importScripts("worker-development.js");
   self.skipWaiting();
   workbox.clientsClaim();
   workbox.registerRoute("/", new workbox.NetworkFirst({

@@ -110,8 +110,6 @@ const ApplicationForm = () => {
 			// useNotificationStore.getState().setMessage("申請を送信しました"); // Removing this as we will handle it in history page
 			router.push("/history?submitted=true");
 		} catch (error: any) {
-			console.error("申請の送信に失敗しました", error);
-
 			// 上限エラーか判定
 			const isLimitError = error.response?.data?.is_limit_error;
 			if (isLimitError) {

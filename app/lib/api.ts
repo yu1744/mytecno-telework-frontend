@@ -29,17 +29,9 @@ api.interceptors.request.use(
 			config.headers["uid"] = uid;
 		}
 
-		// デバッグログ
-		console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
-			url: config.url,
-			baseURL: config.baseURL,
-			headers: config.headers,
-		});
-
 		return config;
 	},
 	(error) => {
-		console.error("[API Request Error]", error);
 		return Promise.reject(error);
 	}
 );
@@ -47,15 +39,6 @@ api.interceptors.request.use(
 // レスポンスインターセプター
 api.interceptors.response.use(
 	(response) => {
-		console.log(
-			`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url
-			}`,
-			{
-				status: response.status,
-				statusText: response.statusText,
-			}
-		);
-
 		if (response.headers["access-token"]) {
 			localStorage.setItem("access-token", response.headers["access-token"]);
 		}
@@ -68,24 +51,6 @@ api.interceptors.response.use(
 		return response;
 	},
 	(error) => {
-		// エラーオブジェクトをより詳しくログ出力
-		const errorDetails = {
-			message: error.message,
-			code: error.code,
-			status: error.response?.status,
-			statusText: error.response?.statusText,
-			data: error.response?.data,
-			config: {
-				url: error.config?.url,
-				method: error.config?.method,
-			}
-		};
-		
-		console.error(
-			`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}`,
-			errorDetails
-		);
-
 		if (error.response && error.response.status === 401) {
 			// ログインAPIでの401エラーはモーダル表示の対象外とする
 			if (error.config.url !== "/auth/sign_in") {
