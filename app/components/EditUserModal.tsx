@@ -32,23 +32,28 @@ const schema = z
 		employee_number: z.string().min(1, "社員番号は必須です。"),
 		address: z.string().optional(),
 		phone_number: z.string().optional(),
-		password: z.string().optional(),
-		password_confirmation: z.string().optional(),
 		department_id: z.string().min(1, "所属部署を選択してください。"),
 		role_id: z.string().min(1, "権限を選択してください。"),
 		group_id: z.string().optional(),
 		position: z.string().optional(),
 		manager_id: z.string().optional(),
+		microsoft_account_id: z.string().optional(),
+		// バリデーション(.refine)で参照するため、スキーマにも定義を追加
+		password: z.string().optional(),
+		password_confirmation: z.string().optional(),
 	})
-	.refine((data) => {
-		if (data.password) {
-			return data.password === data.password_confirmation;
+	.refine(
+		(data) => {
+			if (data.password) {
+				return data.password === data.password_confirmation;
+			}
+			return true;
+		},
+		{
+			message: "パスワードが一致しません。",
+			path: ["password_confirmation"],
 		}
-		return true;
-	}, {
-		message: "パスワードが一致しません。",
-		path: ["password_confirmation"],
-	});
+	);
 
 type FormData = z.infer<typeof schema>;
 
@@ -80,6 +85,21 @@ const EditUserModal: React.FC<Props> = ({
 		reset,
 	} = useForm<FormData>({
 		resolver: zodResolver(schema),
+		defaultValues: {
+			name: "",
+			email: "",
+			employee_number: "",
+			address: "",
+			phone_number: "",
+			password: "",
+			password_confirmation: "",
+			department_id: "",
+			role_id: "",
+			group_id: "",
+			position: "",
+			manager_id: "",
+			microsoft_account_id: "",
+		},
 	});
 
 	useEffect(() => {
@@ -95,6 +115,7 @@ const EditUserModal: React.FC<Props> = ({
 				group_id: user.group_id ? String(user.group_id) : "",
 				position: user.position || "",
 				manager_id: user.manager_id ? String(user.manager_id) : "",
+				microsoft_account_id: user.microsoft_account_id || "",
 			});
 		}
 	}, [user, reset]);
@@ -106,7 +127,7 @@ const EditUserModal: React.FC<Props> = ({
 
 	const onSubmit = (data: FormData) => {
 		if (!user) return;
-		const { password, password_confirmation, ...restData } = data;
+		const { ...restData } = data;
 		const updateData: Omit<UpdateUserParams, "id"> = {
 			...restData,
 			department_id: parseInt(data.department_id, 10),
@@ -115,10 +136,6 @@ const EditUserModal: React.FC<Props> = ({
 			manager_id: data.manager_id ? parseInt(data.manager_id, 10) : undefined,
 		};
 
-		if (password) {
-			updateData.password = password;
-			updateData.password_confirmation = password_confirmation;
-		}
 		onUpdate({ ...updateData, id: user.id });
 		handleClose();
 	};
@@ -132,7 +149,15 @@ const EditUserModal: React.FC<Props> = ({
 				<DialogHeader>
 					<DialogTitle>ユーザー情報編集</DialogTitle>
 				</DialogHeader>
-				<form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 py-4">
+				<form
+					onSubmit={handleSubmit(onSubmit)}
+					className="grid gap-4 py-4"
+					autoComplete="off"
+				>
+					{/* ダミーinput - ブラウザのオートフィルを吸収 */}
+					<input type="text" style={{ display: "none" }} tabIndex={-1} />
+					<input type="password" style={{ display: "none" }} tabIndex={-1} />
+
 					<div className="grid grid-cols-4 items-center gap-4">
 						<Label htmlFor="name" className="text-right">
 							名前
@@ -175,7 +200,11 @@ const EditUserModal: React.FC<Props> = ({
 							name="employee_number"
 							control={control}
 							render={({ field }) => (
-								<Input id="employee_number" {...field} className="col-span-3" />
+								<Input
+									id="employee_number"
+									{...field}
+									className="col-span-3"
+								/>
 							)}
 						/>
 						{errors.employee_number && (
@@ -216,10 +245,7 @@ const EditUserModal: React.FC<Props> = ({
 							name="department_id"
 							control={control}
 							render={({ field }) => (
-								<Select
-									onValueChange={field.onChange}
-									value={field.value}
-								>
+								<Select onValueChange={field.onChange} value={field.value}>
 									<SelectTrigger className="col-span-3">
 										<SelectValue placeholder="選択してください" />
 									</SelectTrigger>
@@ -250,20 +276,16 @@ const EditUserModal: React.FC<Props> = ({
 							name="group_id"
 							control={control}
 							render={({ field }) => (
-								<Select
-									onValueChange={field.onChange}
-									value={field.value}
-								>
+								<Select onValueChange={field.onChange} value={field.value}>
 									<SelectTrigger className="col-span-3">
 										<SelectValue placeholder="選択してください" />
 									</SelectTrigger>
 									<SelectContent>
-										{groups
-											.map((group) => (
-												<SelectItem key={group.id} value={String(group.id)}>
-													{group.name}
-												</SelectItem>
-											))}
+										{groups.map((group) => (
+											<SelectItem key={group.id} value={String(group.id)}>
+												{group.name}
+											</SelectItem>
+										))}
 									</SelectContent>
 								</Select>
 							)}
@@ -277,10 +299,7 @@ const EditUserModal: React.FC<Props> = ({
 							name="role_id"
 							control={control}
 							render={({ field }) => (
-								<Select
-									onValueChange={field.onChange}
-									value={field.value}
-								>
+								<Select onValueChange={field.onChange} value={field.value}>
 									<SelectTrigger className="col-span-3">
 										<SelectValue placeholder="選択してください" />
 									</SelectTrigger>
@@ -320,10 +339,7 @@ const EditUserModal: React.FC<Props> = ({
 							name="manager_id"
 							control={control}
 							render={({ field }) => (
-								<Select
-									onValueChange={field.onChange}
-									value={field.value}
-								>
+								<Select onValueChange={field.onChange} value={field.value}>
 									<SelectTrigger className="col-span-3">
 										<SelectValue placeholder="選択してください" />
 									</SelectTrigger>
@@ -352,6 +368,7 @@ const EditUserModal: React.FC<Props> = ({
 									{...field}
 									className="col-span-3"
 									placeholder="変更する場合のみ入力"
+									autoComplete="new-password"
 								/>
 							)}
 						/>
@@ -378,6 +395,7 @@ const EditUserModal: React.FC<Props> = ({
 									{...field}
 									className="col-span-3"
 									placeholder="変更する場合のみ入力"
+									autoComplete="new-password"
 								/>
 							)}
 						/>
@@ -386,6 +404,28 @@ const EditUserModal: React.FC<Props> = ({
 								{errors.password_confirmation.message}
 							</p>
 						)}
+					</div>
+					<div className="grid grid-cols-4 items-center gap-4">
+						<Label
+							htmlFor="microsoft_account_id"
+							className="text-right whitespace-nowrap"
+						>
+							MS Account ID
+						</Label>
+						<Controller
+							name="microsoft_account_id"
+							control={control}
+							render={({ field }) => (
+								<Input
+									id="microsoft_account_id"
+									{...field}
+									value={field.value ?? ""}
+									className="col-span-3"
+									placeholder="例: user@company.onmicrosoft.com"
+									autoComplete="off"
+								/>
+							)}
+						/>
 					</div>
 					<DialogFooter>
 						<DialogClose asChild>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
 	Home,
+	LayoutDashboard,
 	FileText,
 	History,
 	User,
@@ -23,8 +24,8 @@ const applicationMenuItems = [
 	{
 		href: "/dashboard",
 		icon: Home,
-		label: "ダッシュボード",
-		description: "概要とサマリー",
+		label: "申請ダッシュボード",
+		description: "申請状況の概要",
 	},
 	{
 		href: "/apply",
@@ -48,6 +49,13 @@ const applicationMenuItems = [
 
 // 承認機能メニュー（承認者・管理者）
 const approvalMenuItems = [
+	{
+		href: "/approval-dashboard",
+		icon: LayoutDashboard,
+		label: "承認ダッシュボード",
+		description: "承認状況の概要",
+		roles: ["approver", "admin"],
+	},
 	{
 		href: "/approvals",
 		icon: CheckSquare,

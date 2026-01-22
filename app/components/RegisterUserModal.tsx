@@ -36,6 +36,7 @@ const schema = z
 		role_id: z.string().min(1, "権限を選択してください。"),
 		group_id: z.string().optional(),
 		position: z.string().optional(),
+		microsoft_account_id: z.string().optional(),
 		is_caregiver: z.boolean().optional(),
 		has_child_under_elementary: z.boolean().optional(),
 	});
@@ -76,6 +77,7 @@ const RegisterUserModal: React.FC<Props> = ({
 			role_id: "",
 			group_id: "",
 			position: "",
+			microsoft_account_id: "",
 			is_caregiver: false,
 			has_child_under_elementary: false,
 		},
@@ -292,6 +294,26 @@ const RegisterUserModal: React.FC<Props> = ({
 							)}
 						/>
 					</div>
+
+					
+					<div className="grid grid-cols-4 items-center gap-4">
+  						<Label htmlFor="microsoft_account_id" className="text-right whitespace-nowrap">
+    						MS Account ID
+  						</Label>
+  						<Controller
+   							name="microsoft_account_id"
+    						control={control}
+    						render={({ field }) => (
+      							<Input
+       								id="microsoft_account_id"
+        							{...field}
+        							className="col-span-3"
+        							placeholder="例: user@company.onmicrosoft.com"
+     							/>
+    						)}
+						/>
+					</div>
+					
 					<div className="grid grid-cols-4 items-center gap-4">
 						<Label htmlFor="is_caregiver" className="text-right">
 							介護フラグ

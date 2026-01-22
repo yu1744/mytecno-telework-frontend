@@ -86,6 +86,7 @@ export type CreateUserParams = {
 	role_id: number;
 	department_id: number;
 	hired_date?: string;
+	microsoft_account_id?: string;
 };
 export type UpdateUserParams = {
 	id: number;
@@ -103,6 +104,7 @@ export type UpdateUserParams = {
 	employee_number?: string;
 	manager_id?: number;
 	hired_date?: string;
+	microsoft_account_id?: string;
 };
 
 export const adminGetUsers = () => api.get<User[]>("/admin/users");
@@ -129,7 +131,7 @@ export interface UserInfoChangeParams {
 	effective_date: string;
 }
 export const adminCreateInfoChange = (params: UserInfoChangeParams) =>
-	api.post("/admin/user_info_changes", params);
+	api.post("/admin/user_info_changes", { user_info_change: params });
 
 // 部署・役職API
 export const getDepartments = () => api.get<Department[]>("/departments");
@@ -175,7 +177,11 @@ export const getApplication = (id: number) =>
 export const cancelApplication = (id: number) =>
 	api.delete(`/applications/${id}`);
 export const adminImportUsers = (formData: FormData) => {
-	return api.post("/admin/users/import_csv", formData);
+	return api.post("/admin/users/import_csv", formData, {
+		headers: {
+			"Content-Type": "multipart/form-data",
+		},
+	});
 };
 
 export const adminGetApplications = (params: ApplicationRequestParams = {}) => {
@@ -203,7 +209,14 @@ export const updateApprovalStatus = (
 	id: number,
 	status: "approved" | "rejected",
 	comment?: string
-) => api.put(`/approvals/${id}`, { approval: { status, comment } });
+) => {
+	const payload: { status: string; comment?: string } = { status };
+	// commentが指定されている場合のみペイロードに含める
+	if (comment !== undefined && comment !== null && comment !== "") {
+		payload.comment = comment;
+	}
+	return api.put(`/approvals/${id}`, { approval: payload });
+};
 export const getPendingApprovalsCount = () => {
 	return api.get("/approvals/pending_count");
 };
@@ -226,3 +239,10 @@ export const setupAccount = (params: {
 	password: string;
 	password_confirmation: string;
 }) => api.post("/auth/activation/setup", params);
+
+// 利用統計API
+export const adminExportUsageStats = () =>
+	api.get("/admin/usage_stats/export", { responseType: "blob" });
+
+export const adminGetUsageStats = (params?: { start_date?: string; end_date?: string; department_id?: string }) =>
+	api.get("/admin/usage_stats", { params });
