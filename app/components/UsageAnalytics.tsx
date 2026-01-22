@@ -163,11 +163,11 @@ const UsageAnalytics = () => {
           <CardTitle>個人別利用状況</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between mb-4 space-x-2">
-            <div className="flex items-center space-x-2">
-              <Input type="date" placeholder="開始日" className="w-40" />
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-4 gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Input type="date" placeholder="開始日" className="w-auto" />
               <span>〜</span>
-              <Input type="date" placeholder="終了日" className="w-40" />
+              <Input type="date" placeholder="終了日" className="w-auto" />
               <Select>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="部署で絞り込み" />
