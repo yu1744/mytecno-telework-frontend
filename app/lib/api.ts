@@ -51,6 +51,24 @@ api.interceptors.response.use(
 		return response;
 	},
 	(error) => {
+		// エラーオブジェクトをより詳しくログ出力
+		const errorDetails = {
+			message: error.message,
+			code: error.code,
+			status: error.response?.status,
+			statusText: error.response?.statusText,
+			data: error.response?.data,
+			config: {
+				url: error.config?.url,
+				method: error.config?.method,
+			}
+		};
+
+		console.error(
+			`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}`,
+			errorDetails
+		);
+
 		if (error.response && error.response.status === 401) {
 			// ログインAPIでの401エラーはモーダル表示の対象外とする
 			if (error.config.url !== "/auth/sign_in") {
@@ -244,5 +262,36 @@ export const setupAccount = (params: {
 export const adminExportUsageStats = () =>
 	api.get("/admin/usage_stats/export", { responseType: "blob" });
 
+
 export const adminGetUsageStats = (params?: { start_date?: string; end_date?: string; department_id?: string }) =>
 	api.get("/admin/usage_stats", { params });
+
+// 操作ログAPI
+export interface OperationLog {
+	id: number;
+	user_id: number;
+	user_name: string;
+	action: string;
+	action_label: string;
+	target_type: string;
+	target_id: string;
+	details: any;
+	ip_address: string;
+	created_at: string;
+}
+
+export interface OperationLogParams {
+	user_id?: string;
+	action_type?: string;
+	start_date?: string;
+	end_date?: string;
+	page?: number;
+	per_page?: number;
+}
+
+export const getOperationLogs = (params: OperationLogParams) =>
+	api.get<{ logs: OperationLog[]; total: number; page: number; per_page: number }>("/admin/operation_logs", { params });
+
+export const exportOperationLogs = (params: OperationLogParams) =>
+	api.get("/admin/operation_logs/export", { params, responseType: "blob" });
+

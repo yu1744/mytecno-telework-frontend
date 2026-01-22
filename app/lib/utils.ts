@@ -129,3 +129,30 @@ export const cleanParams = <T extends Record<string, unknown>>(params: T): Parti
         Object.entries(params).filter(([, v]) => v !== undefined && v !== "")
     ) as Partial<T>;
 };
+
+/**
+ * API call with retry mechanism
+ */
+export const apiCallWithRetry = async (
+    fn: () => Promise<any>,
+    maxRetries: number = 3,
+    delay: number = 1000
+): Promise<any> => {
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            return await fn();
+        } catch (error: any) {
+            const isConnectionError =
+                error.code === "ERR_CONNECTION_RESET" ||
+                error.code === "ERR_NETWORK" ||
+                error.message?.includes("Network Error");
+
+            if (isConnectionError && i < maxRetries - 1) {
+                console.log(`リトライ ${i + 1}/${maxRetries}...`);
+                await new Promise((resolve) => setTimeout(resolve, delay));
+                continue;
+            }
+            throw error;
+        }
+    }
+};

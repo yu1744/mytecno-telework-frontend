@@ -65,13 +65,13 @@ export const RecentApplicationsTable = ({
 }: RecentApplicationsTableProps) => {
 	return (
 		<Table>
-			<TableHeader>
-				<TableRow>
-					<TableHead>申請日</TableHead>
-					<TableHead className="hidden md:table-cell">申請種別</TableHead>
-					<TableHead className="hidden md:table-cell">時間</TableHead>
-					<TableHead>ステータス</TableHead>
-					<TableHead className="hidden lg:table-cell">備考</TableHead>
+			<TableHeader className="sticky top-0 z-10 bg-white">
+				<TableRow className="bg-white">
+					<TableHead className="bg-white">申請日</TableHead>
+					<TableHead className="hidden md:table-cell bg-white">申請種別</TableHead>
+					<TableHead className="hidden md:table-cell bg-white">時間</TableHead>
+					<TableHead className="bg-white">ステータス</TableHead>
+					<TableHead className="hidden lg:table-cell bg-white">備考</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>

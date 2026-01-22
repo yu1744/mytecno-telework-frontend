@@ -89,17 +89,16 @@ const ApprovalDashboardContent = () => {
 
     return (
         <div className="p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-                <h1 className="text-2xl font-bold">承認ダッシュボード</h1>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 border-b pb-4">
+                <h1 className="text-3xl font-extrabold tracking-tight">承認ダッシュボード</h1>
                 <Button asChild className="w-full sm:w-auto">
                     <Link href="/approvals">承認待ち一覧へ</Link>
                 </Button>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 mb-6">
+            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 mb-8">
                 <StatCard
                     title="承認待ち件数"
                     value={pendingCount}
-                    description="あなたが承認する必要がある申請"
                 />
             </div>
             <Card>

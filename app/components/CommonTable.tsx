@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUpDown } from "lucide-react";
+import { cn } from "@/app/lib/utils";
 
 export interface ColumnDef<T> {
 	accessorKey: keyof T | "actions";
@@ -26,6 +27,9 @@ interface CommonTableProps<T> {
 	sortKey?: keyof T | (string & {});
 	sortOrder?: "asc" | "desc";
 	getRowClassName?: (row: T) => string;
+	stickyHeader?: boolean;
+	fillHeight?: boolean;
+	className?: string;
 }
 
 export function CommonTable<T extends { id: number | string }>({
@@ -36,25 +40,32 @@ export function CommonTable<T extends { id: number | string }>({
 	sortKey,
 	sortOrder,
 	getRowClassName,
+	stickyHeader = true,
+	fillHeight = false,
+	className,
 }: CommonTableProps<T>) {
 	return (
-		<Card className="shadow-lg">
+		<Card className={cn("shadow-lg overflow-hidden flex flex-col", fillHeight ? "flex-1" : "", className)}>
 			{title && (
-				<CardHeader>
+				<CardHeader className="flex-none">
 					<CardTitle>{title}</CardTitle>
 				</CardHeader>
 			)}
-			<CardContent>
-				<div className="rounded-md border">
-					<Table>
-						<TableHeader>
+			<CardContent className={cn("p-0 overflow-hidden flex flex-col", fillHeight ? "flex-1" : "")}>
+				<div className={cn(
+					"rounded-md border overflow-x-auto",
+					fillHeight ? "flex-1 overflow-y-auto" : ""
+				)}>
+					<Table className="relative">
+						<TableHeader className={cn(stickyHeader ? "sticky top-0 z-10 bg-white" : "")}>
 							<TableRow>
 								{columns.map((column, index) => (
-									<TableHead key={index}>
+									<TableHead key={index} className={cn(stickyHeader ? "bg-white" : "")}>
 										{column.enableSorting && onSort ? (
 											<Button
 												variant="ghost"
 												onClick={() => onSort(column.accessorKey as keyof T)}
+												className="-ml-4 h-8 data-[state=open]:bg-accent"
 											>
 												{typeof column.header === "string"
 													? column.header
@@ -73,7 +84,7 @@ export function CommonTable<T extends { id: number | string }>({
 						<TableBody>
 							{data.length === 0 ? (
 								<TableRow>
-									<TableCell colSpan={columns.length} className="text-center">
+									<TableCell colSpan={columns.length} className="h-24 text-center">
 										データがありません。
 									</TableCell>
 								</TableRow>
