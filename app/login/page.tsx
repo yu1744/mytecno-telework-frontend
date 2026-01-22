@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, signOut, useSession } from "next-auth/react";
 import api from "@/app/lib/api";
+import { apiCallWithRetry } from "@/app/lib/utils";
 import { useAuthStore } from "@/app/store/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,30 +20,7 @@ import {
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
-// リトライ付きAPIコール (frontendsa由来)
-const apiCallWithRetry = async (
-	fn: () => Promise<any>,
-	maxRetries: number = 3,
-	delay: number = 1000
-): Promise<any> => {
-	for (let i = 0; i < maxRetries; i++) {
-		try {
-			return await fn();
-		} catch (error: any) {
-			const isConnectionError =
-				error.code === "ERR_CONNECTION_RESET" ||
-				error.code === "ERR_NETWORK" ||
-				error.message?.includes("Network Error");
 
-			if (isConnectionError && i < maxRetries - 1) {
-				console.log(`リトライ ${i + 1}/${maxRetries}...`);
-				await new Promise((resolve) => setTimeout(resolve, delay));
-				continue;
-			}
-			throw error;
-		}
-	}
-};
 
 const LoginPage = () => {
 	const [email, setEmail] = useState("");
@@ -121,7 +99,7 @@ const LoginPage = () => {
 			if (error.response?.status === 404) {
 				setError(
 					error.response.data.error ||
-						"このMicrosoftアカウントは登録されていません。"
+					"このMicrosoftアカウントは登録されていません。"
 				);
 			} else {
 				setError("Microsoft認証に失敗しました。再度お試しください。");

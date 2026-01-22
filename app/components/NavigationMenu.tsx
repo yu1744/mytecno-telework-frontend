@@ -24,25 +24,21 @@ const applicationMenuItems = [
 		href: "/dashboard",
 		icon: Home,
 		label: "申請ダッシュボード",
-		description: "申請状況の概要",
 	},
 	{
 		href: "/apply",
 		icon: FileText,
 		label: "新規申請",
-		description: "在宅勤務申請",
 	},
 	{
 		href: "/history",
 		icon: History,
 		label: "申請履歴",
-		description: "過去の申請確認",
 	},
 	{
 		href: "/profile",
 		icon: User,
 		label: "プロフィール",
-		description: "個人設定",
 	},
 ];
 
@@ -52,21 +48,18 @@ const approvalMenuItems = [
 		href: "/approval-dashboard",
 		icon: LayoutDashboard,
 		label: "承認ダッシュボード",
-		description: "承認状況の概要",
 		roles: ["approver", "admin"],
 	},
 	{
 		href: "/approvals",
 		icon: CheckSquare,
 		label: "承認待ち",
-		description: "部下の申請承認",
 		roles: ["approver", "admin"],
 	},
 	{
 		href: "/admin/applications",
 		icon: FileSearch,
 		label: "全申請一覧",
-		description: "全社申請確認",
 		roles: ["admin", "approver"],
 	},
 ];
@@ -77,14 +70,12 @@ const adminMenuItems = [
 		href: "/admin",
 		icon: Shield,
 		label: "管理ダッシュボード",
-		description: "利用状況分析",
 		roles: ["admin"],
 	},
 	{
 		href: "/admin/users",
 		icon: Users,
 		label: "ユーザー管理",
-		description: "権限・所属管理",
 		roles: ["admin"],
 	},
 ];

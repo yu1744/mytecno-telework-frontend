@@ -117,130 +117,124 @@ const AdminPageContent = () => {
 	return (
 		<main className="p-6">
 			<Toaster />
-			<div>
-				<h1 className="text-2xl font-bold mb-6">管理者ページ</h1>
+			<div className="flex items-center mb-8 border-b pb-4">
+				<h1 className="text-3xl font-extrabold tracking-tight">管理者ページ</h1>
+			</div>
 
-				<Tabs defaultValue="usage-analytics">
-					<TabsList>
-						<TabsTrigger value="usage-analytics">利用状況</TabsTrigger>
-						<TabsTrigger value="department-management">部署管理</TabsTrigger>
-						<TabsTrigger value="system-settings">システム設定</TabsTrigger>
-					</TabsList>
+			<Tabs defaultValue="usage-analytics">
+				<TabsList>
+					<TabsTrigger value="usage-analytics">利用状況</TabsTrigger>
+					<TabsTrigger value="department-management">部署管理</TabsTrigger>
+					<TabsTrigger value="system-settings">システム設定</TabsTrigger>
+				</TabsList>
 
-					<TabsContent value="usage-analytics" className="mt-4">
-						<UsageAnalytics />
-					</TabsContent>
+				<TabsContent value="usage-analytics" className="mt-4">
+					<UsageAnalytics />
+				</TabsContent>
 
-					<TabsContent value="department-management" className="mt-4">
-						<Card>
+				<TabsContent value="department-management" className="mt-4">
+					<Card>
+						<CardHeader>
+							<div className="flex justify-between items-center">
+								<CardTitle>部署一覧</CardTitle>
+								<Button onClick={() => handleOpenDepartmentModal(null)}>
+									新規部署作成
+								</Button>
+							</div>
+						</CardHeader>
+						<CardContent>
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead className="font-bold">部署名</TableHead>
+										<TableHead className="font-bold">アクション</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{departments.map((department) => (
+										<TableRow key={department.id}>
+											<TableCell>{department.name}</TableCell>
+											<TableCell>
+												<div className="flex gap-2">
+													<Button
+														variant="outline"
+														size="sm"
+														onClick={() => handleOpenDepartmentModal(department)}
+													>
+														編集
+													</Button>
+													<Button
+														variant="destructive"
+														size="sm"
+														onClick={() => handleOpenDeleteDepartmentModal(department)}
+													>
+														削除
+													</Button>
+												</div>
+											</TableCell>
+										</TableRow>
+									))}
+								</TableBody>
+							</Table>
+						</CardContent>
+					</Card>
+				</TabsContent>
+
+				<TabsContent value="system-settings" className="mt-4">
+					<div className="grid gap-4 md:grid-cols-2">
+						<Card className="hover:shadow-md transition-shadow">
 							<CardHeader>
-								<div className="flex justify-between items-center">
-									<CardTitle>部署一覧</CardTitle>
-									<Button onClick={() => handleOpenDepartmentModal(null)}>
-										新規部署作成
-									</Button>
-								</div>
+								<CardTitle className="text-lg">人事異動の予約・管理</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<Table>
-									<TableHeader>
-										<TableRow>
-											<TableHead className="font-bold">部署名</TableHead>
-											<TableHead className="font-bold">アクション</TableHead>
-										</TableRow>
-									</TableHeader>
-									<TableBody>
-										{departments.map((department) => (
-											<TableRow key={department.id}>
-												<TableCell>{department.name}</TableCell>
-												<TableCell>
-													<div className="flex gap-2">
-														<Button
-															variant="outline"
-															size="sm"
-															onClick={() => handleOpenDepartmentModal(department)}
-														>
-															編集
-														</Button>
-														<Button
-															variant="destructive"
-															size="sm"
-															onClick={() => handleOpenDeleteDepartmentModal(department)}
-														>
-															削除
-														</Button>
-													</div>
-												</TableCell>
-											</TableRow>
-										))}
-									</TableBody>
-								</Table>
+								<Button asChild>
+									<Link href="/admin/personnel_changes">管理画面へ</Link>
+								</Button>
 							</CardContent>
 						</Card>
-					</TabsContent>
+						<Card className="hover:shadow-md transition-shadow">
+							<CardHeader>
+								<CardTitle className="text-lg">操作ログ</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<Button asChild>
+									<Link href="/admin/logs">ログを確認</Link>
+								</Button>
+							</CardContent>
+						</Card>
+					</div>
+				</TabsContent>
+			</Tabs>
 
-					<TabsContent value="system-settings" className="mt-4">
-						<div className="grid gap-4 md:grid-cols-2">
-							<Card className="hover:shadow-md transition-shadow">
-								<CardHeader>
-									<CardTitle className="text-lg">人事異動の予約・管理</CardTitle>
-								</CardHeader>
-								<CardContent>
-									<p className="text-sm text-muted-foreground mb-4">
-										社員の部署異動や役職変更を予約し、指定日に自動反映します。
-									</p>
-									<Button asChild>
-										<Link href="/admin/personnel_changes">管理画面へ</Link>
-									</Button>
-								</CardContent>
-							</Card>
-							<Card className="hover:shadow-md transition-shadow">
-								<CardHeader>
-									<CardTitle className="text-lg">操作ログ</CardTitle>
-								</CardHeader>
-								<CardContent>
-									<p className="text-sm text-muted-foreground mb-4">
-										システム内の操作履歴を確認し、CSVエクスポートできます。
-									</p>
-									<Button asChild>
-										<Link href="/admin/logs">ログを確認</Link>
-									</Button>
-								</CardContent>
-							</Card>
-						</div>
-					</TabsContent>
-				</Tabs>
+			{/* Department Modals */}
+			<ReusableModal
+				open={isDepartmentModalOpen}
+				onClose={handleCloseDepartmentModal}
+				title={selectedDepartment ? "部署の編集" : "部署の新規作成"}
+				content={
+					<Input
+						autoFocus
+						placeholder="部署名"
+						value={departmentName}
+						onChange={(e) => setDepartmentName(e.target.value)}
+					/>
+				}
+				actions={[
+					{ text: "キャンセル", onClick: handleCloseDepartmentModal, variant: "ghost" },
+					{ text: "保存", onClick: handleSaveDepartment },
+				]}
+			/>
 
-				{/* Department Modals */}
-				<ReusableModal
-					open={isDepartmentModalOpen}
-					onClose={handleCloseDepartmentModal}
-					title={selectedDepartment ? "部署の編集" : "部署の新規作成"}
-					content={
-						<Input
-							autoFocus
-							placeholder="部署名"
-							value={departmentName}
-							onChange={(e) => setDepartmentName(e.target.value)}
-						/>
-					}
-					actions={[
-						{ text: "キャンセル", onClick: handleCloseDepartmentModal, variant: "ghost" },
-						{ text: "保存", onClick: handleSaveDepartment },
-					]}
-				/>
-
-				<ReusableModal
-					open={isDeleteDepartmentModalOpen}
-					onClose={handleCloseDeleteDepartmentModal}
-					title="部署の削除"
-					content={`本当に${selectedDepartment?.name}を削除しますか？`}
-					actions={[
-						{ text: "キャンセル", onClick: handleCloseDeleteDepartmentModal, variant: "ghost" },
-						{ text: "削除", onClick: handleDeleteDepartment, variant: "destructive" },
-					]}
-				/>
-			</div>
+			<ReusableModal
+				open={isDeleteDepartmentModalOpen}
+				onClose={handleCloseDeleteDepartmentModal}
+				title="部署の削除"
+				content={`本当に${selectedDepartment?.name}を削除しますか？`}
+				actions={[
+					{ text: "キャンセル", onClick: handleCloseDeleteDepartmentModal, variant: "ghost" },
+					{ text: "削除", onClick: handleDeleteDepartment, variant: "destructive" },
+				]}
+			/>
 		</main>
 	);
 };
