@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import api from '@/app/lib/api';
 import NotificationBell from './NotificationBell';
+import MobileNavigation from './MobileNavigation';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 
@@ -23,10 +24,10 @@ const Header = () => {
       localStorage.removeItem('access-token');
       localStorage.removeItem('client');
       localStorage.removeItem('uid');
-      
+
       // NextAuthのセッションもクリア
       await signOut({ redirect: false });
-      
+
       router.push('/login');
     }
   };
@@ -37,15 +38,18 @@ const Header = () => {
         <h2 className="text-xl font-bold">在宅勤務申請システム</h2>
         {isAuthenticated && user && (
           <div className="flex items-center space-x-4">
-            <Label>{user.email}</Label>
+            <div className="hidden md:block">
+              <Label>{user.email}</Label>
+            </div>
             <NotificationBell />
             <Button variant="outline" onClick={handleLogout}>
               ログアウト
             </Button>
+            <MobileNavigation />
           </div>
         )}
       </div>
-    </header>
+    </header >
   );
 };
 

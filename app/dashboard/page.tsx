@@ -166,8 +166,8 @@ const DashboardPage = () => {
 
 	return (
 		<div className="p-6">
-			<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-				<h1 className="text-2xl font-bold">申請ダッシュボード</h1>
+			<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 border-b pb-4">
+				<h1 className="text-3xl font-extrabold tracking-tight">申請ダッシュボード</h1>
 				<Button asChild className="w-full sm:w-auto">
 					<Link href="/apply">新規申請</Link>
 				</Button>
@@ -197,17 +197,14 @@ const DashboardPage = () => {
 				<StatCard
 					title="未処理"
 					value={stats.pending}
-					description="自分の申請状況"
 				/>
 				<StatCard
 					title="承認済み"
 					value={stats.approved}
-					description="自分の申請状況"
 				/>
 				<StatCard
 					title="却下済み"
 					value={stats.rejected}
-					description="自分の申請状況"
 				/>
 			</div>
 			<div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
@@ -232,11 +229,11 @@ const DashboardPage = () => {
 						</div>
 					</CardContent>
 				</Card>
-				<Card className="xl:col-span-2">
-					<CardHeader>
+				<Card className="xl:col-span-2 flex flex-col h-[500px]">
+					<CardHeader className="flex-none">
 						<CardTitle>最近の申請</CardTitle>
 					</CardHeader>
-					<CardContent>
+					<CardContent className="flex-1 overflow-y-auto min-h-0">
 						{recentApplications.length > 0 ? (
 							<RecentApplicationsTable applications={recentApplications} />
 						) : (

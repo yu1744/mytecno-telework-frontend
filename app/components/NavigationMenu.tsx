@@ -17,6 +17,7 @@ import {
 import { useAuthStore } from "@/app/store/auth";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 // 申請機能メニュー（全ユーザー）
 const applicationMenuItems = [
@@ -24,25 +25,21 @@ const applicationMenuItems = [
 		href: "/dashboard",
 		icon: Home,
 		label: "申請ダッシュボード",
-		description: "申請状況の概要",
 	},
 	{
 		href: "/apply",
 		icon: FileText,
 		label: "新規申請",
-		description: "在宅勤務申請",
 	},
 	{
 		href: "/history",
 		icon: History,
 		label: "申請履歴",
-		description: "過去の申請確認",
 	},
 	{
 		href: "/profile",
 		icon: User,
 		label: "プロフィール",
-		description: "個人設定",
 	},
 ];
 
@@ -52,21 +49,18 @@ const approvalMenuItems = [
 		href: "/approval-dashboard",
 		icon: LayoutDashboard,
 		label: "承認ダッシュボード",
-		description: "承認状況の概要",
 		roles: ["approver", "admin"],
 	},
 	{
 		href: "/approvals",
 		icon: CheckSquare,
 		label: "承認待ち",
-		description: "部下の申請承認",
 		roles: ["approver", "admin"],
 	},
 	{
 		href: "/admin/applications",
 		icon: FileSearch,
 		label: "全申請一覧",
-		description: "全社申請確認",
 		roles: ["admin", "approver"],
 	},
 ];
@@ -77,19 +71,22 @@ const adminMenuItems = [
 		href: "/admin",
 		icon: Shield,
 		label: "管理ダッシュボード",
-		description: "利用状況分析",
 		roles: ["admin"],
 	},
 	{
 		href: "/admin/users",
 		icon: Users,
 		label: "ユーザー管理",
-		description: "権限・所属管理",
 		roles: ["admin"],
 	},
 ];
 
-const NavigationMenu = () => {
+interface NavigationMenuProps {
+	className?: string;
+	onItemClick?: () => void;
+}
+
+const NavigationMenu = ({ className, onItemClick }: NavigationMenuProps) => {
 	const user = useAuthStore((state) => state.user);
 	const pathname = usePathname();
 
@@ -118,12 +115,15 @@ const NavigationMenu = () => {
 		const Icon = item.icon;
 
 		return (
-			<Link href={item.href} key={item.href} passHref>
-				<Button
-					variant={isActive ? "secondary" : "ghost"}
-					className={`w-full justify-start h-auto py-3 px-4 ${isActive ? "bg-primary/10 text-primary" : "hover:bg-gray-100 dark:hover:bg-gray-800"
-						}`}
-				>
+			<Button
+				key={item.href}
+				asChild
+				variant={isActive ? "secondary" : "ghost"}
+				className={`w-full justify-start h-auto py-3 px-4 ${isActive ? "bg-primary/10 text-primary" : "hover:bg-gray-100 dark:hover:bg-gray-800"
+					}`}
+				onClick={onItemClick}
+			>
+				<Link href={item.href}>
 					<div className="flex items-start gap-3 w-full">
 						<Icon className="h-5 w-5 mt-0.5 flex-shrink-0" />
 						<div className="flex flex-col items-start text-left">
@@ -135,13 +135,13 @@ const NavigationMenu = () => {
 							)}
 						</div>
 					</div>
-				</Button>
-			</Link>
+				</Link>
+			</Button>
 		);
 	};
 
 	return (
-		<nav className="w-64 h-full border-r bg-white dark:bg-gray-950 overflow-y-auto mobile-scroll">
+		<nav className={cn("w-64 h-full border-r bg-white dark:bg-gray-950 overflow-y-auto mobile-scroll", className)}>
 			<div className="flex flex-col gap-2 p-3">
 				{/* 申請機能セクション */}
 				<div>

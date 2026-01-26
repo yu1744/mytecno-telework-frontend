@@ -70,9 +70,11 @@ const NotificationBell = () => {
       </button>
       {isOpen && (
         <div
-          className={`notification-area absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-10 ${
-            isOpen ? 'notification-area-open' : 'notification-area-closed'
-          }`}
+          className={`notification-area z-10 bg-white rounded-md shadow-lg
+            fixed left-4 right-4 top-20 w-auto
+            md:absolute md:right-0 md:left-auto md:top-full md:mt-2 md:w-80
+            ${isOpen ? 'notification-area-open' : 'notification-area-closed'}
+          `}
         >
           <div className="py-1">
             <div className="px-4 py-2 text-sm text-gray-700 font-semibold">
