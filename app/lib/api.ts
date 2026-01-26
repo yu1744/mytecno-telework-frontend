@@ -140,6 +140,15 @@ export const getProfile = () => api.get<User>("/me");
 export const updateUser = (id: number, params: Omit<UpdateUserParams, "id">) =>
 	api.put<User>(`/users/${id}`, { user: params });
 
+// 週間在宅勤務上限API
+export interface WeeklyLimitStatus {
+	weekly_limit: number;
+	weekly_count: number;
+	years_of_service: number;
+}
+export const getWeeklyLimitStatus = () =>
+	api.get<WeeklyLimitStatus>("/weekly_limit_status");
+
 // 人事異動API
 export interface UserInfoChangeParams {
 	user_id: number;
@@ -266,32 +275,8 @@ export const adminExportUsageStats = () =>
 export const adminGetUsageStats = (params?: { start_date?: string; end_date?: string; department_id?: string }) =>
 	api.get("/admin/usage_stats", { params });
 
-// 操作ログAPI
-export interface OperationLog {
-	id: number;
-	user_id: number;
-	user_name: string;
-	action: string;
-	action_label: string;
-	target_type: string;
-	target_id: string;
-	details: any;
-	ip_address: string;
-	created_at: string;
-}
+export const adminGetDepartmentTrend = (departmentId: string) =>
+	api.get(`/admin/usage_stats/department_trend?department_id=${encodeURIComponent(departmentId)}`);
 
-export interface OperationLogParams {
-	user_id?: string;
-	action_type?: string;
-	start_date?: string;
-	end_date?: string;
-	page?: number;
-	per_page?: number;
-}
-
-export const getOperationLogs = (params: OperationLogParams) =>
-	api.get<{ logs: OperationLog[]; total: number; page: number; per_page: number }>("/admin/operation_logs", { params });
-
-export const exportOperationLogs = (params: OperationLogParams) =>
-	api.get("/admin/operation_logs/export", { params, responseType: "blob" });
-
+export const adminGetMonthlyComparison = (month: string) =>
+	api.get(`/admin/usage_stats/monthly_comparison?month=${month}`);

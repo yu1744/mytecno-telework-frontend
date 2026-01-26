@@ -18,6 +18,9 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import DepartmentTrendChart from "@/app/components/DepartmentTrendChart";
+import MonthlyComparisonChart from "@/app/components/MonthlyComparisonChart";
 
 interface UsageStats {
   total_users: number;
@@ -34,6 +37,7 @@ const AdminUsagePage = () => {
   const [usersByGroup, setUsersByGroup] = useState<{ name: string; count: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [departments, setDepartments] = useState<string[]>([]);
 
   useEffect(() => {
     if (user && user.role.name !== "admin") {
@@ -70,6 +74,9 @@ const AdminUsagePage = () => {
         setUsageStats(data);
         if (data.users_by_group) {
           setUsersByGroup(data.users_by_group);
+        }
+        if (data.users_by_department) {
+          setDepartments(data.users_by_department.map((d: any) => d.name));
         }
       } catch (err) {
         setError(
@@ -267,6 +274,45 @@ const AdminUsagePage = () => {
                 <Bar dataKey="count" fill="#82ca9d" name="申請数" />
               </BarChart>
             </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>高度な分析</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="trend" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="trend">部署別の推移 (時系列)</TabsTrigger>
+                <TabsTrigger value="monthly">月別の部署比較 (断面)</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="trend" className="space-y-4">
+                <div className="p-4 border rounded-lg bg-slate-50/50">
+                  <h3 className="text-lg font-medium mb-4">特定の部署を選択して推移を確認</h3>
+                  <DepartmentTrendChart
+                    departments={departments}
+                    accessToken={accessToken!}
+                    client={client!}
+                    uid={uid!}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="monthly" className="space-y-4">
+                <div className="p-4 border rounded-lg bg-slate-50/50">
+                  <h3 className="text-lg font-medium mb-4">特定の月の申請数バランスを確認</h3>
+                  <MonthlyComparisonChart
+                    accessToken={accessToken!}
+                    client={client!}
+                    uid={uid!}
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
