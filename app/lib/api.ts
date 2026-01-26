@@ -80,7 +80,7 @@ api.interceptors.response.use(
 				method: error.config?.method,
 			}
 		};
-		
+
 		console.error(
 			`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}`,
 			errorDetails
@@ -156,6 +156,15 @@ export const adminDeleteUser = (id: number) => api.delete(`/admin/users/${id}`);
 export const getProfile = () => api.get<User>("/me");
 export const updateUser = (id: number, params: Omit<UpdateUserParams, "id">) =>
 	api.put<User>(`/users/${id}`, { user: params });
+
+// 週間在宅勤務上限API
+export interface WeeklyLimitStatus {
+	weekly_limit: number;
+	weekly_count: number;
+	years_of_service: number;
+}
+export const getWeeklyLimitStatus = () =>
+	api.get<WeeklyLimitStatus>("/weekly_limit_status");
 
 // 人事異動API
 export interface UserInfoChangeParams {
@@ -281,3 +290,9 @@ export const adminExportUsageStats = () =>
 
 export const adminGetUsageStats = (params?: { start_date?: string; end_date?: string; department_id?: string }) =>
 	api.get("/admin/usage_stats", { params });
+
+export const adminGetDepartmentTrend = (departmentId: string) =>
+	api.get(`/admin/usage_stats/department_trend?department_id=${encodeURIComponent(departmentId)}`);
+
+export const adminGetMonthlyComparison = (month: string) =>
+	api.get(`/admin/usage_stats/monthly_comparison?month=${month}`);

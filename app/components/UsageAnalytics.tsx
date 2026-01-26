@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { adminExportUsageStats, adminGetUsageStats } from '@/app/lib/api';
+import DepartmentTrendChart from './DepartmentTrendChart';
+import MonthlyComparisonChart from './MonthlyComparisonChart';
 import {
   BarChart,
   Bar,
@@ -64,6 +66,14 @@ const individualUsageData = [
   { id: 5, name: '伊藤 四郎', department: '開発部', date: '2023-03-05', type: '終日在宅' },
 ];
 
+const MONTH_COLORS: { [key: string]: string } = {
+  '11月': '#FF8042', // オレンジ
+  '12月': '#0088FE', // 青
+  '1月': '#00C49F',  // 緑
+  '2月': '#FFBB28',  // 黄
+  '3月': '#8884d8',  // 紫
+};
+
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const UsageAnalytics = () => {
@@ -110,25 +120,8 @@ const UsageAnalytics = () => {
   if (loading) return <div>Loading...</div>;
   if (!usageStats) return <div>No data</div>;
 
-  // Get all unique month keys from all data items
-  const chartData = usageStats?.monthly_usage_by_department || [];
-  const allMonthKeys = new Set<string>();
-
-  chartData.forEach((item: any) => {
-    Object.keys(item).forEach(key => {
-      if (key !== 'name') {
-        allMonthKeys.add(key);
-      }
-    });
-  });
-
-  // Sort keys to try and keep months in order (simple numeric-like sort)
-  const monthKeys = Array.from(allMonthKeys).sort((a, b) => {
-    // Assuming format "1月", "12月" etc. remove "月" and compare numbers
-    const numA = parseInt(a.replace('月', ''));
-    const numB = parseInt(b.replace('月', ''));
-    return numA - numB;
-  });
+  // グラフ用の一時的なログ (削除予定)
+  // console.log('chartData sample:', chartData[0]);
 
   return (
     <div className="space-y-8">
@@ -193,30 +186,11 @@ const UsageAnalytics = () => {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>部署別の月次利用回数</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name"
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                {monthKeys.map((month, index) => (
-                  <Bar key={month} dataKey={month} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <DepartmentTrendChart departments={usageStats?.users_by_department || []} />
+        <MonthlyComparisonChart />
       </div>
 
       {/* データ一覧とエクスポート機能 */}
@@ -272,7 +246,27 @@ const UsageAnalytics = () => {
             </TableHeader>
             <TableBody>
               {(usageStats?.individual_usage_data || []).map((row: any) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  onClick={() => {
+                    // テーブル行をクリックしてフィルタリング
+                    const filters: any = {};
+                    filters.start_date = row.date;
+                    filters.end_date = row.date;
+                    if (row.department_name) {
+                      const deptObj = usageStats?.users_by_department?.find((d: any) => d.name === row.department_name);
+                      if (deptObj) {
+                        filters.department_id = deptObj.id || row.department_name;
+                      }
+                    }
+                    setStartDate(row.date);
+                    setEndDate(row.date);
+                    setSelectedDepartment(row.department_name || 'all');
+                    fetchStats(filters);
+                  }}
+                  style={{ cursor: 'pointer' }}
+                  className="hover:bg-gray-100"
+                >
                   <TableCell>{row.user_name}</TableCell>
                   <TableCell>{row.department_name}</TableCell>
                   <TableCell>{row.date}</TableCell>

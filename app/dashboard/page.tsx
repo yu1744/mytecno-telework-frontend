@@ -10,6 +10,8 @@ import {
 	getApplicationStats,
 	getRecentApplications,
 	getCalendarApplications,
+	getWeeklyLimitStatus,
+	WeeklyLimitStatus,
 } from "@/app/lib/api";
 import { Application } from "@/app/types/application";
 import { useAuthStore } from "@/app/store/auth";
@@ -38,6 +40,11 @@ const DashboardPage = () => {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+	const [weeklyLimitStatus, setWeeklyLimitStatus] = useState<WeeklyLimitStatus>({
+		weekly_limit: 1,
+		weekly_count: 0,
+		years_of_service: 0,
+	});
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -70,8 +77,18 @@ const DashboardPage = () => {
 					console.error("Failed to fetch calendar applications:", err);
 				}
 
+				let weeklyLimitRes = null;
+				try {
+					weeklyLimitRes = await getWeeklyLimitStatus();
+				} catch (err) {
+					console.error("Failed to fetch weekly limit status:", err);
+				}
+
 				setStats(statsRes?.data || { pending: 0, approved: 0, rejected: 0 });
 				setRecentApplications(recentRes?.data || []);
+				if (weeklyLimitRes?.data) {
+					setWeeklyLimitStatus(weeklyLimitRes.data);
+				}
 				const calendarData = calendarRes?.data || {};
 				const flattenedApplications: Application[] = [];
 				for (const date in calendarData) {
@@ -155,6 +172,27 @@ const DashboardPage = () => {
 					<Link href="/apply">新規申請</Link>
 				</Button>
 			</div>
+			<Card className="mb-6">
+				<CardHeader className="pb-2">
+					<CardTitle className="text-lg">今週の在宅勤務状況</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<div className="flex items-center gap-4">
+						<div className="text-3xl font-bold">
+							{weeklyLimitStatus.weekly_count} / {weeklyLimitStatus.weekly_limit}
+						</div>
+						<div className="text-sm text-muted-foreground">日</div>
+						{weeklyLimitStatus.weekly_count >= weeklyLimitStatus.weekly_limit && (
+							<span className="px-2 py-1 text-xs font-semibold text-white bg-red-500 rounded">
+								上限到達
+							</span>
+						)}
+					</div>
+					<p className="text-xs text-muted-foreground mt-2">
+						勤続{weeklyLimitStatus.years_of_service}年（週{weeklyLimitStatus.weekly_limit}日まで）
+					</p>
+				</CardContent>
+			</Card>
 			<div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 mb-6">
 				<StatCard
 					title="未処理"
