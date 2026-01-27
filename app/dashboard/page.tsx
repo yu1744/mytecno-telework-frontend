@@ -94,7 +94,7 @@ const DashboardPage = () => {
 				for (const date in calendarData) {
 					const dayData = calendarData[date];
 					if (dayData && Array.isArray(dayData.applications)) {
-						dayData.applications.forEach((app: { id: number; user_name: string; application_type: string }) => {
+						dayData.applications.forEach((app: { id: number; user_name: string; application_type: string; work_style?: string }) => {
 							flattenedApplications.push({
 								id: app.id,
 								date: date,
@@ -103,7 +103,7 @@ const DashboardPage = () => {
 									name: app.user_name,
 									transport_routes: [],
 								},
-								application_status: { name: app.status, id: 0 },
+								application_status: { name: "unknown", id: 0 },
 								work_style: app.work_style || "",
 								// Application 型が要求する他の必須プロパティ
 								reason: "",

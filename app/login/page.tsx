@@ -6,6 +6,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import api from "@/app/lib/api";
 import { apiCallWithRetry, isAxiosError } from "@/app/lib/utils";
 import { useAuthStore } from "@/app/store/auth";
+import { User } from "@/app/types/user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,8 +34,8 @@ const LoginPage = () => {
 	const { data: session, status } = useSession();
 
 	// 共通の認証後処理（トークン保存とリダイレクト）
-	const handleAuthSuccess = (user: { id: number; email: string; name: string }, authHeaders: { "access-token": string; client: string; uid: string }) => {
-		setAuth(user, authHeaders);
+	const handleAuthSuccess = (user: Record<string, unknown>, authHeaders: { "access-token": string; client: string; uid: string }) => {
+		setAuth(user as unknown as User, authHeaders);
 
 		localStorage.setItem("access-token", authHeaders["access-token"]);
 		localStorage.setItem("client", authHeaders["client"]);
@@ -42,7 +43,7 @@ const LoginPage = () => {
 
 		setIsRedirecting(true);
 
-		const roleName = user.role?.name;
+		const roleName = (user as { role?: { name?: string } }).role?.name;
 		switch (roleName) {
 			case "admin":
 				router.push("/admin");

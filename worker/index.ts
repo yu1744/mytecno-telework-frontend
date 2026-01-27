@@ -1,8 +1,11 @@
 /// <reference lib="webworker" />
 
-declare const self: ServiceWorkerGlobalScope;
+// This makes the script a module, preventing the global 'self' conflict
+export {};
 
-self.addEventListener("push", (event) => {
+const sw = self as unknown as ServiceWorkerGlobalScope;
+
+sw.addEventListener("push", (event: PushEvent) => {
     if (!event.data) return;
 
     try {
@@ -15,20 +18,20 @@ self.addEventListener("push", (event) => {
             data: payload.data,
         };
 
-        event.waitUntil(self.registration.showNotification(title, options));
+        event.waitUntil(sw.registration.showNotification(title, options));
     } catch (err) {
         console.error('Error handling push event:', err);
     }
 });
 
-self.addEventListener("notificationclick", (event) => {
+sw.addEventListener("notificationclick", (event: NotificationEvent) => {
     event.notification.close();
 
     // URL to open
-    const urlToOpen = new URL(event.notification.data?.url || "/", self.location.origin).href;
+    const urlToOpen = new URL(event.notification.data?.url || "/", sw.location.origin).href;
 
     event.waitUntil(
-        self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+        sw.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
             // Check if there is already a window/tab open with the target URL
             for (const client of clients) {
                 if (client.url === urlToOpen && "focus" in client) {
@@ -36,8 +39,8 @@ self.addEventListener("notificationclick", (event) => {
                 }
             }
             // If not, open a new window
-            if (self.clients.openWindow) {
-                return self.clients.openWindow(urlToOpen);
+            if (sw.clients.openWindow) {
+                return sw.clients.openWindow(urlToOpen);
             }
         })
     );

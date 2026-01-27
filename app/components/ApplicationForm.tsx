@@ -147,8 +147,8 @@ const ApplicationForm = () => {
 				});
 			} else {
 				const errorMessage =
-					error.response?.data?.errors?.join("\n") ||
-					error.message ||
+					(isAxiosError(error) && error.response?.data?.errors?.join("\n")) ||
+					(error instanceof Error ? error.message : null) ||
 					"申請の送信に失敗しました";
 				toast.error(errorMessage);
 			}

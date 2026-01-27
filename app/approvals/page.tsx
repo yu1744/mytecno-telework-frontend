@@ -68,7 +68,6 @@ const ApprovalsPageContent = () => {
 				sort_by: sortBy,
 				sort_order: sortOrder,
 				filter_by_status: filterByStatus,
-				filter_by_user: filterByUser,
 				filter_by_month: filterByMonth,
 			};
 			Object.keys(params).forEach(

@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DepartmentTrendChart from "@/app/components/DepartmentTrendChart";
 import MonthlyComparisonChart from "@/app/components/MonthlyComparisonChart";
+import { Department } from "@/app/types/department";
 
 interface UsageStats {
   total_users: number;
@@ -37,7 +38,7 @@ const AdminUsagePage = () => {
   const [usersByGroup, setUsersByGroup] = useState<{ name: string; count: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [departments, setDepartments] = useState<string[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
 
   useEffect(() => {
     if (user && user.role.name !== "admin") {
@@ -76,7 +77,10 @@ const AdminUsagePage = () => {
           setUsersByGroup(data.users_by_group);
         }
         if (data.users_by_department) {
-          setDepartments(data.users_by_department.map((d: { name: string }) => d.name));
+          setDepartments(data.users_by_department.map((d: { name: string; id?: number }, index: number) => ({ 
+            id: d.id || index, 
+            name: d.name 
+          })));
         }
       } catch (err) {
         setError(
@@ -295,9 +299,6 @@ const AdminUsagePage = () => {
                   <h3 className="text-lg font-medium mb-4">特定の部署を選択して推移を確認</h3>
                   <DepartmentTrendChart
                     departments={departments}
-                    accessToken={accessToken!}
-                    client={client!}
-                    uid={uid!}
                   />
                 </div>
               </TabsContent>
@@ -305,11 +306,7 @@ const AdminUsagePage = () => {
               <TabsContent value="monthly" className="space-y-4">
                 <div className="p-4 border rounded-lg bg-slate-50/50">
                   <h3 className="text-lg font-medium mb-4">特定の月の申請数バランスを確認</h3>
-                  <MonthlyComparisonChart
-                    accessToken={accessToken!}
-                    client={client!}
-                    uid={uid!}
-                  />
+                  <MonthlyComparisonChart />
                 </div>
               </TabsContent>
             </Tabs>
