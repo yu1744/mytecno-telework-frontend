@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, signOut, useSession } from "next-auth/react";
 import api from "@/app/lib/api";
-import { apiCallWithRetry } from "@/app/lib/utils";
+import { apiCallWithRetry, isAxiosError } from "@/app/lib/utils";
 import { useAuthStore } from "@/app/store/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,9 +95,9 @@ const LoginPage = () => {
 
 			handleAuthSuccess(user, authHeaders);
 		} catch (error: unknown) {
-			if (error instanceof Error && 'response' in error && (error as { response?: { status?: number } }).response?.status === 404) {
+			if (isAxiosError(error) && error.response?.status === 404) {
 				setError(
-					((error as { response?: { data?: { error?: string } } }).response?.data?.error) ||
+					error.response?.data?.error ||
 					"このMicrosoftアカウントは登録されていません。"
 				);
 			} else {
@@ -134,18 +134,18 @@ const LoginPage = () => {
 			handleAuthSuccess(user, authHeaders);
 		} catch (error: unknown) {
 			// main由来の詳細なエラーハンドリングを採用
-			if (error instanceof Error && 'code' in error && ((error as { code?: string }).code === "ECONNABORTED" || (error as { code?: string }).code === "ETIMEDOUT")) {
+			if (isAxiosError(error) && (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT")) {
 				setError(
 					"サーバーへの接続がタイムアウトしました。少しお待ちください。"
 				);
-			} else if (error.code === "ERR_NETWORK" || !error.response) {
+			} else if (isAxiosError(error) && (error.code === "ERR_NETWORK" || !error.response)) {
 				setError("ネットワークエラーが発生しました。接続を確認してください。");
-			} else if (
-				error.response?.status === 401 ||
-				error.response?.status === 422
+			} else if (isAxiosError(error) &&
+				(error.response?.status === 401 ||
+				error.response?.status === 422)
 			) {
 				setError("メールアドレスまたはパスワードが正しくありません。");
-			} else if (error.response?.status === 500) {
+			} else if (isAxiosError(error) && error.response?.status === 500) {
 				setError("サーバーエラーが発生しました。しばらく後にお試しください。");
 			} else {
 				setError("ログインに失敗しました。もう一度お試しください。");

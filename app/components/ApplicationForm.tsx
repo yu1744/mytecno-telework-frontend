@@ -30,6 +30,7 @@ import {
 import { Loader2, Info } from "lucide-react";
 import { useModalStore } from "@/app/store/modal";
 import { useNotificationStore } from "@/app/store/notificationStore";
+import { isAxiosError } from "@/app/lib/utils";
 
 import { Calendar } from "@/components/ui/calendar";
 
@@ -113,13 +114,13 @@ const ApplicationForm = () => {
 		} catch (error: unknown) {
 			console.error("申請の送信に失敗しました", error);
 
-			const isLimitError = (error instanceof Error && 'response' in error && (error as { response?: { data?: { is_limit_error?: boolean } } }).response?.data?.is_limit_error);
+			const isLimitError = isAxiosError(error) && error.response?.data?.is_limit_error;
 			if (isLimitError) {
 				isModalShown = true;
 				useModalStore.getState().showModal({
 					title: "申請上限超過の確認",
 					message:
-						((error as { response?: { data?: { errors?: string[] } } }).response?.data?.errors?.join("\n") || "") +
+						((isAxiosError(error) && error.response?.data?.errors?.join("\n")) || "") +
 						"\n\n上限を超えて申請してよろしいですか？",
 					confirmText: "申請",
 					cancelText: "キャンセル",
@@ -131,7 +132,7 @@ const ApplicationForm = () => {
 							router.push("/history?submitted=true");
 						} catch (retryError: unknown) {
 							const retryErrorMessage =
-								(retryError instanceof Error && 'response' in retryError && (retryError as { response?: { data?: { errors?: string[] } } }).response?.data?.errors?.join("\n")) ||
+								(isAxiosError(retryError) && retryError.response?.data?.errors?.join("\n")) ||
 								(retryError instanceof Error ? retryError.message : null) ||
 								"申請の送信に失敗しました";
 							toast.error(retryErrorMessage);

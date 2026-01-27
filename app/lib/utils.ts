@@ -10,6 +10,36 @@ export function cn(...inputs: ClassValue[]) {
  */
 
 /**
+ * Type guard for errors with code property
+ */
+interface ErrorWithCode {
+    code?: string;
+}
+
+function hasErrorCode(error: unknown): error is Error & ErrorWithCode {
+    return error instanceof Error && 'code' in error;
+}
+
+/**
+ * Type guard for Axios-like errors with response data
+ */
+export interface AxiosError extends Error {
+    code?: string;
+    response?: {
+        status?: number;
+        data?: {
+            error?: string;
+            errors?: string[];
+            is_limit_error?: boolean;
+        };
+    };
+}
+
+export function isAxiosError(error: unknown): error is AxiosError {
+    return error instanceof Error && 'response' in error;
+}
+
+/**
  * Parse string to integer, returning undefined if empty
  */
 export const parseIntOrUndefined = (value: string | undefined): number | undefined => {
@@ -142,9 +172,9 @@ export const apiCallWithRetry = async <T>(
         try {
             return await fn();
         } catch (error: unknown) {
+            const errorWithCode = hasErrorCode(error) ? error : null;
             const isConnectionError =
-                (error instanceof Error && 'code' in error && ((error as { code?: string }).code === "ERR_CONNECTION_RESET" ||
-                (error as { code?: string }).code === "ERR_NETWORK")) ||
+                (errorWithCode && (errorWithCode.code === "ERR_CONNECTION_RESET" || errorWithCode.code === "ERR_NETWORK")) ||
                 (error instanceof Error && error.message?.includes("Network Error"));
 
             if (isConnectionError && i < maxRetries - 1) {

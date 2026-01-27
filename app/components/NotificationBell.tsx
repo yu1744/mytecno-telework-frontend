@@ -5,6 +5,7 @@ import { Bell } from 'lucide-react';
 import { getUnreadNotifications } from '@/app/lib/api';
 import type { AppNotification } from '@/app/types/application';
 import Link from 'next/link';
+import { isAxiosError } from '@/app/lib/utils';
 
 const NotificationBell = () => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -24,8 +25,8 @@ const NotificationBell = () => {
         // 通知の取得に失敗してもUIは表示し続ける
         console.debug('[NotificationBell] Fetch failed:', {
           message: error instanceof Error ? error.message : String(error),
-          status: (error instanceof Error && 'response' in error && (error as { response?: { status?: number } }).response?.status) || null,
-          data: (error instanceof Error && 'response' in error && (error as { response?: { data?: unknown } }).response?.data) || null,
+          status: isAxiosError(error) ? error.response?.status : null,
+          data: isAxiosError(error) ? error.response?.data : null,
         });
         setNotifications([]);
       }
