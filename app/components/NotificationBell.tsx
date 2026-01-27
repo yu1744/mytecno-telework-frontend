@@ -25,7 +25,7 @@ const NotificationBell = () => {
         console.debug('[NotificationBell] Fetch failed:', {
           message: error instanceof Error ? error.message : String(error),
           status: (error instanceof Error && 'response' in error && (error as { response?: { status?: number } }).response?.status) || null,
-          data: error.response?.data,
+          data: (error instanceof Error && 'response' in error && (error as { response?: { data?: unknown } }).response?.data) || null,
         });
         setNotifications([]);
       }
