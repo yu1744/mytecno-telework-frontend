@@ -94,7 +94,7 @@ const DashboardPage = () => {
 				for (const date in calendarData) {
 					const dayData = calendarData[date];
 					if (dayData && Array.isArray(dayData.applications)) {
-						dayData.applications.forEach((app: any) => {
+						dayData.applications.forEach((app: { id: number; user_name: string; application_type: string }) => {
 							flattenedApplications.push({
 								id: app.id,
 								date: date,

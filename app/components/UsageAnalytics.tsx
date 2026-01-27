@@ -78,7 +78,12 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const UsageAnalytics = () => {
   const [isExporting, setIsExporting] = useState(false);
-  const [usageStats, setUsageStats] = useState<any>(null);
+  const [usageStats, setUsageStats] = useState<{
+    usage_by_application_type?: Array<{ name: string; value: number }>;
+    usage_by_day_of_week?: Array<{ name: string; value: number }>;
+    users_by_department?: Array<{ id?: number; name: string }>;
+    individual_usage_data?: Array<{ id: number; date: string; department_name?: string; user_name: string; application_type: string }>;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Filter state
@@ -104,7 +109,7 @@ const UsageAnalytics = () => {
   }, []);
 
   const handleFilter = () => {
-    const filters: any = {};
+    const filters: { start_date?: string; end_date?: string; department_id?: string } = {};
     if (startDate) filters.start_date = startDate;
     if (endDate) filters.end_date = endDate;
     if (selectedDepartment && selectedDepartment !== 'all') {
@@ -146,7 +151,7 @@ const UsageAnalytics = () => {
                   nameKey="name"
                   label
                 >
-                  {(usageStats?.usage_by_application_type || []).map((entry: any, index: number) => (
+                  {(usageStats?.usage_by_application_type || []).map((entry, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -175,7 +180,7 @@ const UsageAnalytics = () => {
                   nameKey="name"
                   label={({ name, percent }) => `${name} ${((percent as number) * 100).toFixed(0)}%`}
                 >
-                  {(usageStats?.usage_by_day_of_week || []).map((entry: any, index: number) => (
+                  {(usageStats?.usage_by_day_of_week || []).map((entry, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -210,7 +215,7 @@ const UsageAnalytics = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">全ての部署</SelectItem>
-                  {usageStats?.users_by_department?.map((dept: any) => (
+                  {usageStats?.users_by_department?.map((dept) => (
                     <SelectItem key={dept.name} value={dept.name}>
                       {dept.name}
                     </SelectItem>
@@ -233,16 +238,16 @@ const UsageAnalytics = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(usageStats?.individual_usage_data || []).map((row: any) => (
+              {(usageStats?.individual_usage_data || []).map((row) => (
                 <TableRow
                   key={row.id}
                   onClick={() => {
                     // テーブル行をクリックしてフィルタリング
-                    const filters: any = {};
+                    const filters: { start_date?: string; end_date?: string; department_id?: string | number } = {};
                     filters.start_date = row.date;
                     filters.end_date = row.date;
                     if (row.department_name) {
-                      const deptObj = usageStats?.users_by_department?.find((d: any) => d.name === row.department_name);
+                      const deptObj = usageStats?.users_by_department?.find((d) => d.name === row.department_name);
                       if (deptObj) {
                         filters.department_id = deptObj.id || row.department_name;
                       }

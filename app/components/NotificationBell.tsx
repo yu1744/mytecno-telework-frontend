@@ -5,6 +5,7 @@ import { Bell } from 'lucide-react';
 import { getUnreadNotifications } from '@/app/lib/api';
 import type { AppNotification } from '@/app/types/application';
 import Link from 'next/link';
+import { isAxiosError } from '@/app/lib/utils';
 
 const NotificationBell = () => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -19,13 +20,13 @@ const NotificationBell = () => {
         console.debug('[NotificationBell] Success:', response);
         console.debug('[NotificationBell] response.data:', response.data);
         setNotifications(Array.isArray(response.data) ? response.data : []);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // APIエラーは既にコンソールに出力されているので、ここでは静かに処理する
         // 通知の取得に失敗してもUIは表示し続ける
         console.debug('[NotificationBell] Fetch failed:', {
-          message: error.message,
-          status: error.response?.status,
-          data: error.response?.data,
+          message: error instanceof Error ? error.message : String(error),
+          status: isAxiosError(error) ? error.response?.status : null,
+          data: isAxiosError(error) ? error.response?.data : null,
         });
         setNotifications([]);
       }

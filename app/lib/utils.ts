@@ -10,6 +10,36 @@ export function cn(...inputs: ClassValue[]) {
  */
 
 /**
+ * Type guard for errors with code property
+ */
+interface ErrorWithCode {
+    code?: string;
+}
+
+function hasErrorCode(error: unknown): error is Error & ErrorWithCode {
+    return error instanceof Error && 'code' in error;
+}
+
+/**
+ * Type guard for Axios-like errors with response data
+ */
+export interface AxiosError extends Error {
+    code?: string;
+    response?: {
+        status?: number;
+        data?: {
+            error?: string;
+            errors?: string[];
+            is_limit_error?: boolean;
+        };
+    };
+}
+
+export function isAxiosError(error: unknown): error is AxiosError {
+    return error instanceof Error && 'response' in error;
+}
+
+/**
  * Parse string to integer, returning undefined if empty
  */
 export const parseIntOrUndefined = (value: string | undefined): number | undefined => {
@@ -133,19 +163,19 @@ export const cleanParams = <T extends Record<string, unknown>>(params: T): Parti
 /**
  * API call with retry mechanism
  */
-export const apiCallWithRetry = async (
-    fn: () => Promise<any>,
+export const apiCallWithRetry = async <T>(
+    fn: () => Promise<T>,
     maxRetries: number = 3,
     delay: number = 1000
-): Promise<any> => {
+): Promise<T> => {
     for (let i = 0; i < maxRetries; i++) {
         try {
             return await fn();
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const errorWithCode = hasErrorCode(error) ? error : null;
             const isConnectionError =
-                error.code === "ERR_CONNECTION_RESET" ||
-                error.code === "ERR_NETWORK" ||
-                error.message?.includes("Network Error");
+                (errorWithCode && (errorWithCode.code === "ERR_CONNECTION_RESET" || errorWithCode.code === "ERR_NETWORK")) ||
+                (error instanceof Error && error.message?.includes("Network Error"));
 
             if (isConnectionError && i < maxRetries - 1) {
                 console.log(`リトライ ${i + 1}/${maxRetries}...`);

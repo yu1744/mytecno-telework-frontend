@@ -76,7 +76,7 @@ const AdminUsagePage = () => {
           setUsersByGroup(data.users_by_group);
         }
         if (data.users_by_department) {
-          setDepartments(data.users_by_department.map((d: any) => d.name));
+          setDepartments(data.users_by_department.map((d: { name: string }) => d.name));
         }
       } catch (err) {
         setError(

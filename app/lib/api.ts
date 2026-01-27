@@ -187,9 +187,9 @@ export const createApplication = (
 	params: ApplicationPayload,
 	skipLimitCheck: boolean = false
 ) => {
-	const payload = { application: params };
+	const payload: { application: ApplicationPayload & { skip_limit_check?: boolean } } = { application: params };
 	if (skipLimitCheck) {
-		(payload.application as any).skip_limit_check = true;
+		payload.application.skip_limit_check = true;
 	}
 	return api.post("/applications", payload);
 };
@@ -280,3 +280,28 @@ export const adminGetDepartmentTrend = (departmentId: string) =>
 
 export const adminGetMonthlyComparison = (month: string) =>
 	api.get(`/admin/usage_stats/monthly_comparison?month=${month}`);
+
+// 操作ログAPI
+export interface OperationLog {
+	id: number;
+	created_at: string;
+	user_name: string;
+	action_label: string;
+	target_type?: string;
+	target_id?: number;
+	ip_address: string;
+}
+
+export interface OperationLogParams {
+	action_type?: string;
+	start_date?: string;
+	end_date?: string;
+	page?: number;
+	per_page?: number;
+}
+
+export const getOperationLogs = (params: OperationLogParams) =>
+	api.get<{ logs: OperationLog[]; total: number }>("/admin/operation_logs", { params });
+
+export const exportOperationLogs = (filters: Omit<OperationLogParams, "page" | "per_page">) =>
+	api.get("/admin/operation_logs/export", { params: filters, responseType: "blob" });
