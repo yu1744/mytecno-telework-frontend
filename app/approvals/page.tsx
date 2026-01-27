@@ -157,9 +157,11 @@ const ApprovalsPageContent = () => {
 			fetchApplications();
 			setIsApprovalModalOpen(false);
 			setSelectedApplicationForAction(null);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error("Failed to approve application:", error);
-			const message = error.response?.data?.error || "承認処理に失敗しました";
+			const message = (error instanceof Error && 'response' in error && (error as { response?: { data?: { error?: string } } }).response?.data?.error)
+				? (error as { response: { data: { error: string } } }).response.data.error
+				: "承認処理に失敗しました";
 			toast.error(message);
 		} finally {
 			setIsSubmitting(false);
@@ -179,9 +181,11 @@ const ApprovalsPageContent = () => {
 			fetchApplications();
 			setIsRejectModalOpen(false);
 			setSelectedApplicationForAction(null);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error("Failed to reject application:", error);
-			const message = error.response?.data?.error || "却下処理に失敗しました";
+			const message = (error instanceof Error && 'response' in error && (error as { response?: { data?: { error?: string } } }).response?.data?.error)
+				? (error as { response: { data: { error: string } } }).response.data.error
+				: "却下処理に失敗しました";
 			toast.error(message);
 		} finally {
 			setIsSubmitting(false);

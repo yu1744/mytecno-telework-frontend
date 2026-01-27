@@ -19,12 +19,12 @@ const NotificationBell = () => {
         console.debug('[NotificationBell] Success:', response);
         console.debug('[NotificationBell] response.data:', response.data);
         setNotifications(Array.isArray(response.data) ? response.data : []);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // APIエラーは既にコンソールに出力されているので、ここでは静かに処理する
         // 通知の取得に失敗してもUIは表示し続ける
         console.debug('[NotificationBell] Fetch failed:', {
-          message: error.message,
-          status: error.response?.status,
+          message: error instanceof Error ? error.message : String(error),
+          status: (error instanceof Error && 'response' in error && (error as { response?: { status?: number } }).response?.status) || null,
           data: error.response?.data,
         });
         setNotifications([]);

@@ -62,10 +62,10 @@ export default function ActivatePage() {
 			await checkActivation(values.email, values.employee_number);
 			setUserInfo(values);
 			setStep(2);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error(error);
-			if (error.response?.data?.error) {
-				toast.error(error.response.data.error);
+			if (error instanceof Error && 'response' in error && (error as { response?: { data?: { error?: string } } }).response?.data?.error) {
+				toast.error((error as { response: { data: { error: string } } }).response.data.error);
 			} else {
 				toast.error("アカウントの確認に失敗しました");
 			}
@@ -84,10 +84,10 @@ export default function ActivatePage() {
 			});
 			toast.success("アカウントが有効化されました。ログインしてください。");
 			router.push("/login");
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error(error);
-			if (error.response?.data?.error) {
-				toast.error(error.response.data.error);
+			if (error instanceof Error && 'response' in error && (error as { response?: { data?: { error?: string } } }).response?.data?.error) {
+				toast.error((error as { response: { data: { error: string } } }).response.data.error);
 			} else {
 				toast.error("アカウントの有効化に失敗しました");
 			}

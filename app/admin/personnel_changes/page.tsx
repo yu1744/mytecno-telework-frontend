@@ -118,7 +118,7 @@ const PersonnelChangesPage = () => {
 			setChanges(formattedData);
 			setUsers(usersRes.data);
 			setDepartments(deptsRes.data);
-			setRoles(rolesRes.data as any); // roles API might return different structure, casting for now
+			setRoles(rolesRes.data as { id: number; name: string }[]); // roles API might return different structure
 			setError(null);
 		} catch (error) {
 			setError("データの取得に失敗しました。");

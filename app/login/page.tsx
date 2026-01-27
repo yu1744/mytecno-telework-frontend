@@ -33,7 +33,7 @@ const LoginPage = () => {
 	const { data: session, status } = useSession();
 
 	// 共通の認証後処理（トークン保存とリダイレクト）
-	const handleAuthSuccess = (user: any, authHeaders: any) => {
+	const handleAuthSuccess = (user: { id: number; email: string; name: string }, authHeaders: { "access-token": string; client: string; uid: string }) => {
 		setAuth(user, authHeaders);
 
 		localStorage.setItem("access-token", authHeaders["access-token"]);
@@ -94,10 +94,10 @@ const LoginPage = () => {
 			};
 
 			handleAuthSuccess(user, authHeaders);
-		} catch (error: any) {
-			if (error.response?.status === 404) {
+		} catch (error: unknown) {
+			if (error instanceof Error && 'response' in error && (error as { response?: { status?: number } }).response?.status === 404) {
 				setError(
-					error.response.data.error ||
+					((error as { response?: { data?: { error?: string } } }).response?.data?.error) ||
 					"このMicrosoftアカウントは登録されていません。"
 				);
 			} else {
@@ -132,9 +132,9 @@ const LoginPage = () => {
 			};
 
 			handleAuthSuccess(user, authHeaders);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			// main由来の詳細なエラーハンドリングを採用
-			if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") {
+			if (error instanceof Error && 'code' in error && ((error as { code?: string }).code === "ECONNABORTED" || (error as { code?: string }).code === "ETIMEDOUT")) {
 				setError(
 					"サーバーへの接続がタイムアウトしました。少しお待ちください。"
 				);
