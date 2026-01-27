@@ -243,13 +243,13 @@ const UsageAnalytics = () => {
                   key={row.id}
                   onClick={() => {
                     // テーブル行をクリックしてフィルタリング
-                    const filters: { start_date?: string; end_date?: string; department_id?: string | number } = {};
+                    const filters: { start_date?: string; end_date?: string; department_id?: string } = {};
                     filters.start_date = row.date;
                     filters.end_date = row.date;
                     if (row.department_name) {
                       const deptObj = usageStats?.users_by_department?.find((d) => d.name === row.department_name);
                       if (deptObj) {
-                        filters.department_id = deptObj.id || row.department_name;
+                        filters.department_id = deptObj.id?.toString() || row.department_name;
                       }
                     }
                     setStartDate(row.date);

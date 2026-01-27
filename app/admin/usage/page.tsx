@@ -299,9 +299,6 @@ const AdminUsagePage = () => {
                   <h3 className="text-lg font-medium mb-4">特定の部署を選択して推移を確認</h3>
                   <DepartmentTrendChart
                     departments={departments}
-                    accessToken={accessToken!}
-                    client={client!}
-                    uid={uid!}
                   />
                 </div>
               </TabsContent>
@@ -309,11 +306,7 @@ const AdminUsagePage = () => {
               <TabsContent value="monthly" className="space-y-4">
                 <div className="p-4 border rounded-lg bg-slate-50/50">
                   <h3 className="text-lg font-medium mb-4">特定の月の申請数バランスを確認</h3>
-                  <MonthlyComparisonChart
-                    accessToken={accessToken!}
-                    client={client!}
-                    uid={uid!}
-                  />
+                  <MonthlyComparisonChart />
                 </div>
               </TabsContent>
             </Tabs>

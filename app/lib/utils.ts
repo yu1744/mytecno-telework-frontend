@@ -185,4 +185,6 @@ export const apiCallWithRetry = async <T>(
             throw error;
         }
     }
+    // This should never be reached due to the throw in the loop, but TypeScript requires it
+    throw new Error("Maximum retries reached");
 };
