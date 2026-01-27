@@ -25,6 +25,7 @@ import { ApplicationDetailModal } from "../components/ApplicationDetailModal";
 import { ApprovalModal } from "../components/ApprovalModal";
 import { RejectModal } from "../components/RejectModal";
 import { toast } from "sonner";
+import { isAxiosError } from "../lib/utils";
 
 const getStatusBadge = (statusId: number) => {
 	switch (statusId) {
