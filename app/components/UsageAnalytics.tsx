@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { adminExportUsageStats, adminGetUsageStats } from '@/app/lib/api';
+import DepartmentTrendChart from './DepartmentTrendChart';
+import MonthlyComparisonChart from './MonthlyComparisonChart';
 import {
   BarChart,
   Bar,
@@ -64,11 +66,24 @@ const individualUsageData = [
   { id: 5, name: '伊藤 四郎', department: '開発部', date: '2023-03-05', type: '終日在宅' },
 ];
 
+const MONTH_COLORS: { [key: string]: string } = {
+  '11月': '#FF8042', // オレンジ
+  '12月': '#0088FE', // 青
+  '1月': '#00C49F',  // 緑
+  '2月': '#FFBB28',  // 黄
+  '3月': '#8884d8',  // 紫
+};
+
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const UsageAnalytics = () => {
   const [isExporting, setIsExporting] = useState(false);
-  const [usageStats, setUsageStats] = useState<any>(null);
+  const [usageStats, setUsageStats] = useState<{
+    usage_by_application_type?: Array<{ name: string; value: number }>;
+    usage_by_day_of_week?: Array<{ name: string; value: number }>;
+    users_by_department?: Array<{ id?: number; name: string }>;
+    individual_usage_data?: Array<{ id: number; date: string; department_name?: string; user_name: string; application_type: string }>;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Filter state
@@ -94,7 +109,7 @@ const UsageAnalytics = () => {
   }, []);
 
   const handleFilter = () => {
-    const filters: any = {};
+    const filters: { start_date?: string; end_date?: string; department_id?: string } = {};
     if (startDate) filters.start_date = startDate;
     if (endDate) filters.end_date = endDate;
     if (selectedDepartment && selectedDepartment !== 'all') {
@@ -110,25 +125,8 @@ const UsageAnalytics = () => {
   if (loading) return <div>Loading...</div>;
   if (!usageStats) return <div>No data</div>;
 
-  // Get all unique month keys from all data items
-  const chartData = usageStats?.monthly_usage_by_department || [];
-  const allMonthKeys = new Set<string>();
-
-  chartData.forEach((item: any) => {
-    Object.keys(item).forEach(key => {
-      if (key !== 'name') {
-        allMonthKeys.add(key);
-      }
-    });
-  });
-
-  // Sort keys to try and keep months in order (simple numeric-like sort)
-  const monthKeys = Array.from(allMonthKeys).sort((a, b) => {
-    // Assuming format "1月", "12月" etc. remove "月" and compare numbers
-    const numA = parseInt(a.replace('月', ''));
-    const numB = parseInt(b.replace('月', ''));
-    return numA - numB;
-  });
+  // グラフ用の一時的なログ (削除予定)
+  // console.log('chartData sample:', chartData[0]);
 
   return (
     <div className="space-y-8">
@@ -153,7 +151,7 @@ const UsageAnalytics = () => {
                   nameKey="name"
                   label
                 >
-                  {(usageStats?.usage_by_application_type || []).map((entry: any, index: number) => (
+                  {(usageStats?.usage_by_application_type || []).map((entry, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -182,7 +180,7 @@ const UsageAnalytics = () => {
                   nameKey="name"
                   label={({ name, percent }) => `${name} ${((percent as number) * 100).toFixed(0)}%`}
                 >
-                  {(usageStats?.usage_by_day_of_week || []).map((entry: any, index: number) => (
+                  {(usageStats?.usage_by_day_of_week || []).map((entry, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -193,30 +191,11 @@ const UsageAnalytics = () => {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>部署別の月次利用回数</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name"
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                {monthKeys.map((month, index) => (
-                  <Bar key={month} dataKey={month} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <DepartmentTrendChart departments={usageStats?.users_by_department || []} />
+        <MonthlyComparisonChart />
       </div>
 
       {/* データ一覧とエクスポート機能 */}
@@ -225,30 +204,18 @@ const UsageAnalytics = () => {
           <CardTitle>個人別利用状況</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between mb-4 space-x-2">
-            <div className="flex items-center space-x-2">
-              <Input
-                type="date"
-                placeholder="開始日"
-                className="w-40"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-4 gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Input type="date" placeholder="開始日" className="w-auto" />
               <span>〜</span>
-              <Input
-                type="date"
-                placeholder="終了日"
-                className="w-40"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-              <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+              <Input type="date" placeholder="終了日" className="w-auto" />
+              <Select>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="部署で絞り込み" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">全ての部署</SelectItem>
-                  {usageStats?.users_by_department?.map((dept: any) => (
+                  {usageStats?.users_by_department?.map((dept) => (
                     <SelectItem key={dept.name} value={dept.name}>
                       {dept.name}
                     </SelectItem>
@@ -271,8 +238,28 @@ const UsageAnalytics = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(usageStats?.individual_usage_data || []).map((row: any) => (
-                <TableRow key={row.id}>
+              {(usageStats?.individual_usage_data || []).map((row) => (
+                <TableRow
+                  key={row.id}
+                  onClick={() => {
+                    // テーブル行をクリックしてフィルタリング
+                    const filters: { start_date?: string; end_date?: string; department_id?: string } = {};
+                    filters.start_date = row.date;
+                    filters.end_date = row.date;
+                    if (row.department_name) {
+                      const deptObj = usageStats?.users_by_department?.find((d) => d.name === row.department_name);
+                      if (deptObj) {
+                        filters.department_id = deptObj.id?.toString() || row.department_name;
+                      }
+                    }
+                    setStartDate(row.date);
+                    setEndDate(row.date);
+                    setSelectedDepartment(row.department_name || 'all');
+                    fetchStats(filters);
+                  }}
+                  style={{ cursor: 'pointer' }}
+                  className="hover:bg-gray-100"
+                >
                   <TableCell>{row.user_name}</TableCell>
                   <TableCell>{row.department_name}</TableCell>
                   <TableCell>{row.date}</TableCell>

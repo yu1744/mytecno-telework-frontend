@@ -1,6 +1,5 @@
 "use client";
 
-import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header";
 import InstallPrompt from "./components/InstallPrompt";
@@ -12,11 +11,6 @@ import { useModalStore } from "./store/modal";
 import ReusableModal from "./components/ReusableModal";
 import { SessionProvider } from "next-auth/react"; // frontendsa由来
 import { Toaster } from "@/components/ui/sonner"; // main由来
-
-const notoSansJp = Noto_Sans_JP({
-	subsets: ["latin"],
-	weight: ["400", "700"],
-});
 
 export default function RootLayout({
 	children,
@@ -67,7 +61,8 @@ export default function RootLayout({
 				<meta name="format-detection" content="telephone=no" />
 				<meta name="mobile-web-app-capable" content="yes" />
 			</head>
-			<body className={`${notoSansJp.className} bg-gray-100`}>
+			<body className="bg-gray-100 font-sans"
+				style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif' }}>
 				{/* SessionProviderでラップし、内部にToasterなども配置 */}
 				<SessionProvider>
 					{isLoginPage ? (
@@ -78,7 +73,9 @@ export default function RootLayout({
 						<div className="flex flex-col h-screen">
 							<Header />
 							<div className="flex flex-1">
-								<NavigationMenu />
+								<div className="hidden md:block h-full">
+									<NavigationMenu />
+								</div>
 								<main className="flex-1 overflow-y-auto p-8">{children}</main>
 							</div>
 						</div>

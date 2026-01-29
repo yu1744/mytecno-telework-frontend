@@ -293,63 +293,68 @@ const HistoryPageContent = () => {
 	if (error) return <p className="text-red-500">{error}</p>;
 
 	return (
-		<div className="container mx-auto p-4">
+		<div className="flex flex-col h-full gap-4">
 			<Toaster />
-			<h1 className="text-2xl font-bold mb-4">申請履歴</h1>
-			<div className="flex flex-col sm:flex-row items-center mb-4 gap-4">
-				<div className="flex items-center gap-2">
-					<label htmlFor="month-filter" className="text-sm font-medium">
-						申請月:
-					</label>
-					<Select
-						value={filterByMonth || "all"}
-						onValueChange={(value) =>
-							setFilterByMonth(value === "all" ? "" : value)
-						}
-					>
-						<SelectTrigger id="month-filter" className="w-[180px]">
-							<SelectValue placeholder="すべて" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">すべて</SelectItem>
-							{monthOptions.map((option) => (
-								<SelectItem key={option.value} value={option.value}>
-									{option.label}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
+			<div className="flex-none">
+				<div className="flex items-center mb-4 border-b pb-4">
+					<h1 className="text-3xl font-extrabold tracking-tight">申請履歴</h1>
 				</div>
-				<div className="flex items-center gap-2">
-					<label htmlFor="status-filter" className="text-sm font-medium">
-						ステータス:
-					</label>
-					<Select
-						value={filterByStatus || "all"}
-						onValueChange={(value) =>
-							setFilterByStatus(value === "all" ? "" : value)
-						}
-					>
-						<SelectTrigger id="status-filter" className="w-[150px]">
-							<SelectValue placeholder="すべて" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">すべて</SelectItem>
-							<SelectItem value="1">申請中</SelectItem>
-							<SelectItem value="2">承認済み</SelectItem>
-							<SelectItem value="3">却下</SelectItem>
-							<SelectItem value="4">キャンセル</SelectItem>
-						</SelectContent>
-					</Select>
+				<div className="flex flex-col sm:flex-row items-center mb-2 gap-4">
+					<div className="flex items-center gap-2">
+						<label htmlFor="month-filter" className="text-sm font-medium">
+							申請月:
+						</label>
+						<Select
+							value={filterByMonth || "all"}
+							onValueChange={(value) =>
+								setFilterByMonth(value === "all" ? "" : value)
+							}
+						>
+							<SelectTrigger id="month-filter" className="w-[180px]">
+								<SelectValue placeholder="すべて" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">すべて</SelectItem>
+								{monthOptions.map((option) => (
+									<SelectItem key={option.value} value={option.value}>
+										{option.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
+					<div className="flex items-center gap-2">
+						<label htmlFor="status-filter" className="text-sm font-medium">
+							ステータス:
+						</label>
+						<Select
+							value={filterByStatus || "all"}
+							onValueChange={(value) =>
+								setFilterByStatus(value === "all" ? "" : value)
+							}
+						>
+							<SelectTrigger id="status-filter" className="w-[150px]">
+								<SelectValue placeholder="すべて" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">すべて</SelectItem>
+								<SelectItem value="1">申請中</SelectItem>
+								<SelectItem value="2">承認済み</SelectItem>
+								<SelectItem value="3">却下</SelectItem>
+								<SelectItem value="4">キャンセル</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
 				</div>
 			</div>
 			<CommonTable
 				columns={columns}
 				data={applications}
-				title="申請履歴"
+				title="申請履歴一覧"
 				onSort={handleSort}
 				sortKey={sortBy}
 				sortOrder={sortOrder}
+				fillHeight={true}
 			/>
 			{selectedApplication && (
 				<ApplicationDetailModal

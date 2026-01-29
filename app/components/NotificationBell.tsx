@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Bell } from 'lucide-react';
 import { getUnreadNotifications, markNotificationAsRead } from '@/app/lib/api';
 import type { AppNotification } from '@/app/types/application';
+import Link from 'next/link';
+import { isAxiosError } from '@/app/lib/utils';
 
 const NotificationBell = () => {
   const router = useRouter();
@@ -16,15 +18,26 @@ const NotificationBell = () => {
   // 通知を取得
   const fetchNotifications = useCallback(async () => {
     try {
+      console.debug('[NotificationBell] Fetching unread notifications...');
       const response = await getUnreadNotifications();
+      console.debug('[NotificationBell] Success:', response);
+      console.debug('[NotificationBell] response.data:', response.data);
       setNotifications(Array.isArray(response.data) ? response.data : []);
-    } catch (error) {
+    } catch (error: unknown) {
+      // APIエラーは既にコンソールに出力されているので、ここでは静かに処理する
+      // 通知の取得に失敗してもUIは表示し続ける
+      console.debug('[NotificationBell] Fetch failed:', {
+        message: error instanceof Error ? error.message : String(error),
+        status: isAxiosError(error) ? error.response?.status : null,
+        data: isAxiosError(error) ? error.response?.data : null,
+      });
       setNotifications([]);
     }
   }, []);
 
   useEffect(() => {
     fetchNotifications();
+    // 定期的に通知を更新（30秒ごと）
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
@@ -101,7 +114,11 @@ const NotificationBell = () => {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="notification-area notification-area-open absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-10"
+          className={`notification-area z-10 bg-white rounded-md shadow-lg
+            fixed left-4 right-4 top-20 w-auto
+            md:absolute md:right-0 md:left-auto md:top-full md:mt-2 md:w-80
+            ${isOpen ? 'notification-area-open' : 'notification-area-closed'}
+          `}
         >
           <div className="py-1">
             <div className="px-4 py-2 text-sm text-gray-700 font-semibold">

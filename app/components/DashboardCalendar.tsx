@@ -51,7 +51,7 @@ export function DashboardCalendar({
 			const applicationData: ApplicationData = {};
 			if (Array.isArray(applications)) {
 				applications.forEach((app) => {
-					const date = app.date.split("T");
+					const date = app.date.split("T")[0];
 					if (!applicationData[date]) {
 						applicationData[date] = {
 							pending: 0,
@@ -172,7 +172,7 @@ export function DashboardCalendar({
 					table: "h-full",
 					tbody: "h-full",
 				}}
-				captionLayout="dropdown-buttons"
+				captionLayout="dropdown"
 				fromYear={new Date().getFullYear() - 5}
 				toYear={new Date().getFullYear() + 5}
 			/>

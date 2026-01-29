@@ -10,6 +10,36 @@ export function cn(...inputs: ClassValue[]) {
  */
 
 /**
+ * Type guard for errors with code property
+ */
+interface ErrorWithCode {
+    code?: string;
+}
+
+function hasErrorCode(error: unknown): error is Error & ErrorWithCode {
+    return error instanceof Error && 'code' in error;
+}
+
+/**
+ * Type guard for Axios-like errors with response data
+ */
+export interface AxiosError extends Error {
+    code?: string;
+    response?: {
+        status?: number;
+        data?: {
+            error?: string;
+            errors?: string[];
+            is_limit_error?: boolean;
+        };
+    };
+}
+
+export function isAxiosError(error: unknown): error is AxiosError {
+    return error instanceof Error && 'response' in error;
+}
+
+/**
  * Parse string to integer, returning undefined if empty
  */
 export const parseIntOrUndefined = (value: string | undefined): number | undefined => {
@@ -128,4 +158,33 @@ export const cleanParams = <T extends Record<string, unknown>>(params: T): Parti
     return Object.fromEntries(
         Object.entries(params).filter(([, v]) => v !== undefined && v !== "")
     ) as Partial<T>;
+};
+
+/**
+ * API call with retry mechanism
+ */
+export const apiCallWithRetry = async <T>(
+    fn: () => Promise<T>,
+    maxRetries: number = 3,
+    delay: number = 1000
+): Promise<T> => {
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            return await fn();
+        } catch (error: unknown) {
+            const errorWithCode = hasErrorCode(error) ? error : null;
+            const isConnectionError =
+                (errorWithCode && (errorWithCode.code === "ERR_CONNECTION_RESET" || errorWithCode.code === "ERR_NETWORK")) ||
+                (error instanceof Error && error.message?.includes("Network Error"));
+
+            if (isConnectionError && i < maxRetries - 1) {
+                console.log(`リトライ ${i + 1}/${maxRetries}...`);
+                await new Promise((resolve) => setTimeout(resolve, delay));
+                continue;
+            }
+            throw error;
+        }
+    }
+    // This should never be reached due to the throw in the loop, but TypeScript requires it
+    throw new Error("Maximum retries reached");
 };

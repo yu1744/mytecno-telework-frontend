@@ -78,7 +78,8 @@ const LogsPageContent = () => {
     }, [fetchLogs]);
 
     const handleFilterChange = (key: keyof OperationLogParams, value: string) => {
-        setFilters((prev) => ({ ...prev, [key]: value }));
+        const adjustedValue = value === "all" ? "" : value;
+        setFilters((prev) => ({ ...prev, [key]: adjustedValue }));
         setPage(1);
     };
 

@@ -4,7 +4,9 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, signOut, useSession } from "next-auth/react";
 import api from "@/app/lib/api";
+import { apiCallWithRetry, isAxiosError } from "@/app/lib/utils";
 import { useAuthStore } from "@/app/store/auth";
+import { User } from "@/app/types/user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,30 +21,7 @@ import {
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
-// リトライ付きAPIコール (frontendsa由来)
-const apiCallWithRetry = async (
-	fn: () => Promise<any>,
-	maxRetries: number = 3,
-	delay: number = 1000
-): Promise<any> => {
-	for (let i = 0; i < maxRetries; i++) {
-		try {
-			return await fn();
-		} catch (error: any) {
-			const isConnectionError =
-				error.code === "ERR_CONNECTION_RESET" ||
-				error.code === "ERR_NETWORK" ||
-				error.message?.includes("Network Error");
 
-			if (isConnectionError && i < maxRetries - 1) {
-				console.log(`リトライ ${i + 1}/${maxRetries}...`);
-				await new Promise((resolve) => setTimeout(resolve, delay));
-				continue;
-			}
-			throw error;
-		}
-	}
-};
 
 const LoginPage = () => {
 	const [email, setEmail] = useState("");
@@ -55,8 +34,8 @@ const LoginPage = () => {
 	const { data: session, status } = useSession();
 
 	// 共通の認証後処理（トークン保存とリダイレクト）
-	const handleAuthSuccess = (user: any, authHeaders: any) => {
-		setAuth(user, authHeaders);
+	const handleAuthSuccess = (user: Record<string, unknown>, authHeaders: { "access-token": string; client: string; uid: string }) => {
+		setAuth(user as unknown as User, authHeaders);
 
 		localStorage.setItem("access-token", authHeaders["access-token"]);
 		localStorage.setItem("client", authHeaders["client"]);
@@ -64,7 +43,7 @@ const LoginPage = () => {
 
 		setIsRedirecting(true);
 
-		const roleName = user.role?.name;
+		const roleName = (user as { role?: { name?: string } }).role?.name;
 		switch (roleName) {
 			case "admin":
 				router.push("/admin");
@@ -116,12 +95,11 @@ const LoginPage = () => {
 			};
 
 			handleAuthSuccess(user, authHeaders);
-		} catch (error: any) {
-			console.error("Microsoft認証エラー:", error);
-			if (error.response?.status === 404) {
+		} catch (error: unknown) {
+			if (isAxiosError(error) && error.response?.status === 404) {
 				setError(
-					error.response.data.error ||
-						"このMicrosoftアカウントは登録されていません。"
+					error.response?.data?.error ||
+					"このMicrosoftアカウントは登録されていません。"
 				);
 			} else {
 				setError("Microsoft認証に失敗しました。再度お試しください。");
@@ -155,22 +133,20 @@ const LoginPage = () => {
 			};
 
 			handleAuthSuccess(user, authHeaders);
-		} catch (error: any) {
-			console.error("Login failed:", error);
-
+		} catch (error: unknown) {
 			// main由来の詳細なエラーハンドリングを採用
-			if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") {
+			if (isAxiosError(error) && (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT")) {
 				setError(
 					"サーバーへの接続がタイムアウトしました。少しお待ちください。"
 				);
-			} else if (error.code === "ERR_NETWORK" || !error.response) {
+			} else if (isAxiosError(error) && (error.code === "ERR_NETWORK" || !error.response)) {
 				setError("ネットワークエラーが発生しました。接続を確認してください。");
-			} else if (
-				error.response?.status === 401 ||
-				error.response?.status === 422
+			} else if (isAxiosError(error) &&
+				(error.response?.status === 401 ||
+				error.response?.status === 422)
 			) {
 				setError("メールアドレスまたはパスワードが正しくありません。");
-			} else if (error.response?.status === 500) {
+			} else if (isAxiosError(error) && error.response?.status === 500) {
 				setError("サーバーエラーが発生しました。しばらく後にお試しください。");
 			} else {
 				setError("ログインに失敗しました。もう一度お試しください。");
@@ -190,7 +166,6 @@ const LoginPage = () => {
 			}
 			await signIn("azure-ad", { callbackUrl: "/login" });
 		} catch (error) {
-			console.error("Microsoft Sign-in failed:", error);
 			setError("Microsoftサインインの開始に失敗しました。");
 			setIsLoading(false);
 		}

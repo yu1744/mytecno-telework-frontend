@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { checkActivation, setupAccount } from "../lib/api";
+import { isAxiosError } from "../lib/utils";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
@@ -62,9 +63,9 @@ export default function ActivatePage() {
 			await checkActivation(values.email, values.employee_number);
 			setUserInfo(values);
 			setStep(2);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error(error);
-			if (error.response?.data?.error) {
+			if (isAxiosError(error) && error.response?.data?.error) {
 				toast.error(error.response.data.error);
 			} else {
 				toast.error("アカウントの確認に失敗しました");
@@ -84,9 +85,9 @@ export default function ActivatePage() {
 			});
 			toast.success("アカウントが有効化されました。ログインしてください。");
 			router.push("/login");
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error(error);
-			if (error.response?.data?.error) {
+			if (isAxiosError(error) && error.response?.data?.error) {
 				toast.error(error.response.data.error);
 			} else {
 				toast.error("アカウントの有効化に失敗しました");

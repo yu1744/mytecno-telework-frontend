@@ -110,15 +110,15 @@ const PersonnelChangesPage = () => {
 				id: item.id,
 				user_name: item.user.name,
 				old_department: item.user.department?.name || "N/A",
-				new_department: item.new_department.name,
+				new_department: item.new_department?.name || "N/A",
 				old_role: item.user.role?.name || "N/A",
-				new_role: item.new_role.name,
+				new_role: item.new_role?.name || "N/A",
 				effective_date: item.effective_date,
 			}));
 			setChanges(formattedData);
 			setUsers(usersRes.data);
 			setDepartments(deptsRes.data);
-			setRoles(rolesRes.data as any); // roles API might return different structure, casting for now
+			setRoles(rolesRes.data as { id: number; name: string }[]); // roles API might return different structure
 			setError(null);
 		} catch (error) {
 			setError("データの取得に失敗しました。");

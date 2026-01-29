@@ -27,11 +27,12 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, Info } from "lucide-react";
+import { Loader2, Info, Train } from "lucide-react";
 import { useModalStore } from "@/app/store/modal";
 import { useNotificationStore } from "@/app/store/notificationStore";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Train } from "lucide-react";
+import { isAxiosError } from "@/app/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
 
 const ApplicationForm = () => {
 	const router = useRouter();
@@ -126,34 +127,30 @@ const ApplicationForm = () => {
 		let isModalShown = false;
 		try {
 			await createApplication(payload);
-			// useNotificationStore.getState().setMessage("申請を送信しました"); // Removing this as we will handle it in history page
 			router.push("/history?submitted=true");
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error("申請の送信に失敗しました", error);
 
-			// 上限エラーか判定
-			const isLimitError = error.response?.data?.is_limit_error;
+			const isLimitError = isAxiosError(error) && error.response?.data?.is_limit_error;
 			if (isLimitError) {
 				isModalShown = true;
-				// 確認ダイアログを表示
 				useModalStore.getState().showModal({
 					title: "申請上限超過の確認",
 					message:
-						error.response?.data?.errors?.join("\n") +
+						((isAxiosError(error) && error.response?.data?.errors?.join("\n")) || "") +
 						"\n\n上限を超えて申請してよろしいですか？",
 					confirmText: "申請",
 					cancelText: "キャンセル",
 					onConfirm: async () => {
 						setLoading(true);
 						try {
-							await createApplication(payload, true); // skip_limit_check=true で再試行
-							// useNotificationStore.getState().setMessage("申請を送信しました");
+							await createApplication(payload, true);
 							useModalStore.getState().hideModal();
 							router.push("/history?submitted=true");
-						} catch (retryError: any) {
+						} catch (retryError: unknown) {
 							const retryErrorMessage =
-								retryError.response?.data?.errors?.join("\n") ||
-								retryError.message ||
+								(isAxiosError(retryError) && retryError.response?.data?.errors?.join("\n")) ||
+								(retryError instanceof Error ? retryError.message : null) ||
 								"申請の送信に失敗しました";
 							toast.error(retryErrorMessage);
 						} finally {
@@ -166,10 +163,9 @@ const ApplicationForm = () => {
 					},
 				});
 			} else {
-				// その他のエラー
 				const errorMessage =
-					error.response?.data?.errors?.join("\n") ||
-					error.message ||
+					(isAxiosError(error) && error.response?.data?.errors?.join("\n")) ||
+					(error instanceof Error ? error.message : null) ||
 					"申請の送信に失敗しました";
 				toast.error(errorMessage);
 			}
@@ -183,258 +179,279 @@ const ApplicationForm = () => {
 	return (
 		<>
 			<Toaster />
-			<Card className="w-full max-w-2xl mx-auto my-8 bg-white shadow-md rounded-lg">
-				<CardHeader>
-					<CardTitle>在宅勤務申請</CardTitle>
-					<CardDescription>
-						必要事項を入力して申請してください。
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<form onSubmit={handleSubmit} className="flex flex-col gap-6">
-						<div className="grid w-full items-center gap-1.5">
-							<Label htmlFor="work-date">勤務日</Label>
-							<DatePicker date={date} setDate={setDate} />
-						</div>
+			<div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+				{/* カレンダーセクション */}
+				<Card className="lg:col-span-5 shadow-sm border-0 bg-white/50 backdrop-blur-sm h-full flex flex-col">
+					<CardHeader className="pb-2">
+						<CardTitle className="text-lg font-bold text-muted-foreground flex items-center gap-2">
+							<span className="w-1 h-4 bg-primary rounded-full"></span>
+							勤務日の選択
+						</CardTitle>
+					</CardHeader>
+					<CardContent className="flex-1 flex flex-col items-center justify-center p-4">
+						<Calendar
+							mode="single"
+							selected={date}
+							onSelect={setDate}
+							className="rounded-md border shadow-inner bg-white scale-110 origin-center"
+						/>
+					</CardContent>
+					<CardFooter className="flex-col items-start gap-1 pt-0">
+						<p className="text-sm text-muted-foreground">
+							{date ? (
+								<span className="text-primary font-bold">
+									選択中: {format(date, "yyyy年MM月dd日")}
+								</span>
+							) : (
+								"カレンダーから日付を選択してください"
+							)}
+						</p>
+					</CardFooter>
+				</Card>
 
-						<div className="grid w-full items-center gap-1.5">
-							<div className="flex items-center gap-2">
-								<Label>勤務形態</Label>
-								<TooltipProvider>
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<Button variant="ghost" size="icon" className="h-5 w-5">
-												<Info className="h-4 w-4" />
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent>
-											<p>
-												所定労働時間よりも短い時間で勤務する場合に選択してください。
-											</p>
-										</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
+				{/* フォームセクション */}
+				<Card className="lg:col-span-7 shadow-lg border-0 bg-white h-full flex flex-col">
+
+					<CardHeader>
+						<CardTitle className="text-2xl font-extrabold tracking-tight">
+							申請詳細入力
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<form onSubmit={handleSubmit} className="space-y-6">
+							{/* 勤務形態 */}
+							<div className="space-y-3 p-4 bg-secondary/20 rounded-xl">
+								<div className="flex items-center gap-2">
+									<Label className="text-base font-bold">勤務形態</Label>
+									<TooltipProvider>
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<Button variant="ghost" size="icon" className="h-5 w-5">
+													<Info className="h-4 w-4" />
+												</Button>
+											</TooltipTrigger>
+											<TooltipContent>
+												<p>所定労働時間よりも短い時間で勤務する場合に選択してください。</p>
+											</TooltipContent>
+										</Tooltip>
+									</TooltipProvider>
+								</div>
+								<RadioGroup
+									value={workOption}
+									onValueChange={setWorkOption}
+									className="flex flex-wrap gap-6"
+								>
+									<div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border shadow-sm cursor-pointer hover:border-primary transition-colors">
+										<RadioGroupItem value="full_day" id="full_day" />
+										<Label htmlFor="full_day" className="font-bold cursor-pointer">終日</Label>
+									</div>
+									<div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border shadow-sm cursor-pointer hover:border-primary transition-colors">
+										<RadioGroupItem value="am_half" id="am_half" />
+										<Label htmlFor="am_half" className="font-bold cursor-pointer">午前半休</Label>
+									</div>
+									<div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border shadow-sm cursor-pointer hover:border-primary transition-colors">
+										<RadioGroupItem value="pm_half" id="pm_half" />
+										<Label htmlFor="pm_half" className="font-bold cursor-pointer">午後半休</Label>
+									</div>
+								</RadioGroup>
 							</div>
-							<RadioGroup
-								value={workOption}
-								onValueChange={setWorkOption}
-								className="flex gap-4"
-							>
-								<div className="flex items-center space-x-2">
-									<RadioGroupItem value="full_day" id="full_day" />
-									<Label htmlFor="full_day">終日</Label>
+
+							{workOption !== "full_day" && (
+								<div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+									<div className="space-y-2">
+										<Label htmlFor="start-time" className="font-bold">勤務開始時間</Label>
+										<Input
+											id="start-time"
+											type="time"
+											value={startTime}
+											onChange={(e) => setStartTime(e.target.value)}
+											className="h-11 text-lg"
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label htmlFor="end-time" className="font-bold">勤務終了時間</Label>
+										<Input
+											id="end-time"
+											type="time"
+											value={endTime}
+											onChange={(e) => setEndTime(e.target.value)}
+											className="h-11 text-lg"
+										/>
+									</div>
 								</div>
-								<div className="flex items-center space-x-2">
-									<RadioGroupItem value="am_half" id="am_half" />
-									<Label htmlFor="am_half">午前半休</Label>
-								</div>
-								<div className="flex items-center space-x-2">
-									<RadioGroupItem value="pm_half" id="pm_half" />
-									<Label htmlFor="pm_half">午後半休</Label>
-								</div>
-							</RadioGroup>
-							{(workOption === "am_half" || workOption === "pm_half") && (
-								<p className="text-sm text-muted-foreground">
-									（0.5日としてカウント）
+							)}
+
+							{isLateNightWork && (
+								<p className="text-sm font-bold text-destructive bg-destructive/10 p-2 rounded-md">
+									⚠️ 特認申請として扱われ、所属長の承認が必要です
 								</p>
 							)}
-						</div>
 
-						{workOption !== "full_day" && (
-							<div className="flex gap-4">
-								<div className="grid w-1/2 items-center gap-1.5">
-									<Label htmlFor="start-time">勤務開始時間</Label>
-									<Input
-										id="start-time"
-										type="time"
-										value={startTime}
-										onChange={(e) => setStartTime(e.target.value)}
+							{/* 電車遅延による申請 */}
+							<div className="space-y-2 p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+								<div className="flex items-center space-x-3 group">
+									<Checkbox
+										id="is-train-delay"
+										checked={isTrainDelay}
+										disabled={!isToday}
+										onCheckedChange={(checked: boolean) => {
+											setIsTrainDelay(checked);
+											// 遅延申請時は特認申請もオンにする
+											if (checked) {
+												setIsSpecial(true);
+											}
+										}}
+										className="w-5 h-5"
 									/>
+									<div className="flex flex-col gap-1">
+										<Label
+											htmlFor="is-train-delay"
+											className={`text-base font-bold flex items-center gap-2 ${!isToday ? 'text-muted-foreground' : 'group-hover:text-primary transition-colors'}`}
+										>
+											<Train className="h-4 w-4" />
+											電車遅延による申請（特認申請）
+										</Label>
+										{!isToday && (
+											<p className="text-xs text-muted-foreground">
+												※ 当日の申請のみ選択可能です
+											</p>
+										)}
+									</div>
 								</div>
-								<div className="grid w-1/2 items-center gap-1.5">
-									<Label htmlFor="end-time">勤務終了時間</Label>
-									<Input
-										id="end-time"
-										type="time"
-										value={endTime}
-										onChange={(e) => setEndTime(e.target.value)}
-									/>
-								</div>
+								{isTrainDelay && (
+									<Alert className="mt-3 border-blue-500 bg-blue-50">
+										<Train className="h-4 w-4 text-blue-600" />
+										<AlertDescription className="text-blue-800 text-sm">
+											登録された通勤経路の遅延を自動確認します。<br />
+											<strong>遅延が確認できた場合:</strong> 自動承認されます。<br />
+											<strong>遅延が確認できない場合:</strong> 特認申請として処理され、上司の承認が必要です。
+										</AlertDescription>
+									</Alert>
+								)}
 							</div>
-						)}
 
-						{isLateNightWork && (
-							<p className="text-sm text-destructive">
-								特認申請として扱われ、所属長の承認が必要です
-							</p>
-						)}
-
-						{/* 電車遅延による申請 */}
-						<div className="grid w-full gap-1.5">
-							<div className="flex items-center space-x-2">
-								<Checkbox
-									id="is-train-delay"
-									checked={isTrainDelay}
-									disabled={!isToday}
-									onCheckedChange={(checked: boolean) => {
-										setIsTrainDelay(checked);
-										// 遅延申請時は特認申請もオンにする
-										if (checked) {
-											setIsSpecial(true);
-										}
-									}}
-								/>
-								<div className="grid gap-1.5 leading-none">
-									<label
-										htmlFor="is-train-delay"
-										className={`text-sm font-medium leading-none flex items-center gap-2 ${!isToday ? 'text-muted-foreground' : ''}`}
-									>
-										<Train className="h-4 w-4" />
-										電車遅延による申請（特認申請）
-									</label>
-									{!isToday && (
-										<p className="text-xs text-muted-foreground">
-											※ 当日の申請のみ選択可能です
-										</p>
-									)}
-								</div>
-							</div>
-							{isTrainDelay && (
-								<Alert className="mt-2 border-blue-500 bg-blue-50">
-									<Train className="h-4 w-4 text-blue-600" />
-									<AlertDescription className="text-blue-800 text-sm">
-										登録された通勤経路の遅延を自動確認します。<br />
-										<strong>遅延が確認できた場合:</strong> 自動承認されます。<br />
-										<strong>遅延が確認できない場合:</strong> 特認申請として処理され、上司の承認が必要です。
-									</AlertDescription>
-								</Alert>
-							)}
-						</div>
-
-						{/* 特認申請でない場合のみ申請理由を表示 */}
-						{!requiresSpecialReason && (
-							<div className="grid w-full gap-1.5">
-								<Label htmlFor="reason">申請理由（任意）</Label>
+							<div className="space-y-2">
+								<Label htmlFor="reason" className="font-bold">申請理由</Label>
 								<Textarea
 									id="reason"
-									value={reason}
-									onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-										setReason(e.target.value)
-									}
-									placeholder="申請理由を入力してください"
-								/>
-							</div>
-						)}
-
-						{requiresSpecialReason && (
-							<div className="grid w-full gap-1.5">
-								<Label htmlFor="special-reason">特任申請理由</Label>
-								<Textarea
-									id="special-reason"
 									required={requiresSpecialReason}
-									value={specialReason}
-									onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-										setSpecialReason(e.target.value)
-									}
-									placeholder="特任申請の背景や理由を記載してください"
+									value={reason}
+									onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReason(e.target.value)}
+									placeholder="申請理由を入力してください"
+									className="min-h-[100px] text-base"
 								/>
 							</div>
-						)}
 
-						<div className="flex items-center space-x-2">
-							<Checkbox
-								id="is-special"
-								checked={isSpecial}
-								onCheckedChange={(checked: boolean) => setIsSpecial(checked)}
-							/>
-							<div className="grid gap-1.5 leading-none">
-								<label
-									htmlFor="is-special"
-									className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-								>
-									特認申請
-								</label>
-							</div>
-							<TooltipProvider>
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<Button variant="ghost" size="icon" className="h-5 w-5">
-											<Info className="h-4 w-4" />
-										</Button>
-									</TooltipTrigger>
-									<TooltipContent>
-										<p>所定の時間を超える場合や、休日申請の場合など</p>
-									</TooltipContent>
-								</Tooltip>
-							</TooltipProvider>
-						</div>
-
-						<div className="flex items-center space-x-2">
-							<Checkbox
-								id="is-overtime"
-								checked={isOvertime}
-								onCheckedChange={(checked: boolean) => setIsOvertime(checked)}
-							/>
-							<div className="flex items-center gap-0.5">
-								<label
-									htmlFor="is-overtime"
-									className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-								>
-									8時間以上の勤務
-								</label>
-								<TooltipProvider>
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<Button variant="ghost" size="icon" className="h-5 w-5">
-												<Info className="h-4 w-4" />
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent>
-											<p>
-												残業や休日出勤など、1日の労働時間が8時間を超える場合に選択してください。
-											</p>
-										</TooltipContent>
-									</Tooltip>
-								</TooltipProvider>
-							</div>
-						</div>
-
-						{isOvertime && (
-							<div className="flex flex-col gap-4 mt-1 p-4 border rounded-md">
-								<div className="grid w-full gap-1.5">
-									<Label htmlFor="overtime-reason">超過理由</Label>
-									<Input
-										id="overtime-reason"
-										required={isOvertime}
-										value={overtimeReason}
-										onChange={(e) => setOvertimeReason(e.target.value)}
+							{requiresSpecialReason && (
+								<div className="space-y-2 animate-in zoom-in-95">
+									<Label htmlFor="special-reason" className="font-bold text-primary">特任申請理由</Label>
+									<Textarea
+										id="special-reason"
+										required={requiresSpecialReason}
+										value={specialReason}
+										onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSpecialReason(e.target.value)}
+										placeholder="特任申請の背景や理由を記載してください"
+										className="min-h-[80px] border-primary/50 focus-visible:ring-primary"
 									/>
 								</div>
-								<div className="grid w-full gap-1.5">
-									<Label htmlFor="overtime-end">業務終了予定時間</Label>
-									<Input
-										id="overtime-end"
-										required={isOvertime}
-										type="time"
-										value={overtimeEnd}
-										onChange={(e) => setOvertimeEnd(e.target.value)}
+							)}
+
+							<div className="flex flex-col gap-3 pt-2 border-t mt-4">
+								<div className="flex items-center space-x-3 group">
+									<Checkbox
+										id="is-special"
+										checked={isSpecial}
+										onCheckedChange={(checked: boolean) => setIsSpecial(checked)}
+										className="w-5 h-5"
 									/>
+									<div className="flex items-center gap-2">
+										<Label htmlFor="is-special" className="text-base font-bold group-hover:text-primary transition-colors">
+											特認申請
+										</Label>
+										<TooltipProvider>
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<Button variant="ghost" size="icon" className="h-5 w-5 opacity-50">
+														<Info className="h-4 w-4" />
+													</Button>
+												</TooltipTrigger>
+												<TooltipContent>
+													<p>所定の時間を超える場合や、休日申請の場合など</p>
+												</TooltipContent>
+											</Tooltip>
+										</TooltipProvider>
+									</div>
+								</div>
+
+								<div className="flex items-center space-x-3 group">
+									<Checkbox
+										id="is-overtime"
+										checked={isOvertime}
+										onCheckedChange={(checked: boolean) => setIsOvertime(checked)}
+										className="w-5 h-5"
+									/>
+									<div className="flex items-center gap-2">
+										<Label htmlFor="is-overtime" className="text-base font-bold group-hover:text-primary transition-colors">
+											8時間以上の勤務
+										</Label>
+										<TooltipProvider>
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<Button variant="ghost" size="icon" className="h-5 w-5 opacity-50">
+														<Info className="h-4 w-4" />
+													</Button>
+												</TooltipTrigger>
+												<TooltipContent>
+													<p>残業や休日出勤など、1日の労働時間が8時間を超える場合に選択してください。</p>
+												</TooltipContent>
+											</Tooltip>
+										</TooltipProvider>
+									</div>
 								</div>
 							</div>
-						)}
 
-						<CardFooter className="flex justify-end gap-2 p-0">
-							<Button type="button" variant="outline">
-								キャンセル
-							</Button>
-							<Button type="submit" disabled={loading || !date}>
-								{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-								申請する
-							</Button>
-						</CardFooter>
-					</form>
-				</CardContent>
-			</Card>
+							{isOvertime && (
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 p-4 bg-amber-50 rounded-xl border border-amber-200 animate-in slide-in-from-left-2">
+									<div className="space-y-2">
+										<Label htmlFor="overtime-reason" className="font-bold">超過理由</Label>
+										<Input
+											id="overtime-reason"
+											required={isOvertime}
+											value={overtimeReason}
+											onChange={(e) => setOvertimeReason(e.target.value)}
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label htmlFor="overtime-end" className="font-bold">業務終了予定時間</Label>
+										<Input
+											id="overtime-end"
+											required={isOvertime}
+											type="time"
+											value={overtimeEnd}
+											onChange={(e) => setOvertimeEnd(e.target.value)}
+										/>
+									</div>
+								</div>
+							)}
+
+							<CardFooter className="flex justify-end gap-3 pt-6 px-0 border-t">
+								<Button type="button" variant="ghost" onClick={() => router.back()}>
+									キャンセル
+								</Button>
+								<Button
+									type="submit"
+									size="lg"
+									disabled={loading || !date}
+									className="px-8 font-bold text-lg h-12 shadow-md hover:scale-105 transition-transform"
+								>
+									{loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+									上記内容で申請する
+								</Button>
+							</CardFooter>
+						</form>
+					</CardContent>
+				</Card>
+			</div>
 		</>
 	);
 };

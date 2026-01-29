@@ -25,6 +25,7 @@ import { ApplicationDetailModal } from "../components/ApplicationDetailModal";
 import { ApprovalModal } from "../components/ApprovalModal";
 import { RejectModal } from "../components/RejectModal";
 import { toast } from "sonner";
+import { isAxiosError } from "../lib/utils";
 
 const getStatusBadge = (statusId: number) => {
 	switch (statusId) {
@@ -67,7 +68,6 @@ const ApprovalsPageContent = () => {
 				sort_by: sortBy,
 				sort_order: sortOrder,
 				filter_by_status: filterByStatus,
-				filter_by_user: filterByUser,
 				filter_by_month: filterByMonth,
 			};
 			Object.keys(params).forEach(
@@ -157,9 +157,12 @@ const ApprovalsPageContent = () => {
 			fetchApplications();
 			setIsApprovalModalOpen(false);
 			setSelectedApplicationForAction(null);
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error("Failed to approve application:", error);
-			toast.error("承認処理に失敗しました");
+			const message = (isAxiosError(error) && error.response?.data?.error)
+				? error.response.data.error
+				: "承認処理に失敗しました";
+			toast.error(message);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -178,9 +181,12 @@ const ApprovalsPageContent = () => {
 			fetchApplications();
 			setIsRejectModalOpen(false);
 			setSelectedApplicationForAction(null);
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error("Failed to reject application:", error);
-			toast.error("却下処理に失敗しました");
+			const message = (isAxiosError(error) && error.response?.data?.error)
+				? error.response.data.error
+				: "却下処理に失敗しました";
+			toast.error(message);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -303,77 +309,58 @@ const ApprovalsPageContent = () => {
 	if (error) return <p className="text-red-500">{error}</p>;
 
 	return (
-		<div className="container mx-auto p-4 md:p-6">
-			<h1 className="text-2xl font-bold mb-6">承認待ち</h1>
-			<div className="flex flex-col sm:flex-row items-center mb-4 gap-4">
-				<div className="flex items-center gap-2">
-					<label htmlFor="month-filter" className="text-sm font-medium">
-						申請月:
-					</label>
-					<Select
-						value={filterByMonth || "all"}
-						onValueChange={(value) =>
-							setFilterByMonth(value === "all" ? "" : value)
-						}
-					>
-						<SelectTrigger id="month-filter" className="w-[180px]">
-							<SelectValue placeholder="すべて" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">すべて</SelectItem>
-							{monthOptions.map((option) => (
-								<SelectItem key={option.value} value={option.value}>
-									{option.label}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
+		<div className="flex flex-col h-full gap-4">
+			<div className="flex-none">
+				<div className="flex items-center mb-4 border-b pb-4">
+					<h1 className="text-3xl font-extrabold tracking-tight">承認待ち</h1>
 				</div>
-				<div className="flex items-center gap-2">
-					<label htmlFor="status-filter" className="text-sm font-medium">
-						ステータス:
-					</label>
-					<Select
-						value={filterByStatus || "all"}
-						onValueChange={(value) =>
-							setFilterByStatus(value === "all" ? "" : value)
-						}
-					>
-						<SelectTrigger id="status-filter" className="w-[150px]">
-							<SelectValue placeholder="すべて" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">すべて</SelectItem>
-							<SelectItem value="1">申請中</SelectItem>
-							<SelectItem value="2">承認済み</SelectItem>
-							<SelectItem value="3">却下</SelectItem>
-							<SelectItem value="4">キャンセル</SelectItem>
-						</SelectContent>
-					</Select>
+				<div className="flex flex-col sm:flex-row items-center mb-2 gap-4">
+					<div className="flex items-center gap-2">
+						<label htmlFor="month-filter" className="text-sm font-medium">
+							申請月:
+						</label>
+						<Select
+							value={filterByMonth || "all"}
+							onValueChange={(value) =>
+								setFilterByMonth(value === "all" ? "" : value)
+							}
+						>
+							<SelectTrigger id="month-filter" className="w-[180px]">
+								<SelectValue placeholder="すべて" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">すべて</SelectItem>
+								{monthOptions.map((option) => (
+									<SelectItem key={option.value} value={option.value}>
+										{option.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
+					<div className="flex items-center gap-2">
+						<label htmlFor="status-filter" className="text-sm font-medium">
+							ステータス:
+						</label>
+						<Select
+							value={filterByStatus || "all"}
+							onValueChange={(value) =>
+								setFilterByStatus(value === "all" ? "" : value)
+							}
+						>
+							<SelectTrigger id="status-filter" className="w-[150px]">
+								<SelectValue placeholder="すべて" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">すべて</SelectItem>
+								<SelectItem value="1">申請中</SelectItem>
+								<SelectItem value="2">承認済み</SelectItem>
+								<SelectItem value="3">却下</SelectItem>
+								<SelectItem value="4">キャンセル</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
 				</div>
-				{/* <div className="flex items-center gap-2">
-					<label htmlFor="user-filter" className="text-sm font-medium">
-						申請者:
-					</label>
-					<Select
-						value={filterByUser || "all"}
-						onValueChange={(value) =>
-							setFilterByUser(value === "all" ? "" : value)
-						}
-					>
-						<SelectTrigger id="user-filter" className="w-[200px]">
-							<SelectValue placeholder="すべて" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">すべて</SelectItem>
-							{users.map((user) => (
-								<SelectItem key={user.id} value={user.id.toString()}>
-									{user.name}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-				</div> */}
 			</div>
 			<CommonTable
 				columns={columns}
@@ -383,6 +370,7 @@ const ApprovalsPageContent = () => {
 				sortKey={sortBy}
 				sortOrder={sortOrder}
 				getRowClassName={getRowClassName}
+				fillHeight={true}
 			/>
 			{selectedApplication && (
 				<ApplicationDetailModal

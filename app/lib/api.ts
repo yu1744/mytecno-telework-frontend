@@ -29,17 +29,9 @@ api.interceptors.request.use(
 			config.headers["uid"] = uid;
 		}
 
-		// デバッグログ
-		console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
-			url: config.url,
-			baseURL: config.baseURL,
-			headers: config.headers,
-		});
-
 		return config;
 	},
 	(error) => {
-		console.error("[API Request Error]", error);
 		return Promise.reject(error);
 	}
 );
@@ -47,15 +39,6 @@ api.interceptors.request.use(
 // レスポンスインターセプター
 api.interceptors.response.use(
 	(response) => {
-		console.log(
-			`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url
-			}`,
-			{
-				status: response.status,
-				statusText: response.statusText,
-			}
-		);
-
 		if (response.headers["access-token"]) {
 			localStorage.setItem("access-token", response.headers["access-token"]);
 		}
@@ -80,7 +63,7 @@ api.interceptors.response.use(
 				method: error.config?.method,
 			}
 		};
-		
+
 		console.error(
 			`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}`,
 			errorDetails
@@ -157,6 +140,15 @@ export const getProfile = () => api.get<User>("/me");
 export const updateUser = (id: number, params: Omit<UpdateUserParams, "id">) =>
 	api.put<User>(`/users/${id}`, { user: params });
 
+// 週間在宅勤務上限API
+export interface WeeklyLimitStatus {
+	weekly_limit: number;
+	weekly_count: number;
+	years_of_service: number;
+}
+export const getWeeklyLimitStatus = () =>
+	api.get<WeeklyLimitStatus>("/weekly_limit_status");
+
 // 人事異動API
 export interface UserInfoChangeParams {
 	user_id: number;
@@ -195,9 +187,9 @@ export const createApplication = (
 	params: ApplicationPayload,
 	skipLimitCheck: boolean = false
 ) => {
-	const payload = { application: params };
+	const payload: { application: ApplicationPayload & { skip_limit_check?: boolean } } = { application: params };
 	if (skipLimitCheck) {
-		(payload.application as any).skip_limit_check = true;
+		payload.application.skip_limit_check = true;
 	}
 	return api.post("/applications", payload);
 };
@@ -279,5 +271,37 @@ export const setupAccount = (params: {
 export const adminExportUsageStats = () =>
 	api.get("/admin/usage_stats/export", { responseType: "blob" });
 
+
 export const adminGetUsageStats = (params?: { start_date?: string; end_date?: string; department_id?: string }) =>
 	api.get("/admin/usage_stats", { params });
+
+export const adminGetDepartmentTrend = (departmentId: string) =>
+	api.get(`/admin/usage_stats/department_trend?department_id=${encodeURIComponent(departmentId)}`);
+
+export const adminGetMonthlyComparison = (month: string) =>
+	api.get(`/admin/usage_stats/monthly_comparison?month=${month}`);
+
+// 操作ログAPI
+export interface OperationLog {
+	id: number;
+	created_at: string;
+	user_name: string;
+	action_label: string;
+	target_type?: string;
+	target_id?: number;
+	ip_address: string;
+}
+
+export interface OperationLogParams {
+	action_type?: string;
+	start_date?: string;
+	end_date?: string;
+	page?: number;
+	per_page?: number;
+}
+
+export const getOperationLogs = (params: OperationLogParams) =>
+	api.get<{ logs: OperationLog[]; total: number }>("/admin/operation_logs", { params });
+
+export const exportOperationLogs = (filters: Omit<OperationLogParams, "page" | "per_page">) =>
+	api.get("/admin/operation_logs/export", { params: filters, responseType: "blob" });
