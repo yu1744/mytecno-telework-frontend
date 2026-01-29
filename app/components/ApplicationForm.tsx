@@ -330,17 +330,19 @@ const ApplicationForm = () => {
 								)}
 							</div>
 
-							<div className="space-y-2">
-								<Label htmlFor="reason" className="font-bold">申請理由</Label>
-								<Textarea
-									id="reason"
-									required={requiresSpecialReason}
-									value={reason}
-									onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReason(e.target.value)}
-									placeholder="申請理由を入力してください"
-									className="min-h-[100px] text-base"
-								/>
-							</div>
+							{/* 特認申請でない場合のみ申請理由を表示 */}
+							{!requiresSpecialReason && (
+								<div className="space-y-2">
+									<Label htmlFor="reason" className="font-bold">申請理由（任意）</Label>
+									<Textarea
+										id="reason"
+										value={reason}
+										onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReason(e.target.value)}
+										placeholder="申請理由を入力してください"
+										className="min-h-[100px] text-base"
+									/>
+								</div>
+							)}
 
 							{requiresSpecialReason && (
 								<div className="space-y-2 animate-in zoom-in-95">
