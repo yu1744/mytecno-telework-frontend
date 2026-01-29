@@ -30,6 +30,8 @@ import {
 import { Loader2, Info } from "lucide-react";
 import { useModalStore } from "@/app/store/modal";
 import { useNotificationStore } from "@/app/store/notificationStore";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Train } from "lucide-react";
 
 const ApplicationForm = () => {
 	const router = useRouter();
@@ -43,6 +45,7 @@ const ApplicationForm = () => {
 	const [overtimeEnd, setOvertimeEnd] = useState("");
 	const [startTime, setStartTime] = useState("");
 	const [endTime, setEndTime] = useState("");
+	const [isTrainDelay, setIsTrainDelay] = useState(false);
 	const [loading, setLoading] = useState(false);
 
 	const isLateNightWork = useMemo(() => {
@@ -52,7 +55,17 @@ const ApplicationForm = () => {
 		return start >= 22 || start < 5 || end >= 22 || end < 5;
 	}, [startTime, endTime]);
 
-	const requiresSpecialReason = isSpecial || isLateNightWork;
+	// 当日かどうか判定
+	const isToday = useMemo(() => {
+		if (!date) return false;
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		const selectedDate = new Date(date);
+		selectedDate.setHours(0, 0, 0, 0);
+		return selectedDate.getTime() === today.getTime();
+	}, [date]);
+
+	const requiresSpecialReason = isSpecial || isLateNightWork || isTrainDelay;
 
 	useEffect(() => {
 		if (date) {
@@ -60,7 +73,12 @@ const ApplicationForm = () => {
 			today.setHours(0, 0, 0, 0);
 			const selectedDate = new Date(date);
 			selectedDate.setHours(0, 0, 0, 0);
-			setIsSpecial(selectedDate.getTime() === today.getTime());
+			const isTodaySelected = selectedDate.getTime() === today.getTime();
+			setIsSpecial(isTodaySelected);
+			// 当日以外を選択した場合は遅延申請をオフにする
+			if (!isTodaySelected && isTrainDelay) {
+				setIsTrainDelay(false);
+			}
 		}
 	}, [date]);
 
@@ -102,6 +120,7 @@ const ApplicationForm = () => {
 			is_overtime: isOvertime,
 			overtime_reason: isOvertime ? overtimeReason : undefined,
 			overtime_end: isOvertime ? overtimeEnd : undefined,
+			is_train_delay: isTrainDelay,
 		};
 
 		let isModalShown = false;
@@ -250,18 +269,62 @@ const ApplicationForm = () => {
 							</p>
 						)}
 
+						{/* 電車遅延による申請 */}
 						<div className="grid w-full gap-1.5">
-							<Label htmlFor="reason">申請理由</Label>
-							<Textarea
-								id="reason"
-								required={requiresSpecialReason}
-								value={reason}
-								onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-									setReason(e.target.value)
-								}
-								placeholder="申請理由を入力してください"
-							/>
+							<div className="flex items-center space-x-2">
+								<Checkbox
+									id="is-train-delay"
+									checked={isTrainDelay}
+									disabled={!isToday}
+									onCheckedChange={(checked: boolean) => {
+										setIsTrainDelay(checked);
+										// 遅延申請時は特認申請もオンにする
+										if (checked) {
+											setIsSpecial(true);
+										}
+									}}
+								/>
+								<div className="grid gap-1.5 leading-none">
+									<label
+										htmlFor="is-train-delay"
+										className={`text-sm font-medium leading-none flex items-center gap-2 ${!isToday ? 'text-muted-foreground' : ''}`}
+									>
+										<Train className="h-4 w-4" />
+										電車遅延による申請（特認申請）
+									</label>
+									{!isToday && (
+										<p className="text-xs text-muted-foreground">
+											※ 当日の申請のみ選択可能です
+										</p>
+									)}
+								</div>
+							</div>
+							{isTrainDelay && (
+								<Alert className="mt-2 border-blue-500 bg-blue-50">
+									<Train className="h-4 w-4 text-blue-600" />
+									<AlertDescription className="text-blue-800 text-sm">
+										登録された通勤経路の遅延を自動確認します。<br />
+										<strong>遅延が確認できた場合:</strong> 自動承認されます。<br />
+										<strong>遅延が確認できない場合:</strong> 特認申請として処理され、上司の承認が必要です。
+									</AlertDescription>
+								</Alert>
+							)}
 						</div>
+
+						{/* 特認申請でない場合のみ申請理由を表示 */}
+						{!requiresSpecialReason && (
+							<div className="grid w-full gap-1.5">
+								<Label htmlFor="reason">申請理由（任意）</Label>
+								<Textarea
+									id="reason"
+									value={reason}
+									onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+										setReason(e.target.value)
+									}
+									placeholder="申請理由を入力してください"
+								/>
+							</div>
+						)}
 
 						{requiresSpecialReason && (
 							<div className="grid w-full gap-1.5">
