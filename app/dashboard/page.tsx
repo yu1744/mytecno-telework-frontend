@@ -148,9 +148,9 @@ const DashboardPage = () => {
 	}
 
 	return (
-		<div className="p-6">
-			<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-				<h1 className="text-2xl font-bold">申請ダッシュボード</h1>
+		<div className="p-2 sm:p-6">
+			<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-4">
+				<h1 className="text-xl sm:text-2xl font-bold">申請ダッシュボード</h1>
 				<Button asChild className="w-full sm:w-auto">
 					<Link href="/apply">新規申請</Link>
 				</Button>

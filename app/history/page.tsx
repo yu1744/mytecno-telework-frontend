@@ -293,12 +293,12 @@ const HistoryPageContent = () => {
 	if (error) return <p className="text-red-500">{error}</p>;
 
 	return (
-		<div className="container mx-auto p-4">
+		<div className="container mx-auto p-2 sm:p-4">
 			<Toaster />
-			<h1 className="text-2xl font-bold mb-4">申請履歴</h1>
-			<div className="flex flex-col sm:flex-row items-center mb-4 gap-4">
-				<div className="flex items-center gap-2">
-					<label htmlFor="month-filter" className="text-sm font-medium">
+			<h1 className="text-xl sm:text-2xl font-bold mb-4">申請履歴</h1>
+			<div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center mb-4 gap-3 sm:gap-4">
+				<div className="flex items-center gap-2 w-full sm:w-auto">
+					<label htmlFor="month-filter" className="text-sm font-medium whitespace-nowrap">
 						申請月:
 					</label>
 					<Select
@@ -307,7 +307,7 @@ const HistoryPageContent = () => {
 							setFilterByMonth(value === "all" ? "" : value)
 						}
 					>
-						<SelectTrigger id="month-filter" className="w-[180px]">
+						<SelectTrigger id="month-filter" className="w-full sm:w-[180px]">
 							<SelectValue placeholder="すべて" />
 						</SelectTrigger>
 						<SelectContent>
@@ -320,8 +320,8 @@ const HistoryPageContent = () => {
 						</SelectContent>
 					</Select>
 				</div>
-				<div className="flex items-center gap-2">
-					<label htmlFor="status-filter" className="text-sm font-medium">
+				<div className="flex items-center gap-2 w-full sm:w-auto">
+					<label htmlFor="status-filter" className="text-sm font-medium whitespace-nowrap">
 						ステータス:
 					</label>
 					<Select
@@ -330,7 +330,7 @@ const HistoryPageContent = () => {
 							setFilterByStatus(value === "all" ? "" : value)
 						}
 					>
-						<SelectTrigger id="status-filter" className="w-[150px]">
+						<SelectTrigger id="status-filter" className="w-full sm:w-[150px]">
 							<SelectValue placeholder="すべて" />
 						</SelectTrigger>
 						<SelectContent>

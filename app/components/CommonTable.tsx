@@ -44,8 +44,8 @@ export function CommonTable<T extends { id: number | string }>({
 					<CardTitle>{title}</CardTitle>
 				</CardHeader>
 			)}
-			<CardContent>
-				<div className="rounded-md border">
+			<CardContent className="p-0 sm:p-6">
+				<div className="rounded-md border overflow-x-auto">
 					<Table>
 						<TableHeader>
 							<TableRow>

@@ -81,7 +81,7 @@ export default function RootLayout({
 								<div className="hidden md:block h-full">
 									<NavigationMenu />
 								</div>
-								<main className="flex-1 overflow-y-auto p-8">{children}</main>
+								<main className="flex-1 overflow-y-auto p-4 md:p-8">{children}</main>
 							</div>
 						</div>
 					)}

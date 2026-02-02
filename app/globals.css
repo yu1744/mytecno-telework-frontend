@@ -192,20 +192,14 @@
 }
 
 /* レスポンシブメディアクエリ */
-@media (max-width: 768px) {
-  /* モバイル用のフォントサイズ調整 */
+@media (max-width: 640px) {
+  /* スマホ用のフォントサイズ調整 */
   body {
     font-size: 14px;
   }
 
-  /* ナビゲーションメニューをモバイルで非表示 */
-  .w-64 {
-    width: 0;
-    display: none;
-  }
-
-  /* メインコンテンツの余白調整 */
-  main {
+  /* カードの余白調整 */
+  .p-6 {
     padding: 1rem !important;
   }
 
@@ -214,9 +208,34 @@
     font-size: 12px;
   }
 
-  /* カードの余白調整 */
-  .p-8 {
-    padding: 1rem !important;
+  table th,
+  table td {
+    padding: 0.5rem 0.75rem !important;
+    white-space: nowrap;
+  }
+
+  /* ボタンのタッチターゲットサイズ確保 */
+  button {
+    min-height: 40px;
+  }
+
+  /* フォーム要素のサイズ調整 */
+  input, select, textarea {
+    font-size: 16px !important; /* iOS ズーム防止 */
+  }
+
+  /* モーダルの調整 */
+  [role="dialog"] {
+    max-width: calc(100vw - 2rem) !important;
+    max-height: calc(100vh - 4rem) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* ナビゲーションメニューをモバイルで非表示 */
+  .w-64 {
+    width: 0;
+    display: none;
   }
 }
 

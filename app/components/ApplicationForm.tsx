@@ -197,7 +197,7 @@ const ApplicationForm = () => {
 							<RadioGroup
 								value={workOption}
 								onValueChange={setWorkOption}
-								className="flex gap-4"
+								className="flex flex-col sm:flex-row gap-2 sm:gap-4"
 							>
 								<div className="flex items-center space-x-2">
 									<RadioGroupItem value="full_day" id="full_day" />
@@ -220,8 +220,8 @@ const ApplicationForm = () => {
 						</div>
 
 						{workOption !== "full_day" && (
-							<div className="flex gap-4">
-								<div className="grid w-1/2 items-center gap-1.5">
+							<div className="flex flex-col sm:flex-row gap-4">
+								<div className="grid w-full sm:w-1/2 items-center gap-1.5">
 									<Label htmlFor="start-time">勤務開始時間</Label>
 									<Input
 										id="start-time"
@@ -230,7 +230,7 @@ const ApplicationForm = () => {
 										onChange={(e) => setStartTime(e.target.value)}
 									/>
 								</div>
-								<div className="grid w-1/2 items-center gap-1.5">
+								<div className="grid w-full sm:w-1/2 items-center gap-1.5">
 									<Label htmlFor="end-time">勤務終了時間</Label>
 									<Input
 										id="end-time"
