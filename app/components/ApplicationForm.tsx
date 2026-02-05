@@ -27,11 +27,11 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Loader2, Info } from "lucide-react";
+import { Loader2, Info, Train } from "lucide-react";
 import { useModalStore } from "@/app/store/modal";
 import { useNotificationStore } from "@/app/store/notificationStore";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { isAxiosError } from "@/app/lib/utils";
-
 import { Calendar } from "@/components/ui/calendar";
 
 const ApplicationForm = () => {
@@ -46,6 +46,7 @@ const ApplicationForm = () => {
 	const [overtimeEnd, setOvertimeEnd] = useState("");
 	const [startTime, setStartTime] = useState("");
 	const [endTime, setEndTime] = useState("");
+	const [isTrainDelay, setIsTrainDelay] = useState(false);
 	const [loading, setLoading] = useState(false);
 
 	const isLateNightWork = useMemo(() => {
@@ -55,7 +56,17 @@ const ApplicationForm = () => {
 		return start >= 22 || start < 5 || end >= 22 || end < 5;
 	}, [startTime, endTime]);
 
-	const requiresSpecialReason = isSpecial || isLateNightWork;
+	// 当日かどうか判定
+	const isToday = useMemo(() => {
+		if (!date) return false;
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		const selectedDate = new Date(date);
+		selectedDate.setHours(0, 0, 0, 0);
+		return selectedDate.getTime() === today.getTime();
+	}, [date]);
+
+	const requiresSpecialReason = isSpecial || isLateNightWork || isTrainDelay;
 
 	useEffect(() => {
 		if (date) {
@@ -63,7 +74,12 @@ const ApplicationForm = () => {
 			today.setHours(0, 0, 0, 0);
 			const selectedDate = new Date(date);
 			selectedDate.setHours(0, 0, 0, 0);
-			setIsSpecial(selectedDate.getTime() === today.getTime());
+			const isTodaySelected = selectedDate.getTime() === today.getTime();
+			setIsSpecial(isTodaySelected);
+			// 当日以外を選択した場合は遅延申請をオフにする
+			if (!isTodaySelected && isTrainDelay) {
+				setIsTrainDelay(false);
+			}
 		}
 	}, [date]);
 
@@ -105,11 +121,14 @@ const ApplicationForm = () => {
 			is_overtime: isOvertime,
 			overtime_reason: isOvertime ? overtimeReason : undefined,
 			overtime_end: isOvertime ? overtimeEnd : undefined,
+			is_train_delay: isTrainDelay,
 		};
 
 		let isModalShown = false;
 		try {
-			await createApplication(payload);
+			// 電車遅延申請の場合は最初から skip_limit_check をtrueで送信
+			// （Gemini APIの二重呼び出しを防ぐため）
+			await createApplication(payload, isTrainDelay);
 			router.push("/history?submitted=true");
 		} catch (error: unknown) {
 			console.error("申請の送信に失敗しました", error);
@@ -270,17 +289,62 @@ const ApplicationForm = () => {
 								</p>
 							)}
 
-							<div className="space-y-2">
-								<Label htmlFor="reason" className="font-bold">申請理由</Label>
-								<Textarea
-									id="reason"
-									required={requiresSpecialReason}
-									value={reason}
-									onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReason(e.target.value)}
-									placeholder="申請理由を入力してください"
-									className="min-h-[100px] text-base"
-								/>
+							{/* 電車遅延による申請 */}
+							<div className="space-y-2 p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+								<div className="flex items-center space-x-3 group">
+									<Checkbox
+										id="is-train-delay"
+										checked={isTrainDelay}
+										disabled={!isToday}
+										onCheckedChange={(checked: boolean) => {
+											setIsTrainDelay(checked);
+											// 遅延申請時は特認申請もオンにする
+											if (checked) {
+												setIsSpecial(true);
+											}
+										}}
+										className="w-5 h-5"
+									/>
+									<div className="flex flex-col gap-1">
+										<Label
+											htmlFor="is-train-delay"
+											className={`text-base font-bold flex items-center gap-2 ${!isToday ? 'text-muted-foreground' : 'group-hover:text-primary transition-colors'}`}
+										>
+											<Train className="h-4 w-4" />
+											電車遅延による申請（特認申請）
+										</Label>
+										{!isToday && (
+											<p className="text-xs text-muted-foreground">
+												※ 当日の申請のみ選択可能です
+											</p>
+										)}
+									</div>
+								</div>
+								{isTrainDelay && (
+									<Alert className="mt-3 border-blue-500 bg-blue-50">
+										<Train className="h-4 w-4 text-blue-600" />
+										<AlertDescription className="text-blue-800 text-sm">
+											登録された通勤経路の遅延を自動確認します。<br />
+											<strong>遅延が確認できた場合:</strong> 自動承認されます。<br />
+											<strong>遅延が確認できない場合:</strong> 特認申請として処理され、上司の承認が必要です。
+										</AlertDescription>
+									</Alert>
+								)}
 							</div>
+
+							{/* 特認申請でない場合のみ申請理由を表示 */}
+							{!requiresSpecialReason && (
+								<div className="space-y-2">
+									<Label htmlFor="reason" className="font-bold">申請理由（任意）</Label>
+									<Textarea
+										id="reason"
+										value={reason}
+										onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReason(e.target.value)}
+										placeholder="申請理由を入力してください"
+										className="min-h-[100px] text-base"
+									/>
+								</div>
+							)}
 
 							{requiresSpecialReason && (
 								<div className="space-y-2 animate-in zoom-in-95">

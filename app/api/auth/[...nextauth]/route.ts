@@ -1,15 +1,17 @@
 import NextAuth from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 
+// Entra ID (旧 Azure AD) の設定
 const handler = NextAuth({
   providers: [
     AzureADProvider({
       clientId: process.env.AZURE_AD_CLIENT_ID!,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
-      tenantId: "common",
+      tenantId: process.env.AZURE_AD_TENANT_ID || "common",
       authorization: {
         params: {
           scope: "openid profile email offline_access User.Read Calendars.ReadWrite",
+          prompt: "login",  // アカウント選択画面をスキップして直接ログイン
         },
       },
     }),
@@ -37,7 +39,7 @@ const handler = NextAuth({
     },
   },
   pages: {
-    signIn: "/login", // /auth/signin から /login に変更
+    signIn: "/login",
   },
   session: {
     strategy: "jwt",
