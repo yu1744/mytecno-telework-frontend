@@ -94,12 +94,19 @@ const TrainDelayChecker: React.FC<TrainDelayCheckerProps> = ({
           icon: "✅",
         });
       }
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        err.message ||
-        "遅延情報の取得に失敗しました";
+    } catch (err: unknown) {
+      let errorMessage = "遅延情報の取得に失敗しました";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      if (typeof err === "object" && err !== null) {
+        const axiosError = err as { response?: { data?: { error?: string; message?: string } } };
+        if (axiosError.response?.data?.error) {
+          errorMessage = axiosError.response.data.error;
+        } else if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message;
+        }
+      }
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
