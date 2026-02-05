@@ -126,7 +126,9 @@ const ApplicationForm = () => {
 
 		let isModalShown = false;
 		try {
-			await createApplication(payload);
+			// 電車遅延申請の場合は最初から skip_limit_check をtrueで送信
+			// （Gemini APIの二重呼び出しを防ぐため）
+			await createApplication(payload, isTrainDelay);
 			router.push("/history?submitted=true");
 		} catch (error: unknown) {
 			console.error("申請の送信に失敗しました", error);
