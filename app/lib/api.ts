@@ -66,7 +66,7 @@ api.interceptors.response.use(
 
 		console.error(
 			`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}`,
-			errorDetails
+			JSON.stringify(errorDetails, null, 2)
 		);
 
 		if (error.response && error.response.status === 401) {
@@ -93,6 +93,30 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+
+// 操作ログの型
+export interface OperationLog {
+	id: number;
+	user_id: number;
+	user_name: string;
+	action: string;
+	action_label: string;
+	target_type: string | null;
+	target_id: number | null;
+	details: any;
+	ip_address: string;
+	created_at: string;
+}
+
+export interface OperationLogParams {
+	user_id?: number | string;
+	action_type?: string;
+	start_date?: string;
+	end_date?: string;
+	page?: number;
+	per_page?: number;
+}
 
 // ユーザー管理API
 export type CreateUserParams = {
@@ -268,8 +292,8 @@ export const setupAccount = (params: {
 }) => api.post("/auth/activation/setup", params);
 
 // 利用統計API
-export const adminExportUsageStats = () =>
-	api.get("/admin/usage_stats/export", { responseType: "blob" });
+export const adminExportUsageStats = (params?: { start_date?: string; end_date?: string; department_id?: string }) =>
+	api.get("/admin/usage_stats/export", { params, responseType: "blob" });
 
 
 export const adminGetUsageStats = (params?: { start_date?: string; end_date?: string; department_id?: string }) =>
@@ -280,3 +304,15 @@ export const adminGetDepartmentTrend = (departmentId: string) =>
 
 export const adminGetMonthlyComparison = (month: string) =>
 	api.get(`/admin/usage_stats/monthly_comparison?month=${month}`);
+
+// 操作ログAPI
+export const getOperationLogs = (params: OperationLogParams) =>
+	api.get<{
+		logs: OperationLog[];
+		total: number;
+		page: number;
+		per_page: number;
+	}>("/admin/operation_logs", { params });
+
+export const exportOperationLogs = (params: OperationLogParams) =>
+	api.get("/admin/operation_logs/export", { params, responseType: "blob" });

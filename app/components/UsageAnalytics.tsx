@@ -88,7 +88,10 @@ const UsageAnalytics = () => {
 
   const fetchStats = async (filters?: { start_date?: string; end_date?: string; department_id?: string }) => {
     try {
-      setLoading(true);
+      // 初回またはデータがない時だけ全体のローディングを表示する
+      if (!usageStats) {
+        setLoading(true);
+      }
       const res = await adminGetUsageStats(filters);
       setUsageStats(res.data);
     } catch (error) {
@@ -114,10 +117,33 @@ const UsageAnalytics = () => {
   };
 
   const handleExportCsv = async () => {
-    // ... (existing export logic)
+    try {
+      setIsExporting(true);
+      const filters: any = {};
+      if (startDate) filters.start_date = startDate;
+      if (endDate) filters.end_date = endDate;
+      if (selectedDepartment && selectedDepartment !== 'all') {
+        filters.department_id = selectedDepartment;
+      }
+
+      const response = await adminExportUsageStats(filters);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `usage_stats_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("CSVをエクスポートしました。");
+    } catch (error) {
+      console.error("Failed to export CSV", error);
+      toast.error("CSVのエクスポートに失敗しました。");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading && !usageStats) return <div className="flex items-center justify-center min-h-[400px]">読み込み中...</div>;
   if (!usageStats) return <div>No data</div>;
 
   // グラフ用の一時的なログ (削除予定)
@@ -201,10 +227,22 @@ const UsageAnalytics = () => {
         <CardContent>
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-4 gap-4">
             <div className="flex flex-wrap items-center gap-2">
-              <Input type="date" placeholder="開始日" className="w-auto" />
+              <Input
+                type="date"
+                placeholder="開始日"
+                className="w-auto"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
               <span>〜</span>
-              <Input type="date" placeholder="終了日" className="w-auto" />
-              <Select>
+              <Input
+                type="date"
+                placeholder="終了日"
+                className="w-auto"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+              <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="部署で絞り込み" />
                 </SelectTrigger>
@@ -217,7 +255,7 @@ const UsageAnalytics = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={handleFilter}>絞り込み</Button>
+              <Button type="button" onClick={handleFilter}>絞り込み</Button>
             </div>
             <Button onClick={handleExportCsv} disabled={isExporting}>
               {isExporting ? 'エクスポート中...' : 'CSVエクスポート'}

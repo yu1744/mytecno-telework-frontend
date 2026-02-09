@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell } from 'lucide-react';
-import { getUnreadNotifications } from '@/app/lib/api';
+import { getNotifications, getUnreadNotifications, markNotificationAsRead } from '@/app/lib/api';
 import type { AppNotification } from '@/app/types/application';
 import Link from 'next/link';
 
@@ -12,29 +12,33 @@ const NotificationBell = () => {
   const notificationAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const fetchUnreadNotifications = async () => {
+    const fetchNotifications = async () => {
       try {
-        console.debug('[NotificationBell] Fetching unread notifications...');
-        const response = await getUnreadNotifications();
-        console.debug('[NotificationBell] Success:', response);
-        console.debug('[NotificationBell] response.data:', response.data);
-        setNotifications(Array.isArray(response.data) ? response.data : []);
+        console.debug('[NotificationBell] Fetching notifications...');
+        const response = await getNotifications();
+        console.debug('[NotificationBell] Success:', {
+          status: response.status,
+          dataCount: Array.isArray(response.data) ? response.data.length : 'not an array'
+        });
+        // 最近の10件に制限
+        const recentNotifications = Array.isArray(response.data)
+          ? response.data.slice(0, 10)
+          : [];
+        setNotifications(recentNotifications);
       } catch (error: any) {
-        // APIエラーは既にコンソールに出力されているので、ここでは静かに処理する
-        // 通知の取得に失敗してもUIは表示し続ける
-        console.debug('[NotificationBell] Fetch failed:', {
+        console.error('[NotificationBell] Fetch failed:', {
           message: error.message,
           status: error.response?.status,
-          data: error.response?.data,
+          url: error.config?.url
         });
         setNotifications([]);
       }
     };
 
-    fetchUnreadNotifications();
-    
+    fetchNotifications();
+
     // 定期的に通知を更新（30秒ごと）
-    const interval = setInterval(fetchUnreadNotifications, 30000);
+    const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -54,7 +58,25 @@ const NotificationBell = () => {
     };
   }, []);
 
-  const unreadCount = notifications.length;
+  const handleNotificationClick = async (id: number) => {
+    try {
+      // 楽観的更新: ステータスを既読に変更
+      setNotifications((prev: AppNotification[]) =>
+        prev.map((n: AppNotification) => n.id === id ? { ...n, read: true } : n)
+      );
+
+      // バックエンドAPIを呼び出し
+      await markNotificationAsRead(id);
+      console.debug(`[NotificationBell] Notification ${id} marked as read`);
+    } catch (error) {
+      console.error(`[NotificationBell] Failed to mark notification ${id} as read:`, error);
+      // エラーが発生した場合は再取得して状態を最新にする
+      const response = await getNotifications();
+      setNotifications(Array.isArray(response.data) ? response.data.slice(0, 10) : []);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <div className="relative" ref={notificationAreaRef}>
@@ -78,7 +100,7 @@ const NotificationBell = () => {
         >
           <div className="py-1">
             <div className="px-4 py-2 text-sm text-gray-700 font-semibold">
-              未読の通知
+              通知
             </div>
             <div className="border-t border-gray-200"></div>
             {notifications.length > 0 ? (
@@ -86,10 +108,25 @@ const NotificationBell = () => {
                 <Link
                   href={notification.link || '#'}
                   key={notification.id}
-                  onClick={() => setIsOpen(false)}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() => {
+                    if (!notification.read) {
+                      handleNotificationClick(notification.id);
+                    }
+                    setIsOpen(false);
+                  }}
+                  className={`block px-4 py-2 text-sm transition-colors duration-200 ${notification.read
+                    ? 'text-gray-400 bg-gray-50/50'
+                    : 'text-gray-800 font-medium hover:bg-blue-50'
+                    } hover:bg-gray-100`}
                 >
-                  {notification.message}
+                  <div className="flex items-start gap-2">
+                    {!notification.read && (
+                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-blue-600 flex-shrink-0" />
+                    )}
+                    <span className={notification.read ? '' : 'pl-0'}>
+                      {notification.message}
+                    </span>
+                  </div>
                 </Link>
               ))
             ) : (

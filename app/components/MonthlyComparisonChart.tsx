@@ -73,32 +73,41 @@ const MonthlyComparisonChart = ({ initialMonth }: MonthlyComparisonChartProps) =
             <p>この月のデータはありません。</p>
           </div>
         ) : (
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={data}
-                layout="vertical"
-                margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" hide />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  width={100}
-                  tick={{ fontSize: 12 }}
-                />
-                <Tooltip
-                  formatter={(value) => [`${value} 回`, '利用回数']}
-                  cursor={{ fill: 'transparent' }}
-                />
-                <Bar dataKey="count" barSize={20} radius={[0, 4, 4, 0]}>
-                  {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="overflow-y-auto overflow-x-hidden max-h-[400px] border rounded-md p-2">
+            {(() => {
+              // 1項目あたり40px + 余白を計算
+              const dynamicHeight = Math.max(300, data.length * 40);
+              return (
+                <div style={{ height: `${dynamicHeight}px`, width: '100%' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={data}
+                      layout="vertical"
+                      margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                      <XAxis type="number" hide />
+                      <YAxis
+                        dataKey="name"
+                        type="category"
+                        width={100}
+                        tick={{ fontSize: 12 }}
+                        interval={0}
+                      />
+                      <Tooltip
+                        formatter={(value) => [`${value} 回`, '利用回数']}
+                        cursor={{ fill: 'transparent' }}
+                      />
+                      <Bar dataKey="count" barSize={20} radius={[0, 4, 4, 0]}>
+                        {data.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              );
+            })()}
           </div>
         )}
       </CardContent>

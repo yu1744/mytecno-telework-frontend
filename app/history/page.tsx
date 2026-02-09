@@ -279,6 +279,7 @@ const HistoryPageContent = () => {
 
 	const monthOptions = Array.from({ length: 12 }, (_, i) => {
 		const date = new Date();
+		date.setDate(1);
 		date.setMonth(date.getMonth() - i);
 		return {
 			value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
