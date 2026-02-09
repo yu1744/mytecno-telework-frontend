@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 // next-pwaの初期化
 // mainブランチの詳細なキャッシュ設定を採用しつつ、構文を整理しました
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const withPWA = require('next-pwa')({
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
@@ -216,9 +217,9 @@ const nextConfig: NextConfig = {
             value: `
               default-src 'self';
               script-src 'self' 'unsafe-eval' 'unsafe-inline';
-              style-src 'self' 'unsafe-inline';
+              style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
               img-src 'self' blob: data:;
-              font-src 'self';
+              font-src 'self' https://fonts.gstatic.com;
               object-src 'none';
               base-uri 'self';
               form-action 'self';

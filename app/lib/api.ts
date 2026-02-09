@@ -211,9 +211,9 @@ export const createApplication = (
 	params: ApplicationPayload,
 	skipLimitCheck: boolean = false
 ) => {
-	const payload = { application: params };
+	const payload: { application: ApplicationPayload & { skip_limit_check?: boolean } } = { application: params };
 	if (skipLimitCheck) {
-		(payload.application as any).skip_limit_check = true;
+		payload.application.skip_limit_check = true;
 	}
 	return api.post("/applications", payload);
 };

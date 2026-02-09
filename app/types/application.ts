@@ -65,6 +65,7 @@ export interface ApplicationPayload {
 	is_overtime: boolean;
 	overtime_reason?: string;
 	overtime_end?: string;
+	is_train_delay?: boolean;
 }
 export interface AppNotification {
 	id: number;

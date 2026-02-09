@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, signOut, useSession } from "next-auth/react";
 import api from "@/app/lib/api";
-import { apiCallWithRetry } from "@/app/lib/utils";
+import { apiCallWithRetry, isAxiosError } from "@/app/lib/utils";
 import { useAuthStore } from "@/app/store/auth";
+import { User } from "@/app/types/user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,28 +14,25 @@ import {
 	Card,
 	CardContent,
 	CardDescription,
-	CardFooter,
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
-
-
 const LoginPage = () => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
-	const [isLoading, setIsLoading] = useState(false); // loading状態を統一
+	const [isLoading, setIsLoading] = useState(false);
 	const [isRedirecting, setIsRedirecting] = useState(false);
 	const setAuth = useAuthStore((state) => state.setAuth);
 	const router = useRouter();
 	const { data: session, status } = useSession();
 
 	// 共通の認証後処理（トークン保存とリダイレクト）
-	const handleAuthSuccess = (user: any, authHeaders: any) => {
-		setAuth(user, authHeaders);
+	const handleAuthSuccess = useCallback((user: Record<string, unknown>, authHeaders: { "access-token": string; client: string; uid: string }) => {
+		setAuth(user as unknown as User, authHeaders);
 
 		localStorage.setItem("access-token", authHeaders["access-token"]);
 		localStorage.setItem("client", authHeaders["client"]);
@@ -42,7 +40,7 @@ const LoginPage = () => {
 
 		setIsRedirecting(true);
 
-		const roleName = user.role?.name;
+		const roleName = (user as { role?: { name?: string } }).role?.name;
 		switch (roleName) {
 			case "admin":
 				router.push("/admin");
@@ -50,24 +48,28 @@ const LoginPage = () => {
 			case "approver":
 				router.push("/approvals");
 				break;
-			case "applicant": // main由来のroleも考慮
+			case "applicant":
 				router.push("/dashboard");
 				break;
 			default:
 				router.push("/dashboard");
 				break;
 		}
-	};
+	}, [setAuth, router]);
 
-	// Microsoft認証を完了する (frontendsa由来)
-	const handleMicrosoftAuth = async () => {
+	// Microsoft認証を完了する（バックエンドにトークンを送信）
+	const handleMicrosoftAuth = useCallback(async (silent: boolean = false) => {
 		if (!session?.accessToken) {
-			setError("Microsoftセッションがありません。再度サインインしてください。");
-			return;
+			if (!silent) {
+				setError("Microsoftセッションがありません。再度サインインしてください。");
+			}
+			return false;
 		}
 
-		setIsLoading(true);
-		setError("");
+		if (!silent) {
+			setIsLoading(true);
+			setError("");
+		}
 
 		try {
 			const response = await apiCallWithRetry(() =>
@@ -94,20 +96,32 @@ const LoginPage = () => {
 			};
 
 			handleAuthSuccess(user, authHeaders);
-		} catch (error: any) {
-			if (error.response?.status === 404) {
-				setError(
-					error.response.data.error ||
-					"このMicrosoftアカウントは登録されていません。"
-				);
-			} else {
-				setError("Microsoft認証に失敗しました。再度お試しください。");
+			return true;
+		} catch (error: unknown) {
+			if (!silent) {
+				if (isAxiosError(error) && error.response?.status === 404) {
+					setError(
+						error.response?.data?.error ||
+						"このMicrosoftアカウントは登録されていません。"
+					);
+				} else {
+					setError("Microsoft認証に失敗しました。再度お試しください。");
+				}
+				setIsLoading(false);
 			}
-			setIsLoading(false);
+			return false;
 		}
-	};
+	}, [session, handleAuthSuccess]);
 
-	// 通常のログイン処理 (mainとfrontendsaの統合)
+	// セッションが確立されたら自動でバックエンド認証を実行
+	// （MSログインからコールバックで戻ってきた場合のみ）
+	useEffect(() => {
+		if (status === "authenticated" && session?.accessToken && !isRedirecting && !isLoading) {
+			handleMicrosoftAuth(true);
+		}
+	}, [status, session, isRedirecting, isLoading, handleMicrosoftAuth]);
+
+	// 通常のログイン処理（メール/パスワード）
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		setError("");
@@ -132,20 +146,19 @@ const LoginPage = () => {
 			};
 
 			handleAuthSuccess(user, authHeaders);
-		} catch (error: any) {
-			// main由来の詳細なエラーハンドリングを採用
-			if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") {
+		} catch (error: unknown) {
+			if (isAxiosError(error) && (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT")) {
 				setError(
 					"サーバーへの接続がタイムアウトしました。少しお待ちください。"
 				);
-			} else if (error.code === "ERR_NETWORK" || !error.response) {
+			} else if (isAxiosError(error) && (error.code === "ERR_NETWORK" || !error.response)) {
 				setError("ネットワークエラーが発生しました。接続を確認してください。");
-			} else if (
-				error.response?.status === 401 ||
-				error.response?.status === 422
+			} else if (isAxiosError(error) &&
+				(error.response?.status === 401 ||
+					error.response?.status === 422)
 			) {
 				setError("メールアドレスまたはパスワードが正しくありません。");
-			} else if (error.response?.status === 500) {
+			} else if (isAxiosError(error) && error.response?.status === 500) {
 				setError("サーバーエラーが発生しました。しばらく後にお試しください。");
 			} else {
 				setError("ログインに失敗しました。もう一度お試しください。");
@@ -154,7 +167,7 @@ const LoginPage = () => {
 		}
 	};
 
-	// Microsoft SSOでサインイン開始
+	// Microsoft SSOでサインイン開始（ボタンクリック時のみ）
 	const handleMicrosoftSignIn = async () => {
 		setIsLoading(true);
 		setError("");
@@ -163,6 +176,7 @@ const LoginPage = () => {
 			if (status === "authenticated") {
 				await signOut({ redirect: false });
 			}
+			// callbackUrl: "/login" でコールバック後にこのページに戻る
 			await signIn("azure-ad", { callbackUrl: "/login" });
 		} catch (error) {
 			setError("Microsoftサインインの開始に失敗しました。");
@@ -218,7 +232,7 @@ const LoginPage = () => {
 							<Button
 								type="button"
 								className="w-full"
-								onClick={handleMicrosoftAuth}
+								onClick={() => handleMicrosoftAuth(false)}
 								disabled={isLoading}
 							>
 								<svg className="w-5 h-5 mr-2" viewBox="0 0 21 21">

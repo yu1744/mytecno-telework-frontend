@@ -18,6 +18,9 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      "**/*_fixed.tsx",
+      "**/*_from_docker.tsx",
+      "public/**",
     ],
   },
 ];
