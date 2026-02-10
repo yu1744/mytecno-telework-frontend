@@ -55,6 +55,7 @@ const ApprovalsPageContent = () => {
 		useState<ApplicationRequestParams["sort_order"]>("desc");
 	const [filterByUser, setFilterByUser] = useState<string>("");
 	const [filterByMonth, setFilterByMonth] = useState<string>("");
+	const [filterByStatus, setFilterByStatus] = useState<string>("");
 
 	const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
 	const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -69,6 +70,7 @@ const ApprovalsPageContent = () => {
 				sort_by: sortBy,
 				sort_order: sortOrder,
 				filter_by_user: filterByUser,
+				filter_by_status: filterByStatus,
 				filter_by_month: filterByMonth,
 			};
 			Object.keys(params).forEach(
@@ -107,7 +109,7 @@ const ApprovalsPageContent = () => {
 	useEffect(() => {
 		fetchApplications();
 		fetchUsers();
-	}, [sortBy, sortOrder, filterByUser, filterByMonth]);
+	}, [sortBy, sortOrder, filterByUser, filterByMonth, filterByStatus]);
 
 	const handleSort = (sortKey: keyof Application | (string & {})) => {
 		const key = sortKey as ApplicationRequestParams["sort_by"];

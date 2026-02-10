@@ -205,6 +205,7 @@ export type ApplicationRequestParams = {
 	user_name?: string;
 	filter_by_status?: string;
 	filter_by_month?: string;
+	filter_by_user?: string | number;
 };
 
 export const createApplication = (
