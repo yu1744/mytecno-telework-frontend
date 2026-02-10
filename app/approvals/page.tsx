@@ -18,6 +18,7 @@ import {
 	getPendingApprovals,
 	getApplication,
 	updateApprovalStatus,
+	adminGetUsers,
 	ApplicationRequestParams,
 } from "../lib/api";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -45,15 +46,16 @@ const getStatusBadge = (statusId: number) => {
 const ApprovalsPageContent = () => {
 	const user = useAuthStore((state) => state.user);
 	const [applications, setApplications] = useState<Application[]>([]);
+	const [users, setUsers] = useState<User[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [sortBy, setSortBy] =
 		useState<ApplicationRequestParams["sort_by"]>("created_at");
 	const [sortOrder, setSortOrder] =
 		useState<ApplicationRequestParams["sort_order"]>("desc");
-	const [filterByStatus, setFilterByStatus] = useState<string>("");
 	const [filterByUser, setFilterByUser] = useState<string>("");
 	const [filterByMonth, setFilterByMonth] = useState<string>("");
+	const [filterByStatus, setFilterByStatus] = useState<string>("");
 
 	const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
 	const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -67,6 +69,7 @@ const ApprovalsPageContent = () => {
 			const params: ApplicationRequestParams = {
 				sort_by: sortBy,
 				sort_order: sortOrder,
+				filter_by_user: filterByUser,
 				filter_by_status: filterByStatus,
 				filter_by_month: filterByMonth,
 			};
@@ -94,9 +97,19 @@ const ApprovalsPageContent = () => {
 		}
 	};
 
+	const fetchUsers = async () => {
+		try {
+			const response = await adminGetUsers();
+			setUsers(response.data);
+		} catch (err) {
+			console.error("Failed to fetch users:", err);
+		}
+	};
+
 	useEffect(() => {
 		fetchApplications();
-	}, [sortBy, sortOrder, filterByStatus, filterByUser, filterByMonth]);
+		fetchUsers();
+	}, [sortBy, sortOrder, filterByUser, filterByMonth, filterByStatus]);
 
 	const handleSort = (sortKey: keyof Application | (string & {})) => {
 		const key = sortKey as ApplicationRequestParams["sort_by"];
@@ -295,6 +308,7 @@ const ApprovalsPageContent = () => {
 
 	const monthOptions = Array.from({ length: 12 }, (_, i) => {
 		const date = new Date();
+		date.setDate(1);
 		date.setMonth(date.getMonth() - i);
 		return {
 			value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
@@ -339,24 +353,25 @@ const ApprovalsPageContent = () => {
 						</Select>
 					</div>
 					<div className="flex items-center gap-2">
-						<label htmlFor="status-filter" className="text-sm font-medium">
-							ステータス:
+						<label htmlFor="user-filter" className="text-sm font-medium">
+							申請者:
 						</label>
 						<Select
-							value={filterByStatus || "all"}
+							value={filterByUser || "all"}
 							onValueChange={(value) =>
-								setFilterByStatus(value === "all" ? "" : value)
+								setFilterByUser(value === "all" ? "" : value)
 							}
 						>
-							<SelectTrigger id="status-filter" className="w-[150px]">
+							<SelectTrigger id="user-filter" className="w-[200px]">
 								<SelectValue placeholder="すべて" />
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="all">すべて</SelectItem>
-								<SelectItem value="1">申請中</SelectItem>
-								<SelectItem value="2">承認済み</SelectItem>
-								<SelectItem value="3">却下</SelectItem>
-								<SelectItem value="4">キャンセル</SelectItem>
+								{users.map((u) => (
+									<SelectItem key={u.id} value={u.id.toString()}>
+										{u.name}
+									</SelectItem>
+								))}
 							</SelectContent>
 						</Select>
 					</div>

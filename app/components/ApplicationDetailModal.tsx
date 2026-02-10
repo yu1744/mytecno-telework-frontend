@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Application } from "@/app/types/application";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { Clock } from "lucide-react";
 
 interface Props {
 	application: Application | null;
@@ -108,20 +109,32 @@ export function ApplicationDetailModal({
 								</TableRow>
 							)}
 							{application.is_overtime && (
-								<>
-									<TableRow>
-										<TableCell className="font-semibold">残業理由</TableCell>
-										<TableCell className="whitespace-pre-wrap">
-											{application.overtime_reason}
-										</TableCell>
-									</TableRow>
-									<TableRow>
-										<TableCell className="font-semibold">
-											残業終了時間
-										</TableCell>
-										<TableCell>{application.overtime_end}</TableCell>
-									</TableRow>
-								</>
+								<TableRow className="bg-slate-50/50">
+									<TableCell colSpan={2} className="p-0">
+										<div className="p-4 space-y-3 border-l-4 border-slate-300">
+											<div className="flex items-center gap-2 text-slate-900 font-bold">
+												<Clock className="w-4 h-4 text-slate-500" />
+												<span>残業申請あり</span>
+											</div>
+											<div className="grid grid-cols-4 gap-4">
+												<div className="text-sm font-semibold text-slate-500 italic">
+													終了予定:
+												</div>
+												<div className="col-span-3 text-lg font-bold text-slate-700">
+													{formatTimeValue(application.overtime_end) ?? "---"}
+												</div>
+											</div>
+											<div className="grid grid-cols-4 gap-4 border-t border-slate-100 pt-2">
+												<div className="text-sm font-semibold text-slate-500">
+													残業理由:
+												</div>
+												<div className="col-span-3 text-sm whitespace-pre-wrap text-slate-700/80">
+													{application.overtime_reason}
+												</div>
+											</div>
+										</div>
+									</TableCell>
+								</TableRow>
 							)}
 						</TableBody>
 					</Table>

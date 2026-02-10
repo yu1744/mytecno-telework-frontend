@@ -70,12 +70,20 @@ const ApplicationForm = () => {
 
 	useEffect(() => {
 		if (date) {
+			const now = new Date();
+			const deadline = new Date(date);
+			deadline.setDate(deadline.getDate() - 1);
+			deadline.setHours(12, 0, 0, 0);
+
 			const today = new Date();
 			today.setHours(0, 0, 0, 0);
 			const selectedDate = new Date(date);
 			selectedDate.setHours(0, 0, 0, 0);
 			const isTodaySelected = selectedDate.getTime() === today.getTime();
-			setIsSpecial(isTodaySelected);
+
+			// 前日12時を過ぎているか、もしくは当日を選択している場合は特認
+			setIsSpecial(now > deadline || isTodaySelected);
+
 			// 当日以外を選択した場合は遅延申請をオフにする
 			if (!isTodaySelected && isTrainDelay) {
 				setIsTrainDelay(false);
@@ -90,10 +98,14 @@ const ApplicationForm = () => {
 			const diff = end.getTime() - start.getTime();
 			const hours = diff / (1000 * 60 * 60);
 			setIsOvertime(hours > 8);
+		} else if (workOption === "full_day" && overtimeEnd) {
+			const end = new Date(`1970-01-01T${overtimeEnd}`);
+			const threshold = new Date(`1970-01-01T18:00`);
+			setIsOvertime(end.getTime() > threshold.getTime());
 		} else {
 			setIsOvertime(false);
 		}
-	}, [startTime, endTime]);
+	}, [startTime, endTime, workOption, overtimeEnd]);
 
 	useEffect(() => {
 		if (!requiresSpecialReason) {
@@ -136,11 +148,12 @@ const ApplicationForm = () => {
 			const isLimitError = isAxiosError(error) && error.response?.data?.is_limit_error;
 			if (isLimitError) {
 				isModalShown = true;
+				const errors = error.response?.data?.errors;
+				const errorMessage = Array.isArray(errors) ? errors.join("\n") : "申請上限に達しています。";
+
 				useModalStore.getState().showModal({
 					title: "申請上限超過の確認",
-					message:
-						((isAxiosError(error) && error.response?.data?.errors?.join("\n")) || "") +
-						"\n\n上限を超えて申請してよろしいですか？",
+					message: errorMessage + "\n\n上限を超えて申請してよろしいですか？",
 					confirmText: "申請",
 					cancelText: "キャンセル",
 					onConfirm: async () => {
@@ -406,12 +419,17 @@ const ApplicationForm = () => {
 													</Button>
 												</TooltipTrigger>
 												<TooltipContent>
-													<p>残業や休日出勤など、1日の労働時間が8時間を超える場合に選択してください。</p>
+													<p>残業や休日出勤など、1日の労働時間が8時間を超える場合に選択してください。※8時間を超える勤務は直属上司の承認が必要となります。</p>
 												</TooltipContent>
 											</Tooltip>
 										</TooltipProvider>
 									</div>
 								</div>
+								{isOvertime && (
+									<p className="text-sm font-bold text-amber-600 bg-amber-50 p-2 rounded-md border border-amber-200">
+										ℹ️ 8時間を超える勤務（残業）申請のため、承認は直属上司（マネージャー）のみ可能となります。
+									</p>
+								)}
 							</div>
 
 							{isOvertime && (

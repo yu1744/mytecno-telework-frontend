@@ -141,7 +141,7 @@ const NavigationMenu = ({ className, onItemClick }: NavigationMenuProps) => {
 	};
 
 	return (
-		<nav className={cn("w-64 h-full border-r bg-white dark:bg-gray-950 overflow-y-auto mobile-scroll", className)}>
+		<nav className={cn("w-64 h-full border-r bg-white dark:bg-gray-950", className)}>
 			<div className="flex flex-col gap-2 p-3">
 				{/* 申請機能セクション */}
 				<div>

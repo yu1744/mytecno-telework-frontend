@@ -20,16 +20,16 @@ const NotificationBell = () => {
     try {
       console.debug('[NotificationBell] Fetching unread notifications...');
       const response = await getUnreadNotifications();
-      console.debug('[NotificationBell] Success:', response);
-      console.debug('[NotificationBell] response.data:', response.data);
+      console.debug('[NotificationBell] Success:', {
+        status: response.status,
+        dataCount: Array.isArray(response.data) ? response.data.length : 'not an array'
+      });
       setNotifications(Array.isArray(response.data) ? response.data : []);
     } catch (error: unknown) {
-      // APIエラーは既にコンソールに出力されているので、ここでは静かに処理する
-      // 通知の取得に失敗してもUIは表示し続ける
-      console.debug('[NotificationBell] Fetch failed:', {
+      console.error('[NotificationBell] Fetch failed:', {
         message: error instanceof Error ? error.message : String(error),
         status: isAxiosError(error) ? error.response?.status : null,
-        data: isAxiosError(error) ? error.response?.data : null,
+        url: isAxiosError(error) ? error.config?.url : null
       });
       setNotifications([]);
     }
@@ -57,7 +57,6 @@ const NotificationBell = () => {
     };
 
     if (isOpen) {
-      // clickイベントを使用（mousedownではなく）
       document.addEventListener('click', handleClickOutside);
       return () => document.removeEventListener('click', handleClickOutside);
     }
@@ -65,19 +64,18 @@ const NotificationBell = () => {
 
   // 通知をクリック
   const handleNotificationClick = useCallback(async (notification: AppNotification) => {
-    console.log('[NotificationBell] Notification clicked:', notification.id);
+    console.debug('[NotificationBell] Notification clicked:', notification.id);
 
-    // 先にローカルステートを更新
+    // 既読状態を先に更新（楽観的更新）
     setNotifications(prev => prev.filter(n => n.id !== notification.id));
     setIsOpen(false);
 
-    // バックグラウンドでAPI呼び出し
     try {
       await markNotificationAsRead(notification.id);
-      console.log('[NotificationBell] Marked as read');
+      console.debug(`[NotificationBell] Notification ${notification.id} marked as read`);
     } catch (error) {
-      console.error('[NotificationBell] Failed to mark as read:', error);
-      // 失敗しても通知を再取得
+      console.error(`[NotificationBell] Failed to mark notification ${notification.id} as read:`, error);
+      // 失敗した場合は最新情報を再取得
       fetchNotifications();
     }
 
@@ -122,7 +120,7 @@ const NotificationBell = () => {
         >
           <div className="py-1">
             <div className="px-4 py-2 text-sm text-gray-700 font-semibold">
-              未読の通知
+              通知
             </div>
             <div className="border-t border-gray-200"></div>
             {notifications.length > 0 ? (
@@ -131,9 +129,12 @@ const NotificationBell = () => {
                   key={notification.id}
                   type="button"
                   onClick={() => handleNotificationClick(notification)}
-                  className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="w-full text-left block px-4 py-2 text-sm text-gray-800 font-medium hover:bg-blue-50 transition-colors duration-200"
                 >
-                  {notification.message}
+                  <div className="flex items-start gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-blue-600 flex-shrink-0" />
+                    <span>{notification.message}</span>
+                  </div>
                 </button>
               ))
             ) : (

@@ -50,6 +50,7 @@ const AdminApplicationsPageContent = () => {
 		useState<ApplicationRequestParams["sort_order"]>("desc");
 	const [filterByStatus, setFilterByStatus] = useState<string>("");
 	const [filterByUser, setFilterByUser] = useState<string>("");
+	const [filterByMonth, setFilterByMonth] = useState<string>("");
 
 	const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 	const [selectedApplication, setSelectedApplication] =
@@ -66,7 +67,10 @@ const AdminApplicationsPageContent = () => {
 				params.status = filterByStatus;
 			}
 			if (filterByUser) {
-				params.user_name = filterByUser;
+				params.filter_by_user = filterByUser;
+			}
+			if (filterByMonth) {
+				params.filter_by_month = filterByMonth;
 			}
 			const response = await adminGetApplications(params);
 			setApplications(response.data);
@@ -93,7 +97,7 @@ const AdminApplicationsPageContent = () => {
 		if (user?.role?.name === "admin") {
 			fetchUsers();
 		}
-	}, [sortBy, sortOrder, filterByStatus, filterByUser]);
+	}, [sortBy, sortOrder, filterByStatus, filterByUser, filterByMonth]);
 
 	const handleSort = (sortKey: keyof Application | (string & {})) => {
 		const key = sortKey as ApplicationRequestParams["sort_by"];
@@ -180,8 +184,21 @@ const AdminApplicationsPageContent = () => {
 				),
 			},
 		],
-		[users]
+		[users, applications]
 	);
+
+	const monthOptions = Array.from({ length: 12 }, (_, i) => {
+		const date = new Date();
+		date.setDate(1);
+		date.setMonth(date.getMonth() - i);
+		return {
+			value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+				2,
+				"0"
+			)}`,
+			label: `${date.getFullYear()}年${date.getMonth() + 1}月`,
+		};
+	});
 
 	const getRowClassName = (row: Application) => {
 		const isSpecial = row.is_special;
@@ -253,6 +270,29 @@ const AdminApplicationsPageContent = () => {
 						</Select>
 					</div>
 				)}
+				<div className="flex items-center gap-2">
+					<label htmlFor="month-filter" className="text-sm font-medium">
+						申請月:
+					</label>
+					<Select
+						value={filterByMonth || "all"}
+						onValueChange={(value) =>
+							setFilterByMonth(value === "all" ? "" : value)
+						}
+					>
+						<SelectTrigger id="month-filter" className="w-[180px]">
+							<SelectValue placeholder="すべて" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="all">すべて</SelectItem>
+							{monthOptions.map((option) => (
+								<SelectItem key={option.value} value={option.value}>
+									{option.label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				</div>
 			</div>
 			<CommonTable
 				columns={columns}

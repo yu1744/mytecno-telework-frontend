@@ -5,7 +5,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Role, Department, Group } from "../types/user";
-import { CreateUserParams } from "../lib/api";
+import { CreateUserParams, createDepartment } from "../lib/api";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -83,23 +83,42 @@ const RegisterUserModal: React.FC<Props> = ({
 		},
 	});
 
+	const [isNewDepartment, setIsNewDepartment] = React.useState(false);
+	const [newDepartmentName, setNewDepartmentName] = React.useState("");
+
 	const departmentId = watch("department_id");
 
 	const handleClose = () => {
 		reset();
+		setIsNewDepartment(false);
+		setNewDepartmentName("");
 		onClose();
 	};
 
-	const onSubmit = (data: FormData) => {
-		const userData = {
-			...data,
-			department_id: parseInt(data.department_id, 10),
-			role_id: parseInt(data.role_id, 10),
-			group_id: data.group_id ? parseInt(data.group_id, 10) : undefined,
-		};
-		onRegister(userData);
-		handleClose();
+	const onSubmit = async (data: FormData) => {
+		try {
+			let departmentId = parseInt(data.department_id, 10);
+
+			if (isNewDepartment && valueIsCreateNew(data.department_id)) {
+				const deptRes = await createDepartment({ name: newDepartmentName });
+				departmentId = deptRes.data.id;
+			}
+
+			const userData = {
+				...data,
+				department_id: departmentId,
+				role_id: parseInt(data.role_id, 10),
+				group_id: data.group_id ? parseInt(data.group_id, 10) : undefined,
+			};
+			onRegister(userData);
+			handleClose();
+		} catch (error) {
+			console.error("Failed to create department:", error);
+			// error is handled by the parent or toast
+		}
 	};
+
+	const valueIsCreateNew = (val: string) => val === "CREATE_NEW";
 
 	return (
 		<Dialog
@@ -193,24 +212,44 @@ const RegisterUserModal: React.FC<Props> = ({
 							name="department_id"
 							control={control}
 							render={({ field }) => (
-								<Select
-									onValueChange={field.onChange}
-									defaultValue={field.value}
-								>
-									<SelectTrigger className="col-span-3">
-										<SelectValue placeholder="選択してください" />
-									</SelectTrigger>
-									<SelectContent>
-										{departments.map((department) => (
-											<SelectItem
-												key={department.id}
-												value={String(department.id)}
-											>
-												{department.name}
+								<div className="col-span-3">
+									<Select
+										onValueChange={(val) => {
+											field.onChange(val);
+											setIsNewDepartment(val === "CREATE_NEW");
+										}}
+										value={field.value}
+									>
+										<SelectTrigger tabIndex={0}>
+											<SelectValue placeholder="選択してください" />
+										</SelectTrigger>
+										<SelectContent>
+											{departments.map((department) => (
+												<SelectItem
+													key={department.id}
+													value={String(department.id)}
+												>
+													{department.name}
+												</SelectItem>
+											))}
+											<SelectItem value="CREATE_NEW" className="font-bold text-blue-600 border-t mt-1">
+												+ 新しい部署を作成...
 											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
+										</SelectContent>
+									</Select>
+									{isNewDepartment && (
+										<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+											<Label htmlFor="new-dept-name" className="text-xs text-blue-600">新しい部署名</Label>
+											<Input
+												id="new-dept-name"
+												placeholder="新しい部署の名前を入力"
+												value={newDepartmentName}
+												onChange={(e) => setNewDepartmentName(e.target.value)}
+												className="mt-1 border-blue-200 focus-visible:ring-blue-500"
+											/>
+										</div>
+									)}
+								</div>
 							)}
 						/>
 						{errors.department_id && (
@@ -295,25 +334,25 @@ const RegisterUserModal: React.FC<Props> = ({
 						/>
 					</div>
 
-					
+
 					<div className="grid grid-cols-4 items-center gap-4">
-  						<Label htmlFor="microsoft_account_id" className="text-right whitespace-nowrap">
-    						MS Account ID
-  						</Label>
-  						<Controller
-   							name="microsoft_account_id"
-    						control={control}
-    						render={({ field }) => (
-      							<Input
-       								id="microsoft_account_id"
-        							{...field}
-        							className="col-span-3"
-        							placeholder="例: user@company.onmicrosoft.com"
-     							/>
-    						)}
+						<Label htmlFor="microsoft_account_id" className="text-right whitespace-nowrap">
+							MS Account ID
+						</Label>
+						<Controller
+							name="microsoft_account_id"
+							control={control}
+							render={({ field }) => (
+								<Input
+									id="microsoft_account_id"
+									{...field}
+									className="col-span-3"
+									placeholder="例: user@company.onmicrosoft.com"
+								/>
+							)}
 						/>
 					</div>
-					
+
 					<div className="grid grid-cols-4 items-center gap-4">
 						<Label htmlFor="is_caregiver" className="text-right">
 							介護フラグ

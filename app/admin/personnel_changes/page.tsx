@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Edit, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Plus } from "lucide-react";
+import Link from "next/link";
 import { toast } from "react-hot-toast";
 
 import api, {
@@ -9,6 +10,7 @@ import api, {
 	getDepartments,
 	getRoles,
 	adminCreateInfoChange,
+	createDepartment,
 } from "@/app/lib/api";
 import EmptyState from "@/app/components/EmptyState";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
@@ -95,6 +97,8 @@ const PersonnelChangesPage = () => {
 		new_role_id: "",
 		effective_date: "",
 	});
+	const [isNewDepartment, setIsNewDepartment] = useState(false);
+	const [newDepartmentName, setNewDepartmentName] = useState("");
 
 	const fetchData = async () => {
 		try {
@@ -135,7 +139,8 @@ const PersonnelChangesPage = () => {
 	const handleCreate = async () => {
 		if (
 			!newChange.user_id ||
-			!newChange.new_department_id ||
+			(!newChange.new_department_id && !isNewDepartment) ||
+			(isNewDepartment && !newDepartmentName) ||
 			!newChange.new_role_id ||
 			!newChange.effective_date
 		) {
@@ -144,9 +149,16 @@ const PersonnelChangesPage = () => {
 		}
 
 		try {
+			let departmentId = Number(newChange.new_department_id);
+
+			if (isNewDepartment) {
+				const deptRes = await createDepartment({ name: newDepartmentName });
+				departmentId = deptRes.data.id;
+			}
+
 			await adminCreateInfoChange({
 				user_id: Number(newChange.user_id),
-				new_department_id: Number(newChange.new_department_id),
+				new_department_id: departmentId,
 				new_role_id: Number(newChange.new_role_id),
 				effective_date: newChange.effective_date,
 			});
@@ -158,6 +170,8 @@ const PersonnelChangesPage = () => {
 				new_role_id: "",
 				effective_date: "",
 			});
+			setIsNewDepartment(false);
+			setNewDepartmentName("");
 			fetchData();
 		} catch (error) {
 			console.error("Failed to create change:", error);
@@ -190,6 +204,14 @@ const PersonnelChangesPage = () => {
 	return (
 		<PrivateRoute allowedRoles={["admin"]}>
 			<div className="container mx-auto py-10">
+				<div className="mb-4">
+					<Button asChild variant="ghost" size="sm">
+						<Link href="/admin">
+							<ArrowLeft className="w-4 h-4 mr-2" />
+							管理者ページに戻る
+						</Link>
+					</Button>
+				</div>
 				<div className="flex justify-between items-center mb-4">
 					<h1 className="text-2xl font-bold">人事異動の予約・管理</h1>
 					<Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
@@ -226,12 +248,18 @@ const PersonnelChangesPage = () => {
 								<div className="grid gap-2">
 									<Label htmlFor="department">新部署</Label>
 									<Select
-										value={newChange.new_department_id}
-										onValueChange={(value) =>
-											setNewChange({ ...newChange, new_department_id: value })
-										}
+										value={isNewDepartment ? "CREATE_NEW" : newChange.new_department_id}
+										onValueChange={(value) => {
+											if (value === "CREATE_NEW") {
+												setIsNewDepartment(true);
+												setNewChange({ ...newChange, new_department_id: "" });
+											} else {
+												setIsNewDepartment(false);
+												setNewChange({ ...newChange, new_department_id: value });
+											}
+										}}
 									>
-										<SelectTrigger>
+										<SelectTrigger tabIndex={0}>
 											<SelectValue placeholder="部署を選択" />
 										</SelectTrigger>
 										<SelectContent>
@@ -240,8 +268,23 @@ const PersonnelChangesPage = () => {
 													{dept.name}
 												</SelectItem>
 											))}
+											<SelectItem value="CREATE_NEW" className="font-bold text-blue-600 border-t mt-1">
+												+ 新しい部署を作成...
+											</SelectItem>
 										</SelectContent>
 									</Select>
+									{isNewDepartment && (
+										<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+											<Label htmlFor="new-dept-name" className="text-xs text-blue-600">新しい部署名</Label>
+											<Input
+												id="new-dept-name"
+												placeholder="新しい部署の名前を入力"
+												value={newDepartmentName}
+												onChange={(e) => setNewDepartmentName(e.target.value)}
+												className="mt-1 border-blue-200 focus-visible:ring-blue-500"
+											/>
+										</div>
+									)}
 								</div>
 								<div className="grid gap-2">
 									<Label htmlFor="role">新役職</Label>

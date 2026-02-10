@@ -116,6 +116,7 @@ const AdminUsersPageContent = () => {
             setUsers([...users, res.data]);
             toast.success("新しいユーザーを登録しました。");
             setRegisterModalOpen(false);
+            fetchData(); // Refetch to update departments list
         } catch (error) {
             console.error("Failed to register user", error);
             toast.error("ユーザー登録に失敗しました。");
@@ -152,6 +153,7 @@ const AdminUsersPageContent = () => {
         try {
             const res = await api.adminGetUser(userId);
             setUserDetail(res.data);
+            setSelectedUser(res.data);
             setIsDetailModalOpen(true);
         } catch (error) {
             toast.error("ユーザー情報の取得に失敗しました。");

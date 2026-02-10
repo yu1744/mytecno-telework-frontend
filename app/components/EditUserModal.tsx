@@ -5,7 +5,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { User, Role, Department, Group } from "../types/user";
-import { UpdateUserParams } from "../lib/api";
+import { UpdateUserParams, createDepartment } from "../lib/api";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -102,6 +102,9 @@ const EditUserModal: React.FC<Props> = ({
 		},
 	});
 
+	const [isNewDepartment, setIsNewDepartment] = React.useState(false);
+	const [newDepartmentName, setNewDepartmentName] = React.useState("");
+
 	useEffect(() => {
 		if (user) {
 			reset({
@@ -122,22 +125,35 @@ const EditUserModal: React.FC<Props> = ({
 
 	const handleClose = () => {
 		reset();
+		setIsNewDepartment(false);
+		setNewDepartmentName("");
 		onClose();
 	};
 
-	const onSubmit = (data: FormData) => {
+	const onSubmit = async (data: FormData) => {
 		if (!user) return;
-		const { ...restData } = data;
-		const updateData: Omit<UpdateUserParams, "id"> = {
-			...restData,
-			department_id: parseInt(data.department_id, 10),
-			role_id: parseInt(data.role_id, 10),
-			group_id: data.group_id ? parseInt(data.group_id, 10) : undefined,
-			manager_id: data.manager_id ? parseInt(data.manager_id, 10) : undefined,
-		};
+		try {
+			let departmentId = parseInt(data.department_id, 10);
 
-		onUpdate({ ...updateData, id: user.id });
-		handleClose();
+			if (isNewDepartment && data.department_id === "CREATE_NEW") {
+				const deptRes = await createDepartment({ name: newDepartmentName });
+				departmentId = deptRes.data.id;
+			}
+
+			const { ...restData } = data;
+			const updateData: Omit<UpdateUserParams, "id"> = {
+				...restData,
+				department_id: departmentId,
+				role_id: parseInt(data.role_id, 10),
+				group_id: data.group_id ? parseInt(data.group_id, 10) : undefined,
+				manager_id: data.manager_id ? parseInt(data.manager_id, 10) : undefined,
+			};
+
+			onUpdate({ ...updateData, id: user.id });
+			handleClose();
+		} catch (error) {
+			console.error("Failed to create department:", error);
+		}
 	};
 
 	return (
@@ -145,7 +161,7 @@ const EditUserModal: React.FC<Props> = ({
 			open={open}
 			onOpenChange={(isOpen: boolean) => !isOpen && handleClose()}
 		>
-			<DialogContent className="sm:max-w-[425px]">
+			<DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>ユーザー情報編集</DialogTitle>
 				</DialogHeader>
@@ -245,21 +261,44 @@ const EditUserModal: React.FC<Props> = ({
 							name="department_id"
 							control={control}
 							render={({ field }) => (
-								<Select onValueChange={field.onChange} value={field.value}>
-									<SelectTrigger className="col-span-3">
-										<SelectValue placeholder="選択してください" />
-									</SelectTrigger>
-									<SelectContent>
-										{departments.map((department) => (
-											<SelectItem
-												key={department.id}
-												value={String(department.id)}
-											>
-												{department.name}
+								<div className="col-span-3">
+									<Select
+										onValueChange={(val) => {
+											field.onChange(val);
+											setIsNewDepartment(val === "CREATE_NEW");
+										}}
+										value={field.value}
+									>
+										<SelectTrigger tabIndex={0}>
+											<SelectValue placeholder="選択してください" />
+										</SelectTrigger>
+										<SelectContent>
+											{departments.map((department) => (
+												<SelectItem
+													key={department.id}
+													value={String(department.id)}
+												>
+													{department.name}
+												</SelectItem>
+											))}
+											<SelectItem value="CREATE_NEW" className="font-bold text-blue-600 border-t mt-1">
+												+ 新しい部署を作成...
 											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
+										</SelectContent>
+									</Select>
+									{isNewDepartment && (
+										<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+											<Label htmlFor="new-dept-name" className="text-xs text-blue-600">新しい部署名</Label>
+											<Input
+												id="new-dept-name"
+												placeholder="新しい部署の名前を入力"
+												value={newDepartmentName}
+												onChange={(e) => setNewDepartmentName(e.target.value)}
+												className="mt-1 border-blue-200 focus-visible:ring-blue-500"
+											/>
+										</div>
+									)}
+								</div>
 							)}
 						/>
 						{errors.department_id && (
